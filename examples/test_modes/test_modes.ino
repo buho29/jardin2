@@ -1,4 +1,3 @@
-
 #include "Model.h";
 
 Model * model = Model::instance();

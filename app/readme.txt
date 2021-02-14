@@ -29,7 +29,7 @@ MainArduinoProject1.ino
 	src\SharedProject2\SharedProject2.cpp
 	src\SharedProject2\SharedProject2.h
 
-	teta
+	teta 
 
 	
 blog: http://www.visualmicro.com/post/2016/05/27/Sharing-code-between-projects.aspx

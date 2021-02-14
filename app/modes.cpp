@@ -1,6 +1,7 @@
 #include "modes.h"
 #include "Model.h"
 
+
 /*			Expression			*/
 
 Expression::Expression() { }
