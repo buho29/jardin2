@@ -3,7 +3,12 @@
 
 /*			Expression			*/
 
-Expression::Expression() { model = Model::instance(); }
+Expression::Expression() { }
+
+void Expression::begin()
+{
+	model = Model::instance(); 
+}
 
 void Expression::setEnabled(bool value){enabled = value;}
 
@@ -87,6 +92,15 @@ const char * SensorExpression::getName(){return "sensors";}
 
 
 ListExpression::ListExpression(){enabled = true;}
+
+void ListExpression::begin()
+{
+	uint i = -1;
+	while (has(++i))
+	{
+		get(i)->begin();
+	}
+}
 
 int8_t ListExpression::evaluate()
 {
@@ -213,7 +227,7 @@ void Modes::setFlags(uint f)
 		bool enabled = fl.contain(modesArr[i]);
 
 		exp->setEnabled(enabled);
-		Serial.printf("%s %s, ", exp->getName(), (exp->getEnabled() ? "true" : "false"));
+		//Serial.printf("%s %s, ", exp->getName(), (exp->getEnabled() ? "true" : "false"));
 	}
 }
 

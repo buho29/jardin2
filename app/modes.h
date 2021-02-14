@@ -3,6 +3,7 @@
 #define _MODES_h
 
 #include "lib/Task.h"
+#include "lib/Flag.h"
 // declaramos dependencia con model(sin include)
 class Model ;
 
@@ -14,6 +15,7 @@ protected:
 public:
 	Model * model;
 	Expression();
+	virtual void begin();
 	// evalua entre 0 a 100 si se riega
 	// evaluate() < 50 se riega
 	virtual int8_t evaluate() = 0;
@@ -72,6 +74,7 @@ protected:
 	Expression * expressionList[20];
 public:
 	ListExpression();
+	void begin();
 	virtual int8_t evaluate();
 	virtual bool skip();
 	virtual const char * getName();

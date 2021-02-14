@@ -24,6 +24,8 @@ void Model::begin()
 
 	readEprom();
 
+	modes.begin();
+
 	clockTime.setTimeZone(config.tz);
 	//irregularity, beginDay, beginMonth, endDay, endMonth, beginHour, endHour
 	clockTime.setDst(
@@ -623,7 +625,6 @@ void Model::printJsonForecast(const JsonObject & doc)
 	doc["precipitationProbability"] = fore->precipitationProbability;
 	doc["totalLiquid"] = fore->totalLiquid;
 	doc["cloudCover"] = fore->cloudCover;
-	doc["icon"] = getIcon(fore->icon);
 	doc["icon1"] = fore->icon;
 	
 	clockTime.now();
@@ -1089,13 +1090,6 @@ bool Model::pauseWaterZone(bool pause)
 						//sumamos la pausa
 						ct->start = (ct->start + elapsed) % TASK_TICKS_24H;
 						ct->stop = (ct->stop + elapsed) % TASK_TICKS_24H;
-
-						//ct->start = start;
-						//ct->stop = (start + alarm->duration) % TASK_TICKS_24H;
-						//start = ct->stop;
-
-						//Serial.printf("alarm id %d ", alarm->id);
-						//Serial.print("next task :"); printTask(ct);
 					}
 
 					//Serial.printf("for reanuda found %d %d\n", found, index);
@@ -1156,7 +1150,9 @@ void Model::onWater(Task * t)
 	if (found)
 	{
 		// si no se puede regar cancelamos
-		if (t->runing && !isManualZoneWater && !canWatering()) {
+		if (t->runing && !isManualZoneWater 
+			&& !canWatering(currentZone->modes)) 
+		{
 			stopWaterZone();
 			return;
 		}
@@ -1743,12 +1739,15 @@ bool Model::isDay()
 }
 //					Modes
 
-bool Model::canWatering()
+bool Model::canWatering(uint flag)
 {
-	//int8_t evaluate = modes.evaluate();
-	//Serial.printf("skip %d evaluate %d result %d\n", modes.skip(), evaluate, (!modes.skip() && modes.evaluate() < 50));
-	//// 
-	//return !modes.skip() && (evaluate < 50 || evaluate < 0);
+	modes.setFlags(flag);
+	int8_t evaluate = modes.evaluate();
+	
+	Serial.printf("skip %d evaluate %d result %d\n", 
+		modes.skip(), evaluate, (!modes.skip() && modes.evaluate() < 50));
+	// 
+	return !modes.skip() && (evaluate < 50 || evaluate < 0);
 }
 
 

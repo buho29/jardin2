@@ -259,8 +259,8 @@ public:
 	bool loadedForescast = false;
 	bool isDay();
 
-	bool canWatering();
-	int32_t lastTimeModesChanged = 0;
+	bool canWatering(uint flag);
+	Modes modes;
 
 	uint16_t getElapsedAlarm();
 
