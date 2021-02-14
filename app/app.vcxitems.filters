@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Text Include="$(MSBuildThisFileDirectory)readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Model.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modes.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)data.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Model.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)lib\Clock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)lib\dataTable.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)lib\Flag.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)lib\Task.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)modes.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)observer.h" />
+  </ItemGroup>
+</Project>

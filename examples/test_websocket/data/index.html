@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>websocket vue</title>
+  <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/quasar@1.14.1/dist/quasar.css'>
+<link rel='stylesheet' href='https://cdn.materialdesignicons.com/5.3.45/css/materialdesignicons.min.css'>
+
+</head>
+
+<body class="bg-blue-1">
+ 
+  <div id="app">
+    
+    <q-scroll-area ref="scrollArea" style="height: calc(100vh - 92px);width: 100%;">
+      <div v-for="(item,i) in messages"  class="q-mx-auto text-center " :key="i" style="max-width:60%;" >
+        <q-chat-message v-if="item.type==='sent'" > {{item.msg}} </q-chat-message>
+        <q-chat-message v-if="item.type==='received'" name='Servidor'sent> {{item.msg}} </q-chat-message>
+      </div>
+    </q-scroll-area>
+
+    <q-form  @submit="sendMessage(socket.message)" @reset="socket.message = null" ref="form" class="row bg-blue-2 q-pa-sm items-center">
+      <q-input :disable="!socket.isConnected" lazy-rules :rules="[ val => val && val.length > 0 || 'Porfi escribe algo']"
+        class="col" v-model="socket.message" filled hint="Enviar mensaje"></q-input>
+      <div class="col-auto q-pl-sm" >
+        <q-btn :disable="!socket.isConnected" class="col bg-primary text-white" type="submit" label='Enviar'></q-btn>
+        <q-toggle class="col"  :value="socket.isConnected" :label="socket.isConnected?'Desconectar':'Conectar'" @input="connect"></q-toggle>
+      </div>
+    </q-form>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/quasar@1.14.1/dist/quasar.ie.polyfills.umd.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@^2.x/dist/vue.js"></script>
+  <script>Vue.config.devtools = Vue.config.productionTip = false;</script>
+  <script src="https://cdn.jsdelivr.net/npm/quasar@1.14.1/dist/quasar.umd.js"></script>
+  
+<!-- partial -->
+  <script >
+  //aplication
+const app = new Vue({
+  el: '#app',
+  data: function () {
+    return {
+      socket: {
+        isConnected: false,
+        message: '',
+        openDate:null
+      },
+      messages:[]
+    }
+  },
+  methods: {
+    addMessage (obj) {
+      this.messages.push(obj);
+      let p = this.$refs.scrollArea.getScrollPosition();
+      this.$refs.scrollArea.setScrollPosition(p+200,300);
+    },
+    sendMessage (message) {
+      let elapsed = this.openDate - new Date();
+      console.log("send",message,this.timeToString(elapsed));
+      
+      this.$refs.form.reset();
+      this.addMessage({type:'sent',msg:message});
+      this.connection.send(message);
+    },
+    connect (){
+      if(this.connection !== undefined){
+        this.connection.close();
+        this.connection = undefined;
+        return;
+      }
+      let url = 'ws://'+document.location.host+'/ws';
+      this.connection = new WebSocket(url);
+      
+      this.connection.binaryType = "arraybuffer";
+
+      const parent = this;
+      this.connection.onmessage = function(event) {
+        
+        var msg = "";
+        if(event.data instanceof ArrayBuffer){
+          msg = "BIN:";
+          var bytes = new Uint8Array(event.data);
+          for (var i = 0; i < bytes.length; i++) {
+            msg += String.fromCharCode(bytes[i]);
+          }
+        } else {
+          msg = event.data;
+        }
+
+        parent.addMessage({type:'received',msg:msg});
+        
+        let str = parent.timeToString(event.timeStamp);
+        console.log("received",msg,str,event.timeStamp)
+
+      }
+      this.connection.onclose = function(event) {
+        parent.socket.isConnected = false
+        parent.notify("Desconectado !!");
+        parent.addMessage({type:'received',msg:'y No vuelvas!'});
+        console.log("onclose");
+      }
+      
+      this.connection.onerror = function(event) {
+        console.log("onerror",event);
+        parent.notify("ha ocurrido un error !!");
+      }
+
+      this.connection.onopen = function(event) {
+        parent.socket.isConnected = true;
+        parent.openDate = new Date();
+        parent.notify("Connectado !!");
+        console.log("open",parent.timeToString(parent.openDate))
+      }
+      
+    },
+    notify (msg){
+      this.$q.notify({
+        color: 'secondary',
+        textColor: 'white',
+        icon: 'mdi-alert-circle',
+        message: msg
+      });
+    },
+    ft(value) {
+      if (value < 10) {
+        return "0" + value;
+      }
+      return value;
+    },
+    timeToString(time){
+      let h, m, s;
+
+      time = Math.round(time/1000);
+      s = time % 60;
+      time = Math.round(time/60);
+      m = time % 60;
+      time = Math.round(time/60);
+      h = time % 24;
+
+      return `${this.ft(h)}:${this.ft(m)}:${this.ft(s)}`;
+    },
+    
+  },
+  created: function() {
+    this.connect();
+  },
+  mounted() {
+    this.$q.iconSet.field.error = 'mdi-alert-circle';
+    this.$q.iconSet.arrow.dropdown = 'mdi-menu-down';
+  },
+})
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding ="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" >
+  <PropertyGroup Label="Globals" >
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{c52cf4f0-9001-4cdc-a954-0530d85313fb}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\esp_littlefs.c" />
+<ClCompile Include="$(MSBuildThisFileDirectory)src\lfs.c" />
+<ClCompile Include="$(MSBuildThisFileDirectory)src\lfs_util.c" />
+<ClCompile Include="$(MSBuildThisFileDirectory)src\LITTLEFS.cpp" />
+<ClCompile Include="$(MSBuildThisFileDirectory)src\littlefs_api.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\esp_littlefs.h" />
+<ClInclude Include="$(MSBuildThisFileDirectory)src\lfs.h" />
+<ClInclude Include="$(MSBuildThisFileDirectory)src\lfs_util.h" />
+<ClInclude Include="$(MSBuildThisFileDirectory)src\LITTLEFS.h" />
+<ClInclude Include="$(MSBuildThisFileDirectory)src\littlefs_api.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="$(MSBuildThisFileDirectory)library.properties" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)library.json" />
+<None Include="$(MSBuildThisFileDirectory)LICENSE" />
+<None Include="$(MSBuildThisFileDirectory)README.md" />
+<None Include="$(MSBuildThisFileDirectory)src\LICENSE" />
+<None Include="$(MSBuildThisFileDirectory)src\LICENSE.md" />
+  </ItemGroup>
+</Project>
