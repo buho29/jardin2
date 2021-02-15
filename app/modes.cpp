@@ -26,7 +26,7 @@ int8_t WeaterExpression::evaluate()
 	  "totalLiquid": 4.5,
 	  "hoursOfPrecipitation": 3,
 	}*/
-	if (this->model->loadedForescast) {
+	if (this->model && this->model->loadedForescast) {
 		WeatherData::Forecast *fore = this->model->weather.getCurrent();
 		int16_t result = fore->cloudCover;
 		result += fore->precipitationProbability;
@@ -42,8 +42,10 @@ int8_t WeaterExpression::evaluate()
 
 bool WeaterExpression::skip()
 {
-	// cancelamos cuando el viento es mas de 8km/h
-	return this->model->weather.speedWin() > 8;
+	if (this->model && this->model->loadedForescast)
+		// cancelamos cuando el viento es mas de 8km/h
+		return this->model->weather.speedWin() > 8;
+	return false;
 }
 
 const char * WeaterExpression::getName(){return "Weater";}

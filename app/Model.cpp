@@ -22,10 +22,10 @@ void Model::begin()
 	}
 
 	clockTime.begin();
+	modes.begin();
 
 	readFiles();
 
-	modes.begin();
 	updateTimeZone();
 
 	//sensor 
@@ -61,6 +61,8 @@ void Model::begin()
 	enableSoftAP();
 	////intentamos conectar al wifi y descargar la hora y la meteo
 	connectWifi();
+
+	calcModes();
 
 	// iniciamos puertos de salida
 	for (auto it : taps) {
@@ -309,6 +311,7 @@ int Model::addZone(const char * name, uint32_t modes)
 	if (zone != nullptr) {
 		zone->set(-1, 0, 0, modes, name);
 		zone = zones.push(zone);
+		zone->can_watering = canWatering(modes);
 
 		dispachZone(false);
 		return zone->id;
@@ -324,6 +327,7 @@ bool Model::editZone(int id, const char * name, uint32_t modes)
 		Serial.println("editZone");
 		strncpy(zone->name, name, MODEL_MAX_CHAR_NAME_ZONE);
 		zone->modes = modes;
+		zone->can_watering = canWatering(modes);
 
 		dispachZone(false);
 
@@ -1611,9 +1615,11 @@ void Model::loadForecast()
 			loadedForescast = true;
 
 			strcpy(msgStatus, lang.get(Str::updatedFore).c_str());
+
 			dispachEvent(EventType::loadedForescast);
 
-			ws.textAll(printJsonForecast());
+			sendAll(printJsonForecast());
+			sendAll(printJson("zones", &zones));
 
 			updateSunTask();
 
@@ -1758,11 +1764,12 @@ bool Model::canWatering(uint flag)
 {
 	modes.setFlags(flag);
 	int8_t evaluate = modes.evaluate();
+	bool skip = modes.skip();
 	
 	Serial.printf("skip %d evaluate %d result %d\n", 
-		modes.skip(), evaluate, (!modes.skip() && modes.evaluate() < 50));
+		skip, evaluate, (!skip && (evaluate < 50 || evaluate < 0)));
 	// 
-	return !modes.skip() && (evaluate < 50 || evaluate < 0);
+	return !skip && (evaluate < 50 || evaluate < 0);
 }
 
 //		web server
@@ -1979,7 +1986,6 @@ void Model::updateTimeZone()
 	);
 }
 
-
 //bind task alarma y reasignamos los valores
 void Model::updateTasks(uint8_t zoneId)
 {
@@ -2002,9 +2008,7 @@ void Model::updateTasks(uint8_t zoneId)
 				);
 
 				alarm->task = t;
-			}
-			else
-			{
+			} else {
 				//Serial.printf("initAlarm recupera task zoneId = %d id :%d time: %d duration :%d\n", zoneId, alarm->id, alarm->time, alarm->duration);
 				t->start = alarm->time;
 				t->stop = alarm->time + alarm->duration;
@@ -2045,6 +2049,14 @@ void Model::calcZones()
 	}
 }
 
+void Model::calcModes()
+{
+	for (auto it : zones) {
+		ZoneItem * zone = it.second;
+		zone->can_watering = canWatering(zone->modes);
+	}
+}
+
 void Model::calcZone(int32_t zoneId)
 {
 	//refrescamos datos de la zona
@@ -2052,7 +2064,8 @@ void Model::calcZone(int32_t zoneId)
 	uint32_t start = UINT32_MAX;
 	int16_t index = -1;
 
-	if (zones.has(zoneId)) {
+	if (zones.has(zoneId)) 
+	{
 		ZoneItem * zone = zones[zoneId];
 
 		for (auto it : alarms) {

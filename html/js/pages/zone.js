@@ -20,17 +20,14 @@ Vue.component("b-select-flags", {
         //"sumamos" el valor
         this.addF(newValue[i]);
       }
-      if(newValue.length)
-        //emitimos un evento q flag cambio
-        this.$emit("input", this.mFlags);
       
-      console.log("teta m");
+      this.$emit("input", this.mFlags);
+      
     },
     
     //flags a cambiado
     flags: function (newValue, oldValue) {
       this.set(newValue);
-      console.log("teta f",newValue, oldValue);
     }
   },
   methods: {
@@ -86,6 +83,7 @@ const zone = {
             fab: false,
             showDialog: false,
             name: null,
+            can_watering: true,
             lastAlarm: false,
             selectedAlarmId: -1,
             time: '10:15:00',
@@ -141,10 +139,12 @@ const zone = {
         ),
         change(flags){
           this.modesFlags = flags;
+          console.log("change",this.modesFlags);
         },
         onSaveZone() {
             let error = false;
             if (this.zoneId >= 0) {
+              console.log(this.modesFlags);
                 this.editZone({
                     id: this.zoneId,
                     name: this.name,
@@ -205,6 +205,7 @@ const zone = {
                 if (zone !== undefined) {
                     this.name = zone.name;
                     this.modesFlags = zone.modes;
+                    this.can_watering = zone.can_watering;
                 }
 
             }
@@ -231,21 +232,21 @@ const zone = {
         <div  class="q-mt-lg q-mx-auto text-center bg-white" style="max-width: 400px">
           
           <div class="bg-primary text-white shadow-3 ">
-              <div  class="text-h6 q-pa-sm">Nombre</div>
+              <div  class="text-h6 q-pa-sm">{{name}}</div>
           </div>
           
           <q-form @submit="onSaveZone" class="q-gutter-md q-pa-md" >
-    
-              <q-input dense filled v-model="name" label="Nombre *"
-                lazy-rules :rules="[ val => val && val.length > 0 || 'Por favor escriba algo']">
-              </q-input>
-              <b-select-flags label="Modos" :options="modesData" :flags="modesFlags" @input="change"/>
-
-    
-                <div class="col-12 text-right">
-                    <q-btn flat label="Cancelar" @click="$router.go(-1)" class="text-primary"></q-btn>
-                    <q-btn label="Guardar" type="submit"  class="bg-primary text-white"></q-btn>
-                </div>
+            
+            <div  class="text-h6 text-blue-5 " v-if="can_watering">Hoy se riega</div>
+            <div  class="text-h6 text-red-5" v-else>Hoy no se riega </div>
+            <q-input dense filled v-model="name" label="Nombre *"
+              lazy-rules :rules="[ val => val && val.length > 0 || 'Por favor escriba algo']">
+            </q-input>
+            <b-select-flags label="Modos" :options="modesData" :flags="modesFlags" @input="change"/>
+              <div class="col-12 text-right">
+                  <q-btn flat label="Cancelar" @click="$router.go(-1)" class="text-primary"></q-btn>
+                  <q-btn label="Guardar" type="submit"  class="bg-primary text-white"></q-btn>
+              </div>
           </q-form>
     
           <div class="bg-primary text-white shadow-3 row ">

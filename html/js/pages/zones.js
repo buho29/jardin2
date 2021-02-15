@@ -100,6 +100,7 @@ Vue.component('b-zone', {
       
       <q-card-section class="q-pa-none q-ma-none">
         <div class="bg-primary row text-white shadow-3">
+        
           <div  class="col text-h6 q-pa-sm">{{data.name}}</div>
           
           <q-fab v-model="fab" v-if="authenticate"
@@ -111,34 +112,38 @@ Vue.component('b-zone', {
     
             <q-fab-action padding="5px" icon="icon-pencil" label="Editar" 
               :to="{name:'zone',params:{id:data.id}}" external-label label-position="left" color="accent" 
-              />
+            />
             
           </q-fab>
+
         </div>
-    </q-card-section>
+      </q-card-section>
       
-      <q-card-section style="height: 140px;">
+      <q-card-section style="height: 180px;">
+        
+        <div  class="text-h6 q-pa-sm text-blue-5 " v-if="data.can_watering">Hoy se riega</div>
+        <div  class="text-h6 q-pa-sm text-red-5" v-else>Hoy no se riega </div>
         <!-- parado  -->
-        <div v-if="!data.runing" class="text-center q-pa-md">
-          <p class="text-h3 q-ma-none">
+        <div v-if="!data.runing" class="text-center">
+          <div class="text-h3 q-ma-none">
             {{formatTime(data.time)}}
-          </p> 
-          <p class="text-blue-5 text-h6 ">
-          {{getAllAlarmsSize(data.id)}} - {{formatTime(data.duration)}}
-          </p>
+          </div> 
+          <div class="text-h6 text-blue-5">
+            {{getAllAlarmsSize(data.id)}} - {{formatTime(data.duration)}}
+          </div>
         </div>
         <!-- rulando -->
-        <div v-else="data.runing" class="text-center q-pa-md">
-          <p class="text-h3 q-ma-none q-pa-none">
+        <div v-else="data.runing" class="text-center text-h6 q-ma-none q-pa-none">
+          <div class="text-h3">
             {{formatTime(data.elapsed)}}
-          </p> 
-          <p class="text-blue-5 text-h6 q-ma-none q-pa-none">
+          </div> 
+          <div class="text-blue-5">
             {{ (getAlarmIndex(data.alarmId) + 1) }} / {{getAllAlarmsSize(data.id)}} - 
             {{formatTime(getAlarmById(data.alarmId).duration - data.elapsed)}}
-          </p>
-          <p class="text-blue-5 text-h6 q-ma-none q-pa-none">
+          </div>
+          <div class="text-blue-5 text-h6">
             {{formatTime(data.duration)}}
-          </p>
+          </div>
         </div>
       </q-card-section>
     

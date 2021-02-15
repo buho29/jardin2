@@ -140,6 +140,7 @@ private:
 
 	void calcZone(int32_t zoneId);
 	void calcZones();
+	void calcModes();
 
 	void updateTasks();
 	void updateTasks(uint8_t zone);

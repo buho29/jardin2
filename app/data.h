@@ -199,6 +199,7 @@ struct ZoneItem : public Item
 	uint16_t duration;
 	uint32_t modes;
 	char name[20] = "";
+	bool can_watering = true;
 	bool runing = false; bool paused = false;
 
 	void set(int id, uint32_t time, uint16_t duration,
@@ -209,14 +210,15 @@ struct ZoneItem : public Item
 	};
 	void serializeItem(JsonObject & obj, bool extra) 
 	{
-		obj["id"] = this->id; obj["time"] = this->time,
-		obj["name"] = this->name; obj["duration"] = this->duration;
-		obj["modes"] = this->modes;
+		obj["id"] = this->id; obj["time"] = time,
+		obj["name"] = name; obj["duration"] = duration;
+		obj["modes"] = modes;
 		if (extra) {
-			obj["paused"] = this->paused;
-			obj["runing"] = this->runing;
-			obj["elapsed"] = this->elapsed;
-			obj["alarmId"] = this->alarmId;
+			obj["paused"] = paused;
+			obj["runing"] = runing;
+			obj["elapsed"] = elapsed;
+			obj["alarmId"] = alarmId;
+			obj["can_watering"] = can_watering;
 		}
 	};
 	void deserializeItem(JsonObject & obj) {
