@@ -23,16 +23,10 @@ void Model::begin()
 
 	clockTime.begin();
 
-	readEprom();
+	readFiles();
 
 	modes.begin();
-
-	clockTime.setTimeZone(config.tz);
-	//irregularity, beginDay, beginMonth, endDay, endMonth, beginHour, endHour
-	clockTime.setDst(
-		config.dst[0], config.dst[1], config.dst[2],  
-		config.dst[3], config.dst[4], config.dst[5], config.dst[6]
-	);
+	updateTimeZone();
 
 	//sensor 
 	if (bme.begin(0x76)) {
@@ -92,7 +86,8 @@ void Model::begin()
 	//Serial.println(printJsonOption());
 	//readModes();
 }
-//loop
+
+//		loop
 void Model::update()
 {
 	//static uint32_t lastFreeHeap = 0;
@@ -121,9 +116,8 @@ void Model::update()
 		Serial.printf("model.update %d ms\n", millis() - c);
 }
 
-//					data file
 
-//lengua
+//		lengua
 void Model::loadDefaultLang()
 {
 	lang.add(Str::welcome, "Bienvenido ");
@@ -162,12 +156,10 @@ void Model::loadDefaultLang()
 	writeJson("/data/lang.json", &lang);
 }
 
-//crypto
+//		crypto
 String Model::sha1(const String & msg)
 {
-
 	const char *payload = msg.c_str();
-
 	const int size = 20;
 
 	byte shaResult[size];
@@ -197,6 +189,7 @@ String Model::sha1(const String & msg)
 	return hashStr;
 }
 
+//		data file
 bool Model::writeFile(const char * path, const char * message)
 {
 	Serial.printf("path : %s\n",path);
@@ -280,16 +273,15 @@ void Model::writeJson(const char * path, Item * item)
 {
 	DynamicJsonDocument doc(20000);
 	JsonObject obj = doc.to<JsonObject>();
-	String str="";
+	String str;
 
 	item->serializeItem(obj,false);
-
 	serializeJsonPretty(obj, str);
-
 	writeFile(path, str.c_str());
 }
 
-void Model::readEprom()
+//		open all json
+void Model::readFiles()
 {
 	if (!readJson("/data/zones.json", &zones) || 
 		!readJson("/data/alarms.json", &alarms)) 
@@ -308,7 +300,7 @@ void Model::readEprom()
 	calcZones();
 }
 
-//					data
+//		data
 
 int Model::addZone(const char * name, uint32_t modes)
 {
@@ -342,7 +334,6 @@ bool Model::editZone(int id, const char * name, uint32_t modes)
 
 bool Model::removeZone(int id)
 {
-
 	if (zones.has(id)) {
 
 		Serial.println("removeZone");
@@ -361,17 +352,28 @@ bool Model::removeZone(int id)
 		if (result) dispachZone(true);
 		return result;
 	}
-
-
 	return false;
 }
 
-//alarm
+void Model::dispachZone(bool alarm)
+{
+	if (firevent) 
+	{
+		sendAll(printJson("zones", &zones));
+		if(alarm) sendAll(printJson("alarms", &alarms));
+
+		writeJson("/data/zones.json", &zones);
+		if (alarm) writeJson("/data/alarms.json", &alarms);
+
+		dispachEvent(EventType::zoneChanged);
+	}
+}
+
+//		alarm
 int Model::addAlarm(int zoneId, int tapId, uint32_t time, uint16_t duration)
 {
-
-	if (zones.has(zoneId)) {
-
+	if (zones.has(zoneId)) 
+	{
 		time = time % TASK_TICKS_24H;
 
 		AlarmItem* alarm = alarms.getEmpty();
@@ -388,7 +390,6 @@ int Model::addAlarm(int zoneId, int tapId, uint32_t time, uint16_t duration)
 
 		return alarm->id;
 	}
-
 	return -1;
 }
 
@@ -400,7 +401,6 @@ int Model::addAlarm(int zoneId, int tapId, uint16_t duration, uint8_t h, uint8_t
 
 bool Model::editAlarm(int id, int tapId, uint32_t time, uint16_t duration)
 {
-
 	if (!taps.has(tapId) || time < 0 || duration < 0 || duration > 21600) {
 		Serial.printf("!taps.has(tapId) |%d| time |%d| duration |%d|",
 			!taps.has(tapId) ,time , duration
@@ -460,24 +460,11 @@ bool Model::removeAlarm(int index)
 	return false;
 }
 
-void Model::dispachZone(bool alarm)
-{
-	if (firevent) {
-
-		sendAll(printJson("zones", &zones));
-		if(alarm) sendAll(printJson("alarms", &alarms));
-
-		writeJson("/data/zones.json", &zones);
-		if (alarm) writeJson("/data/alarms.json", &alarms);
-
-		dispachEvent(EventType::zoneChanged);
-	}
-}
-
-//				Serial data print 
+//		Serial data print 
 void Model::printZones()
 {
-	for (auto it : zones) {		
+	for (auto it : zones) 
+	{		
 		ZoneItem * zone = it.second;
 
 
@@ -499,7 +486,7 @@ void Model::printAlarms(uint8_t z)
 	}
 }
 
-//					webclient
+//		webclient
 void Model::sendAll(const String & str)
 {
 	ws.textAll(str.c_str());
@@ -639,7 +626,6 @@ void Model::printJsonForecast(const JsonObject & doc)
 
 String Model::printJsonForecast()
 {
-
 	DynamicJsonDocument doc(10000);
 	//StaticJsonDocument<2000> doc;
 	const JsonObject & root = doc.to<JsonObject>();
@@ -654,7 +640,6 @@ String Model::printJsonForecast()
 
 void Model::listDir(const char * dirname,const JsonArray & rootjson, uint8_t levels)
 {
-
 	Serial.printf("Listing %s \r\n", dirname);
 
 	File root = LITTLEFS.open(dirname);
@@ -715,7 +700,7 @@ void Model::sendClient(const char* tag,const char* msg, AsyncWebSocketClient * c
 	else ws.textAll(json);
 }
 
-void Model::executeJson(AsyncWebSocketClient * client, const String & json)
+void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 {
 	Serial.println(json);
 	DynamicJsonDocument doc(20000);
@@ -792,17 +777,52 @@ void Model::executeJson(AsyncWebSocketClient * client, const String & json)
 		}
 	}
 
-	if (cmd.containsKey("zone")) executeJsonZone(client, cmd["zone"]);
+	if (cmd.containsKey("zone")) 
+		receivedJsonZone(client, cmd["zone"]);
 
-	if (cmd.containsKey("alarm")) executeJsonAlarm(client,cmd["alarm"]);
+	if (cmd.containsKey("alarm")) 
+		receivedJsonAlarm(client,cmd["alarm"]);
 
 	if (cmd.containsKey("system") && cmd["system"].containsKey("restart")) {
 		ESP.restart();
 	}
 
+	if (cmd.containsKey("config")) {
+		JsonObject con = cmd["config"];
+		if (con.containsKey("tz") && con.containsKey("dst")) {
+			config.setTimeZone(con["dst"], con["tz"]);
+			updateTimeZone();
+			sendMessage(0, lang.get(Str::edit));
+			writeJson("/data/config.json", &config);
+		}
+
+		if (con.containsKey("wifi_ssid") && con.containsKey("wifi_pass")) {
+			config.setWifi(con["wifi_ssid"], con["wifi_pass"]);
+			sendMessage(0, lang.get(Str::edit));
+			writeJson("/data/config.json", &config);
+			//TODO actualizar wifi o resetEsp
+		}
+
+		if (con.containsKey("cityName") && con.containsKey("accuURL") 
+				&& con.containsKey("cityID")) 
+		{
+			config.setAccu(con["cityID"], con["cityName"], con["accuURL"]);
+			sendMessage(0, lang.get(Str::edit));
+			writeJson("/data/config.json", &config);
+			if (connectedWifi) loadForecast();
+		}
+
+		if (con.containsKey("www_user") && con.containsKey("www_pass")) {
+			config.setAdmin(con["www_user"], con["www_pass"]);
+			sendMessage(0, lang.get(Str::edit));
+			writeJson("/data/config.json", &config);
+			//TODO actualizar werver pass :???
+		}
+	}
+
 }
 
-void Model::executeJsonZone(AsyncWebSocketClient * client, const JsonObject & zone)
+void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & zone)
 {
 	if (zone.containsKey("id") && zone.containsKey("runing")
 		&& zone["runing"].as<bool>())
@@ -871,7 +891,7 @@ void Model::executeJsonZone(AsyncWebSocketClient * client, const JsonObject & zo
 	}
 }
 
-void Model::executeJsonAlarm(AsyncWebSocketClient * client, const JsonObject & alarm)
+void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & alarm)
 {
 	if (alarm.containsKey("delete"))
 	{
@@ -996,7 +1016,7 @@ bool Model::isAuthenticate(AsyncWebServerRequest * request)
 	return false;
 }
 
-//					app
+//		app
 
 // pausa el riego de la zona en curso
 bool Model::pauseWaterZone(bool pause)
@@ -1254,7 +1274,6 @@ bool Model::stopWaterZone()
 
 bool Model::waterZone(uint8_t zoneId)
 {
-
 	if (!isWatering() && zones.has(zoneId)) {
 
 		uint32_t current = Tasker::getTickNow();
@@ -1308,6 +1327,7 @@ bool Model::openTap(uint8_t tapId, bool val)
 	return true;
 }
 
+// default json
 void Model::loadDefaultZones()
 {
 	Serial.println("loadDefault");
@@ -1344,7 +1364,6 @@ void Model::loadDefaultZones()
 
 void Model::loadDefaultTaps()
 {
-	
 	taps.clear();
 	uint8_t pins[4] = { 27,14,21,17 };
 	char buffer[20] = "Grifo 1000";
@@ -1376,8 +1395,7 @@ bool Model::isPaused()
 	return pausedTime > 0;
 }
 
-//					wifi
-
+//		wifi
 void Model::load()
 {
 	loadLocalTime();
@@ -1386,7 +1404,6 @@ void Model::load()
 
 void Model::connectWifi()
 {
-
 	strcpy(msgStatus, lang.get(Str::conWifi).c_str());
 	strcat(msgStatus, config.wifi_ssid);
 
@@ -1453,7 +1470,6 @@ void Model::enableSoftAP()
 }
 
 //					time
-
 void Model::loadLocalTime()
 {
 	if (clockTime.updateNTP()) 
@@ -1498,8 +1514,7 @@ void Model::onRetry(Task * current)
 		loadForecast();
 }
 
-//					sensor
-
+//		sensor
 void Model::updateSensor()
 {
 	bme.takeForcedMeasurement();
@@ -1568,8 +1583,7 @@ void Model::saveLoger(Task * t)
 	dispachEvent(EventType::sensorLog);
 }
 
-//					Meteo
-
+//		Meteo
 void Model::loadForecast()
 {
 	if (client.connect(host, 80)) {
@@ -1738,8 +1752,8 @@ bool Model::isDay()
 	}
 	return true;
 }
-//					Modes
 
+//		Modes
 bool Model::canWatering(uint flag)
 {
 	modes.setFlags(flag);
@@ -1751,9 +1765,7 @@ bool Model::canWatering(uint flag)
 	return !modes.skip() && (evaluate < 50 || evaluate < 0);
 }
 
-
-//					web server
-
+//		web server
 void Model::startWebServer()
 {
 
@@ -1802,13 +1814,15 @@ void Model::startWebServer()
 
 	server.begin();
 }
+
 //fix cors errors
 void Model::sendResponse(AsyncWebServerRequest * request, AsyncWebServerResponse * response)
 {
 	response->addHeader("Access-Control-Allow-Origin", "*");
 	request->send(response);
 }
-//file
+
+//		file
 void Model::onFilePage(AsyncWebServerRequest * request)
 {
 
@@ -1947,12 +1961,24 @@ void Model::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client,
 					msg += (char)data[i];
 				}
 			}
-			executeJson(client,msg);
+			receivedJson(client,msg);
 		}
 	}
 }
 
-//					private
+//		private
+
+void Model::updateTimeZone()
+{
+
+	clockTime.setTimeZone(config.tz);
+	//irregularity, beginDay, beginMonth, endDay, endMonth, beginHour, endHour
+	clockTime.setDst(
+		config.dst[0], config.dst[1], config.dst[2],
+		config.dst[3], config.dst[4], config.dst[5], config.dst[6]
+	);
+}
+
 
 //bind task alarma y reasignamos los valores
 void Model::updateTasks(uint8_t zoneId)
@@ -1986,6 +2012,7 @@ void Model::updateTasks(uint8_t zoneId)
 		}
 	}
 }
+
 void Model::updateTasks()
 {
 	for (auto it : zones) {
@@ -1996,7 +2023,6 @@ void Model::updateTasks()
 void Model::reloadTasks(uint8_t zoneId)
 {
 	Serial.printf("reloadTasks %d\n", zoneId);
-
 	for (auto it : alarms) {
 		AlarmItem * alarm = it.second;
 
@@ -2013,7 +2039,6 @@ void Model::reloadTasks(uint8_t zoneId)
 
 void Model::calcZones()
 {
-
 	for (auto it : zones) {
 		ZoneItem * zone = it.second;
 		calcZone(zone->id);
@@ -2044,6 +2069,7 @@ void Model::calcZone(int32_t zoneId)
 		zone->time = start;
 	}
 }
+
 //TODO por terminar
 AlarmItem * Model::isAlarmUsingTime(uint32_t time, uint16_t duration, int ignoreId)
 {

@@ -18,6 +18,25 @@ const store = new Vuex.Store({
   },
   //solo se puede editar el state mediante mutation
   mutations: {
+    
+    //connexion inicial websocket
+    connect({ commit, dispatch }) {
+      if (this.connection !== undefined) {
+        this.connection.close();
+      }
+      this.host = document.location.host;
+      this.host = "192.168.8.100";
+
+      this.connection = new WebSocket('ws://' + this.host + '/ws');
+
+      //delegamos los eventos a las acciones
+      this.connection.onmessage = event => dispatch("onMessage", event);
+      this.connection.onclose = event => dispatch("onClose", event);
+      this.connection.onerror = event => dispatch("onError", event);
+      this.connection.onopen = event => dispatch("onOpen", event);
+
+    },
+
     //updates state
     updateSensors(state, array) { state.sensors = array; },
     updateSensor(state, obj) { state.sensor = obj;},
@@ -161,17 +180,8 @@ const store = new Vuex.Store({
     },
 
     // TODO config
-    configAdmin({ commit, dispatch }, obj) {
-      dispatch("send", { config: {admin: obj}});
-    },
-    configWeather({ commit, dispatch }, obj) {
-      dispatch("send", { config: {weather: obj}});
-    },
-    configWifi({ commit, dispatch }, obj) {
-      dispatch("send", { config: {wifi: obj}});
-    },
-    configTz({ commit, dispatch }, obj) {
-      dispatch("send", { config: {tz: obj}});
+    editConfig({ commit, dispatch }, obj) {
+      dispatch("send", { config: obj});
     },
 
     // recibe wasaps del servidor de eventos/errores
@@ -219,24 +229,6 @@ const store = new Vuex.Store({
           JSON.stringify(obj)
         );
       } else dispatch("connect");
-    },
-
-    //connexion inicial websocket
-    connect({ commit, dispatch }) {
-      if (this.connection !== undefined) {
-        this.connection.close();
-      }
-      this.host = document.location.host;
-      this.host = "192.168.8.100";
-
-      this.connection = new WebSocket('ws://' + this.host + '/ws');
-
-      //delegamos los eventos a las acciones
-      this.connection.onmessage = event => dispatch("onMessage", event);
-      this.connection.onclose = event => dispatch("onClose", event);
-      this.connection.onerror = event => dispatch("onError", event);
-      this.connection.onopen = event => dispatch("onOpen", event);
-
     },
 
     //file

@@ -108,7 +108,6 @@ var mixinOption = {
   },
 }
 
-
 //option components
 Vue.component("b-file", {
     data: function () {
@@ -209,9 +208,9 @@ Vue.component("b-config-admin", {
         };
     },
     methods: {
-        ...Vuex.mapActions(['configAdmin']),
+        ...Vuex.mapActions(['editConfig']),
         onSubmit() {
-            this.configAdmin({www_user : this.name, www_pass: this.pass });
+            this.editConfig({www_user : this.name, www_pass: this.pass });
         },
         onReset() {
             this.name = null;
@@ -256,9 +255,9 @@ Vue.component("b-config-weather", {
     },
     mixins: [mixinOption],
     methods: {
-        ...Vuex.mapActions(['configWeather']),
+        ...Vuex.mapActions(['editConfig']),
         onSubmit() {
-          this.configWeather({ 
+          this.editConfig({ 
             cityName: this.cityName,
             accuURL:this.accuURL, 
             cityID: this.cityID 
@@ -307,9 +306,9 @@ Vue.component("b-config-wifi", {
     },
     mixins: [mixinOption],
     methods: {
-        ...Vuex.mapActions(['configWifi']),
+        ...Vuex.mapActions(['editConfig']),
         onSubmit() {
-            this.configWeather({ wifi_ssid: this.name, wifi_pass: this.pass });
+            this.editConfig({ wifi_ssid: this.name, wifi_pass: this.pass });
         },
         onReset() {
             this.name = null;
@@ -367,9 +366,9 @@ Vue.component("b-config-tz", {
       }
     },
     methods: {
-      ...Vuex.mapActions(['configTz']),
+      ...Vuex.mapActions(['editConfig']),
       onSubmit() {
-          this.configTz({ tz: this.tz, dst: this.dst }); 
+          this.editConfig({ tz: this.tz, dst: this.dst }); 
       },
       onReset() {
           this.tz = null;
@@ -393,7 +392,7 @@ Vue.component("b-config-tz", {
 
         
         <q-input label="Daylight saving time"  filled style="flex-grow: 1;" hint="irregularity, startDay, startDay, endDay, endMonth, startHour, endHour" 
-          v-model="dst"mask=" # , # , ## , # , ## , # , #">
+          v-model="dst" mask=" # , # , ## , # , ## , # , #">
           <template v-slot:append>
             <q-icon name="icon-help" @click="$window.open('https://github.com/kosme/flex_DST','_blank')"/>
           </template>

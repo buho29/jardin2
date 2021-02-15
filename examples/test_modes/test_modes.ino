@@ -19,13 +19,15 @@ void setup() {
 
 	modes.begin();
 
-	Flags f = Flags(Modes::weatherF | Modes::sensorsF);
+	Flags f = Modes::weatherF | Modes::sensorsF;
 
 	modes.setFlags(Modes::weatherF | Modes::sensorsF);
 	
-	Flags fr = Flags(modes.getFlags());
+	Flags fr = modes.getFlags();
+
+
 		
-	Serial.printf("same %s %d %d\n", ((f == fr) ? "true" : "false"), f.get() , fr.get());
+	Serial.printf("same %s %d %d\n", ((f == fr) ? "true" : "false"), f , fr);
 
 	Serial.println((modes.skip()?" skip true":"skip false"));
 	Serial.printf("final evaluate %d\n",modes.evaluate());

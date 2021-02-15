@@ -6,7 +6,6 @@
 #ifndef _MODEL_h
 #define _MODEL_h
 
-#include "Arduino.h"
 #include <WiFi.h>
 #include <iterator>
 #include <ESPmDNS.h>
@@ -62,6 +61,7 @@ private:
 		errorSensor, errorWifi, conWifi, conWifi1, errorFore, updatedFore,
 		updatedTime, errorTime
 	};
+	void loadDefaultLang();
 
 	//timer & alarm
 	ClockTime& clockTime = ClockTime::instance();
@@ -95,7 +95,6 @@ private:
 
 	//default
 	void loadDefaultTaps();
-	void loadDefaultLang();
 	void loadDefaultZones();
 
 	//		data file
@@ -106,7 +105,9 @@ private:
 	void writeJson(const char* path, Iserializable* data);
 	void writeJson(const char* path, Item* item);
 
-	void readEprom();
+	void readFiles();
+
+	void updateTimeZone();
 
 	//internet
 	void load();
@@ -175,9 +176,9 @@ private:
 	void printJsonForecast(const JsonObject& obj);
 
 	//actions clients
-	void executeJson(AsyncWebSocketClient* client, const String& json);
-	void executeJsonZone(AsyncWebSocketClient* client, const JsonObject& zone);
-	void executeJsonAlarm(AsyncWebSocketClient* client, const JsonObject& alarm);
+	void receivedJson(AsyncWebSocketClient* client, const String& json);
+	void receivedJsonZone(AsyncWebSocketClient* client, const JsonObject& zone);
+	void receivedJsonAlarm(AsyncWebSocketClient* client, const JsonObject& alarm);
 
 	// wasap websocket
 	void sendMessage(uint8_t type, const String& msg, AsyncWebSocketClient* client = nullptr);

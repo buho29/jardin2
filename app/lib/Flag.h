@@ -42,7 +42,7 @@
 		lunes ,martes ,miercoles ,jueves ,viernes ,sabado ,domingo
 	};
 
-	Flags f = Flags(lunes | miercoles | viernes | domingo);
+	Flags f = lunes | miercoles | viernes | domingo;
 
 	Serial.printf("same f == alarm %s\n", (f == alarm) ? "true" : "false");
 
@@ -90,8 +90,10 @@ public:
 	};
 
 	// compara
-	bool operator==(Flags &right) { return (mFlags == right.get()); }
+	bool operator==(Flags &right) { return (mFlags == right); }
 	bool operator!=(Flags &right){ return !(*this == right); }
+	//cast flag to uint
+	operator uint()const { return mFlags;}
 };
 
 #endif
