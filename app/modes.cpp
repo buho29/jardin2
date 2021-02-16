@@ -64,9 +64,6 @@ int8_t SensorExpression::evaluate()
 		averageHum += item->humidity;
 	};
 
-
-	Serial.printf("tmp %.0f hum %.0f size %d \n", averageTmp,averageHum, sensors.size());
-
 	averageTmp /= sensors.size();
 	averageHum /= sensors.size();
 
@@ -75,7 +72,7 @@ int8_t SensorExpression::evaluate()
 
 	result /= 2;
 
-	Serial.printf("tmp %.0f hum %.0f \n", averageTmp,averageHum);
+	Serial.printf("tmp %.0f hum %.0f ", averageTmp,averageHum);
 	Serial.printf("sensor evaluate %.0f tmp %d hum %d \n", result,
 		map(averageTmp, 0, 30, 100, 0), map(averageHum, 30, 80, 0, 100));
 	//Serial.printf("tmp1 %d tmp2 %d \n",map(10,0,30,100,0), map(15,0,30,100,0));
@@ -112,11 +109,12 @@ int8_t ListExpression::evaluate()
 	for (uint8_t i = 0; i < count; i++)
 	{
 		Expression * exp = expressionList[i];
-		int8_t ev = exp->evaluate();
-		if (exp->getEnabled() && ev > -1) {
-
-			result += ev;
-			c++;
+		if (exp->getEnabled()) {
+			int8_t ev = exp->evaluate();
+			if (ev > -1) {
+				result += ev;
+				c++;
+			}
 		}
 	}
 	if (c == 0) return -1;
@@ -217,7 +215,7 @@ uint Modes::getFlags()
 			fr.add(modesArr[i]);
 		}
 	}
-	return fr.get();
+	return fr;
 }
 
 void Modes::setFlags(uint f)

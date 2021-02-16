@@ -3,6 +3,12 @@
 
 #include "RTClib.h"
 
+// TODO : not full tested using timelib.h
+#define __RTC__
+
+#ifndef __RTC__
+#include <TimeLib.h>
+#endif
 
 class DST
 {
@@ -133,8 +139,7 @@ private:
 
 class ClockTime {
 public:
-	ClockTime() {};
-
+	
 	static ClockTime & instance() {
 		static  ClockTime pInstance;
 		return pInstance;
@@ -142,6 +147,9 @@ public:
 
 	bool begin() {
 		// initializing the rtc
+
+#ifdef __RTC__
+		DateTime st = rtc.now();
 		if (!rtc.begin()) {
 			Serial.println("Couldn't find RTC!");
 			return false;
@@ -158,14 +166,21 @@ public:
 
 			return true;
 		}
+#else 
+		return true;
+#endif
 	};
 
-	uint32_t now() {
+	uint32_t timeNow() {
 		static int time = 0;
 		if (millis() - time > 50) {
 			time = millis();
 
-			DateTime st = rtc.now();
+#ifndef __RTC__
+			DateTime st = now();	
+#else 
+			DateTime st = rtc.now();		
+#endif
 			_utc = st.unixtime();
 
 			DateTime local = dst.calculateTime(st + (_offset * 3600)); // takes into account DST
@@ -182,11 +197,16 @@ public:
 		return _local;
 	};
 
-	void setTime(int8_t hours, int8_t min, int8_t sec, int8_t day,
+	void setTimeNow(int8_t hours, int8_t min, int8_t sec, int8_t day,
 		int8_t mon, int16_t year) {
 		DateTime dt = DateTime(year, mon, day, hours, min, sec);
 		if (dt.unixtime() != _utc) {
+
+#ifndef __RTC__
+			setTime(hours, min, sec, day, mon, year);
+#else 
 			rtc.adjust(dt);
+#endif
 		}
 	};
 
@@ -197,13 +217,17 @@ public:
 			dsth = 1;
 		}
 
-		setTime(hours - _offset - dsth, min, sec, day, mon, year);
-
+		setTimeNow(hours - _offset - dsth, min, sec, day, mon, year);
 	};
 
-	void setTime(int32_t utc) {
+	void setTimeNow(int32_t utc) {
 		if (utc != _utc) {
+
+#ifdef __RTC__
 			rtc.adjust(DateTime(utc));
+#else 
+			setTime(utc);
+#endif
 		}
 	}
 
@@ -223,7 +247,15 @@ public:
 	int8_t month(){ return _mon; }; int16_t year(){ return _year; };
 
 	int8_t dayWeek(){ return _dayWeek; };
-	float temp(){return rtc.getTemperature();};
+	float temp(){
+
+#ifdef __RTC__
+		return rtc.getTemperature();
+#else 
+		return 0;
+#endif
+		
+	};
 	uint32_t utc() { return _utc; };
 	uint32_t local(){ return _local; };
 	uint16_t tz() { return _offset * 3600; };
@@ -249,8 +281,8 @@ public:
 				timeinfo.tm_sec// seconds 
 			);
 
-			if (abs(dt.unixtime() - _utc) > 10) {
-				rtc.adjust(dt);
+			if (abs(dt.unixtime() - _utc) > 2) {
+				setTimeNow(dt.unixtime());
 				Serial.printf("updateNTP dife = %ds ", (dt.unixtime() - _utc));
 				Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
 			}
@@ -262,6 +294,9 @@ public:
 	bool isDst() { return dst.isDst();};
 
 private:
+
+	ClockTime() {};
+
 	int8_t _hour; int8_t _min;int8_t _sec;
 	int8_t _day; int8_t _mon; int16_t _year;
 	uint32_t _utc = 0;
@@ -270,7 +305,11 @@ private:
 	int8_t _dayWeek = 0;
 
 	DST dst;
+
+#ifdef __RTC__
 	RTC_DS3231 rtc; // clock object
+#endif
+	
 };
 
 #endif

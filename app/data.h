@@ -360,7 +360,7 @@ struct WeatherData {
 
 	bool isDay() {
 		ClockTime & clockTime = ClockTime::instance();
-		return clockTime.now() > sun[0] && clockTime.now() < sun[1];
+		return clockTime.timeNow() > sun[0] && clockTime.timeNow() < sun[1];
 	};
 
 	Forecast * getCurrent() {

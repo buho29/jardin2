@@ -41,6 +41,9 @@ class Model :public Observer
 
 private:
 
+
+	Model() :server(80), ws("/ws") { };
+
 	WiFiClient client;
 
 	//Meteo service
@@ -199,7 +202,6 @@ private:
 
 public:
 
-	Model() :server(80), ws("/ws") { };
 	//singleton
 	static Model * instance();
 

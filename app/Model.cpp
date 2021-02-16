@@ -1,6 +1,5 @@
 #include "Model.h"
 
-
 //singleton
 Model * Model::instance()
 {
@@ -22,11 +21,12 @@ void Model::begin()
 	}
 
 	clockTime.begin();
-	modes.begin();
 
 	readFiles();
 
 	updateTimeZone();
+
+	modes.begin();
 
 	//sensor 
 	if (bme.begin(0x76)) {
@@ -65,17 +65,17 @@ void Model::begin()
 	calcModes();
 
 	// iniciamos puertos de salida
-	for (auto it : taps) {
+	for (auto &it : taps) {
 		TapItem * tap = it.second;
 
 		pinMode(tap->pin, OUTPUT);
 		digitalWrite(tap->pin, OFF);
 
-		Serial.printf("pin %d\n", tap->pin);
+		//Serial.printf("pin %d\n", tap->pin);
 	}
 
 	//imprime las zonas y sus alarmas
-	printZones();
+	//printZones();
 
 	//iniciamos las tareas
 	updateTasks();
@@ -341,7 +341,7 @@ bool Model::removeZone(int id)
 	if (zones.has(id)) {
 
 		Serial.println("removeZone");
-		for (auto it : alarms) {
+		for (auto &it : alarms) {
 			AlarmItem * alarm = it.second;
 			if (id == alarm->zoneId) {
 				if (alarm->task) {
@@ -467,7 +467,7 @@ bool Model::removeAlarm(int index)
 //		Serial data print 
 void Model::printZones()
 {
-	for (auto it : zones) 
+	for (auto &it : zones) 
 	{		
 		ZoneItem * zone = it.second;
 
@@ -481,7 +481,7 @@ void Model::printZones()
 
 void Model::printAlarms(uint8_t z)
 {
-	for (auto it : alarms) {
+	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 		if (z == alarm->zoneId) {
 			Serial.printf("\t alarm Id: %d time: %s duration: %d tap: %s\n",
@@ -619,7 +619,7 @@ void Model::printJsonForecast(const JsonObject & doc)
 	doc["cloudCover"] = fore->cloudCover;
 	doc["icon1"] = fore->icon;
 	
-	clockTime.now();
+	clockTime.timeNow();
 	doc["time"] = clockTime.utc();
 	doc["minTemp"] = weather.minTemp();
 	doc["maxTemp"] = weather.maxTemp();
@@ -1036,7 +1036,7 @@ bool Model::pauseWaterZone(bool pause)
 	bool r = false;
 	bool iswate = isWatering();
 
-	uint32_t now = Tasker::getTickNow();
+	uint32_t now = tasker.timeNow();
 /*
 	Serial.printf("now %s ", Tasker::formatTime(now));
 	Serial.printf("elapsedPausedTask %s ", Tasker::formatTime(elapsedPausedTask));
@@ -1059,7 +1059,7 @@ bool Model::pauseWaterZone(bool pause)
 		}
 
 		//detenemos todas las alarmas de la zona
-		for (auto it : alarms) {
+		for (auto &it : alarms) {
 			AlarmItem * alarm = it.second;
 
 			if (alarm->zoneId == currentZone->id) {
@@ -1100,7 +1100,7 @@ bool Model::pauseWaterZone(bool pause)
 			uint32_t start = t->stop;
 
 			// iniciamos desde currentalarm index
-			for (auto it : alarms) {
+			for (auto &it : alarms) {
 				AlarmItem * alarm = it.second;
 				if (alarm->zoneId == currentZone->id)
 				{
@@ -1160,7 +1160,7 @@ void Model::onWater(Task * t)
 
 	//buscamos la correspondencia con la alarma
 	bool found = false;
-	for (auto it : alarms) {
+	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 		if (alarm->task == t) {
 			currentAlarm = alarm;
@@ -1236,7 +1236,7 @@ bool Model::stopWaterZone()
 	if (currentZone == nullptr) return false;
 
 	//cancelamos las siguientes tareas
-	for (auto it : alarms) {
+	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 
 		if (alarm->zoneId == currentZone->id) {
@@ -1280,11 +1280,11 @@ bool Model::waterZone(uint8_t zoneId)
 {
 	if (!isWatering() && zones.has(zoneId)) {
 
-		uint32_t current = Tasker::getTickNow();
+		uint32_t current = tasker.timeNow();
 
 		isManualZoneWater = true;
 
-		for (auto it : alarms) {
+		for (auto &it : alarms) {
 			AlarmItem * alarm = it.second;
 
 			if (alarm->zoneId == zoneId) {
@@ -1386,7 +1386,7 @@ void Model::loadDefaultTaps()
 // comprobamos si hay grifos abiertos
 bool Model::isWatering()
 {
-	for (auto it : taps) {
+	for (auto &it : taps) {
 		TapItem * tap = it.second;
 		if (tap->open) return true;
 	}
@@ -1481,7 +1481,7 @@ void Model::loadLocalTime()
 		loadedTime = true;
 
 		char buff[9];
-		Tasker::formatTime(buff, Tasker::getTickNow());
+		Tasker::formatTime(buff, tasker.timeNow());
 
 		strcpy(msgStatus, lang.get(Str::updatedTime).c_str());
 		strcat(msgStatus, buff);
@@ -1535,7 +1535,7 @@ void Model::updateSensor()
 	currentSensor.temperature = bme.readTemperature();
 	currentSensor.pressure = round(bme.readPressure()) / 100.0F;
 	currentSensor.humidity = bme.readHumidity();
-	currentSensor.time = clockTime.now();
+	currentSensor.time = clockTime.timeNow();
 
 	const String &json = printJson("sensor", &currentSensor);
 	ws.textAll(json);
@@ -1564,7 +1564,7 @@ void Model::saveLoger(Task * t)
 	char buff[9];
 	char buff1[9];
 	Tasker::formatTime(buff, t->start);
-	Tasker::formatTime(buff1, Tasker::getTickNow());
+	Tasker::formatTime(buff1, tasker.timeNow());
 
 	Serial.printf(" saveLogger %d %s %s temp %.1f pression %.1f hum %d%%\n",
 		t->id, buff1, buff,
@@ -1720,13 +1720,16 @@ bool Model::parseForescast()
 
 }
 
+//TODO : falla settimeout
 void Model::updateSunTask()
 {
 
 	uint32_t s;
 
-	if (isDay()) s = weather.sun[1] - clockTime.now();
-	else s = weather.sun[0] - clockTime.now();
+	uint32_t now = clockTime.timeNow();
+
+	if (isDay()) s = weather.sun[1] - clockTime.timeNow();
+	else s = weather.sun[0] - clockTime.timeNow();
 
 	char buff[9], buff1[9];
 	Tasker::formatTime(buff, weather.sun[0]);
@@ -1734,18 +1737,22 @@ void Model::updateSunTask()
 
 	Serial.printf("sol se levanta a %s se acuesta a %s\n", buff, buff1);
 	Serial.printf("proxima actualizacion sol a %s\n", isDay() ? buff1 : buff);
-	Serial.printf("faltan %d sun1 %d sun %d\n", s, weather.sun[1], weather.sun[0]);
+	Serial.printf("faltan %d sun1 %d sun %d now %s\n", s, weather.sun[1], weather.sun[0],Tasker::formatTime(now));
 
 	using namespace std::placeholders;
-	tasker.setTimeout(std::bind(&Model::onSunChanged, this, _1), s );
+	Task * t = tasker.setTimeout(std::bind(&Model::onSunChanged, this, _1), s );
+	Tasker::printTask(t);
+	Serial.println("teta");
 	
 }
 
 void Model::onSunChanged(Task * t)
 {
-	char buff[9];
-	Tasker::formatTime(buff, Tasker::getTickNow());
-	Serial.printf("onSunChanged, %s \n", buff);
+	Serial.printf("onSunChanged, %s %s %s\n",
+		Tasker::formatTime(tasker.timeNow()).c_str(),
+		Tasker::formatTime(clockTime.timeNow()).c_str(),
+		Tasker::formatTime(clockTime.timeNow() % TASK_TICKS_24H).c_str()
+	);
 	Tasker::printTask(t);
 
 	//loadForecast();
@@ -1991,7 +1998,7 @@ void Model::updateTasks(uint8_t zoneId)
 {
 	using namespace std::placeholders;
 
-	for (auto it : alarms)
+	for (auto &it : alarms)
 	{
 		AlarmItem * alarm = it.second;
 		Task * t = alarm->task;
@@ -2019,7 +2026,7 @@ void Model::updateTasks(uint8_t zoneId)
 
 void Model::updateTasks()
 {
-	for (auto it : zones) {
+	for (auto &it : zones) {
 		updateTasks(it.second->id);
 	}
 }
@@ -2027,7 +2034,7 @@ void Model::updateTasks()
 void Model::reloadTasks(uint8_t zoneId)
 {
 	Serial.printf("reloadTasks %d\n", zoneId);
-	for (auto it : alarms) {
+	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 
 		if (alarm->zoneId == zoneId) {
@@ -2043,7 +2050,7 @@ void Model::reloadTasks(uint8_t zoneId)
 
 void Model::calcZones()
 {
-	for (auto it : zones) {
+	for (auto &it : zones) {
 		ZoneItem * zone = it.second;
 		calcZone(zone->id);
 	}
@@ -2051,7 +2058,7 @@ void Model::calcZones()
 
 void Model::calcModes()
 {
-	for (auto it : zones) {
+	for (auto &it : zones) {
 		ZoneItem * zone = it.second;
 		zone->can_watering = canWatering(zone->modes);
 	}
@@ -2068,7 +2075,7 @@ void Model::calcZone(int32_t zoneId)
 	{
 		ZoneItem * zone = zones[zoneId];
 
-		for (auto it : alarms) {
+		for (auto &it : alarms) {
 			AlarmItem * alarm = it.second;
 			if (zoneId == alarm->zoneId) {
 				dura += alarm->duration;
@@ -2086,7 +2093,7 @@ void Model::calcZone(int32_t zoneId)
 //TODO por terminar
 AlarmItem * Model::isAlarmUsingTime(uint32_t time, uint16_t duration, int ignoreId)
 {
-	for (auto it : alarms) {
+	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 
 		uint32_t tStart = alarm->time; 
@@ -2109,7 +2116,7 @@ bool Model::isLastAlarm(AlarmItem * a)
 {
 	int8_t zoneId = a->zoneId;
 
-	for (auto it : alarms) {
+	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 		if (zoneId == alarm->zoneId &&
 			a->time < alarm->time) {
@@ -2133,7 +2140,7 @@ uint16_t Model::getElapsedAlarm()
 		uint16_t dt = Tasker::getDuration(t->start, t->stop);
 
 		// tiempo trancurrido de la tarea actual
-		elapsed = Tasker::getDuration(t->start, Tasker::getTickNow());
+		elapsed = Tasker::getDuration(t->start, tasker.timeNow());
 
 		// cuando la duracion de la alarma es mas grande 
 		// que la duracion de la tarea (porq fue pausado)

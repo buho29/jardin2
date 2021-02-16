@@ -272,6 +272,8 @@ const zone = {
             <q-item clickable v-ripple v-for="alarm in alarmsZone" :key="alarm.id" 
               :active="selectedAlarmId === alarm.id" @click="selectedAlarmId=alarm.id" 
               active-class="my-menu-link">
+
+              
     
               <q-item-section avatar>
                 <q-icon color="primary" name="icon-alarm" />

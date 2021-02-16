@@ -1,5 +1,9 @@
 ﻿#include"lib/Clock.h"
 #include <WiFi.h>
+
+
+ClockTime clockTime = ClockTime::instance();
+
 void setup()
 {
 	Serial.begin(115200);
@@ -14,23 +18,21 @@ void setup()
 	clockTime.setDst(0, 5, 3, 5, 10, 2, 3);
 
 	// hours, min, sec, day, mon, year
-	//clockTime.setTime(0, 59, 57, 29, 3, 2020);
-	//clockTime.setTime(0, 59, 57, 25, 10,2020);
+	//clockTime.setTimeNow(0, 59, 57, 29, 3, 2020);
+	//clockTime.setTimeNow(0, 59, 57, 25, 10,2020);
 
-	//clockTime.setTime(0, 59, 57, 29, 3, 2020);
-	//clockTime.setTime(0, 59, 57, 25, 10,2020);
+	//clockTime.setTimeNow(0, 59, 57, 29, 3, 2020);
+	//clockTime.setTimeNow(0, 59, 57, 25, 10,2020);
 
 	//clockTime.setTimeLocal(23, 59, 58, 28, 2, 2019);
 	//clockTime.setTimeLocal(23, 59, 58, 28, 2, 2020);
 
-	//if (connectWifi()) {
-	//	Serial.printf(" actualizado : %d \n", clockTime.updateNTP());
-	//}
+	if (connectWifi()) Serial.printf(" actualizado : %d \n", clockTime.updateNTP());
 
 }
 
 void loop() {
-	clockTime.now();
+	clockTime.timeNow();
 
 	DateTime utc(clockTime.utc());
 

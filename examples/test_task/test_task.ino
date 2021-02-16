@@ -50,7 +50,7 @@ void setup()
 	// hours, min, sec, day, mon, year
 	clockTime.setTimeLocal(23, 58, 50, 4, 8, 2018);
 
-	Tasker::formatTime(buff, Tasker::getTickNow());
+	Tasker::formatTime(buff, Tasker::timeNow());
 	Serial.printf("now %s\n\n", buff);
 
 	////howTimeLeft
@@ -145,7 +145,7 @@ void onSetInterval(Task *current)
 
 void loop() {
 
-	Tasker::formatTime(msg, Tasker::getTickNow());
+	Tasker::formatTime(msg, Tasker::timeNow());
 	tasker.check();
 	Serial.print(msg);
 

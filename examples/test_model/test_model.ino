@@ -12,7 +12,7 @@ void testRemoveZone() {
 	int e = 0;
 
 	// creamos zona con 3 alarmas 
-	createZone(clockTime.now() - 3600);
+	createZone(clockTime.timeNow() - 3600);
 
 	if (!model->removeZone(0)) e++;
 
@@ -33,7 +33,7 @@ void testPause() {
 
 	// creamos zona con 3 alarmas 
 	// listo para dispararse
-	createZone(clockTime.now() + 1);
+	createZone(clockTime.timeNow() + 1);
 
 	delay(1000);
 	tasker.check();
@@ -101,9 +101,9 @@ void testEditAlarm() {
 	int e = 0;
 
 	// creamos zona con 3 alarmas 
-	createZone(clockTime.now() - 3600);
+	createZone(clockTime.timeNow() - 3600);
 
-	int32_t time = Tasker::getTickNow() +1;
+	int32_t time = Tasker::timeNow() +1;
 
 	int i=0;
 	AlarmItem * alarms[3];
@@ -164,7 +164,7 @@ void printZone() {
 
 	Serial.printf("alarm id %d time %s %s <--> %s paused %s elapsed%d\n",
 		model->currentAlarm->id,
-		Tasker::formatTime(clockTime.now()),
+		Tasker::formatTime(clockTime.timeNow()),
 		Tasker::formatTime(model->currentAlarm->time),
 		Tasker::formatTime(model->currentAlarm->time + model->currentAlarm->duration),
 		model->currentZone->paused ? "true" : "false",

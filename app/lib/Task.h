@@ -9,19 +9,11 @@
 #include "WProgram.h"
 #endif
 
-
-#define __CLOCK__
-
-#ifdef __CLOCK__
-#include "Clock.h"
-#else 
-#include <TimeLib.h>
-#endif
-
 #ifndef __AVR__
 #include <functional>
 #endif // __AVR__
 
+#include "Clock.h"
 class Task;
 
 #ifndef __AVR__
@@ -63,8 +55,7 @@ class Tasker
 {
 
  public:
-	 Tasker() {};
-
+	 
 	 static Tasker & instance() {
 		 static  Tasker pInstance;
 		 return pInstance;
@@ -72,11 +63,7 @@ class Tasker
 
 	Task *  setTimeout(p_callbackTask callback, uint16_t s) {
 
-#ifdef __CLOCK__
 		uint32_t dateStart = getTickTime(clockTime.hour(), clockTime.min(), clockTime.sec() + s);
-#else 
-		uint32_t dateStart = getTickTime(hour(), minute(), second() + s);
-#endif
 
 		Task * t = add(dateStart, dateStart + s, callback);
 		t->mode = 1;// lo marcamos para q se ejecute solo una vez
@@ -86,11 +73,7 @@ class Tasker
 	Task *  setInterval(p_callbackTask callback, uint16_t s) 
 	{
 
-#ifdef __CLOCK__
 		uint32_t dateStart = getTickTime(clockTime.hour(), clockTime.min(), clockTime.sec() + s);
-#else 
-		uint32_t dateStart = getTickTime(hour(), minute(), second() + s);
-#endif
 
 		Task * t = add(dateStart, dateStart + s, callback);
 		t->mode = 2;// lo marcamos para q se repita
@@ -167,7 +150,8 @@ class Tasker
 			Task *t = &tasks[i];
 			if (t->id == id) return t;
 		}
-		return nullptr;//TODO 
+		Serial.printf("task not found - get(%d) \n",id);
+		return nullptr;
 	};
 	
 	// a meter en un loop
@@ -175,7 +159,7 @@ class Tasker
 
 		if (millis() - time > TASK_INTERVAL) {
 			time = millis();
-			uint32_t current = Tasker::getTickNow();
+			uint32_t current = Tasker::timeNow();
 			for (uint8_t i = 0; i < taskCount; i++)
 			{
 				Task * t = &tasks[i];
@@ -219,15 +203,9 @@ class Tasker
 		return (h * 3600 + m * 60 + s) % TASK_TICKS_24H;
 	};
 	//devuelve los tick de el tiempo actual (24h)
-	static uint32_t getTickNow() 
+	uint32_t timeNow() 
 	{
-
-#ifdef __CLOCK__
-		return ClockTime::instance().now() % TASK_TICKS_24H;
-#else 
-		return now() % TASK_TICKS_24H;
-#endif
-
+		return clockTime.timeNow() % TASK_TICKS_24H;
 	};
 
 	//convierte en string los ticks
@@ -258,8 +236,8 @@ class Tasker
 		else return end - init;
 	};
 
-	static uint32_t howTimeLeft(uint32_t date) {
-		uint32_t _now = Tasker::getTickNow();
+	uint32_t howTimeLeft(uint32_t date) {
+		uint32_t _now = timeNow();
 		return getDuration(_now, date);
 	};
 	static void printTask(Task *t) 
@@ -270,6 +248,8 @@ class Tasker
 	};
 	
 private:
+
+	Tasker() {};
 	Task tasks[TASK_MAX_SIZE];
 	uint8_t taskCount;
 	uint32_t time;
@@ -291,14 +271,9 @@ private:
 			// lo detenemos
 			t->runing = false;
 
-#ifdef __CLOCK__
 			uint32_t dateStart = getTickTime(clockTime.hour(), clockTime.min(), clockTime.sec() + ms);
-#else 
-			uint32_t dateStart = getTickTime(hour(), minute(), second() + ms);
-#endif
 
 			t->start = dateStart;
-			//todo
 			t->stop = t->start + ms;
 		}
 	};
