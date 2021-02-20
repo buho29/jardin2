@@ -55,6 +55,7 @@ public:
 	};
 };
 
+/*    datos    */
 // dato que se guardara en la eeprom
 struct Config :public Item 
 {
@@ -165,9 +166,8 @@ struct Config :public Item
 		obj["accuURL"] = this->accuURL;
 		obj["tz"] = this->tz;
 		obj["dst"] = getDst().c_str();
-
-		Serial.printf("url %s \n", obj["accuURL"]);
 	};
+
 	void deserializeItem(JsonObject &obj) {
 
 		if (!obj.containsKey("wifi_ssid") || !obj.containsKey("wifi_pass") || 
@@ -392,9 +392,4 @@ struct WeatherData {
 		return forecast[index].win[0];
 	};
 };
-
-enum Icon {
-	sun, sun_cloud, cloud, mist, rain, thunder, snow, moon
-};
-
 #endif

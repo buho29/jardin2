@@ -8,16 +8,15 @@
 
 #include <WiFi.h>
 #include <iterator>
-#include <ESPmDNS.h>
 #include <FS.h>
 #include "mbedtls/md.h"//encript 
+//#include <DNSServer.h>
 
 #include <LITTLEFS.h>
 #include <Adafruit_BME280.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-#include "lib/Task.h"
 #include "data.h"
 #include "observer.h"
 
@@ -41,8 +40,28 @@ class Model :public Observer
 
 private:
 
+	class CaptiveRequestHandler : public AsyncWebHandler {
+	public:
+		CaptiveRequestHandler() {}
+		virtual ~CaptiveRequestHandler() {}
 
-	Model() :server(80), ws("/ws") { };
+		bool canHandle(AsyncWebServerRequest* request) 
+		{
+			return request->host() != WiFi.softAPIP().toString();
+		}
+
+		void handleRequest(AsyncWebServerRequest* request) {
+			AsyncResponseStream* response = request->beginResponseStream("text/html");
+			response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
+			response->print("<p>This is out captive portal front page.</p>");
+			response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
+			response->printf("<h3>Try opening <a href='http://%s' target='_blank'>Jardin</a> instead</h3>", WiFi.softAPIP().toString().c_str());
+			response->print("</body></html>");
+			request->send(response);
+		}
+	};
+
+	Model() :server(80), ws("/ws"), apIP(8, 8, 4, 4) { };
 
 	WiFiClient client;
 
@@ -82,6 +101,9 @@ private:
 	AsyncWebServer server;
 	AsyncWebSocket ws;
 
+	IPAddress apIP;
+	//DNSServer dnsServer;
+
 	// el tiempo para volver a intentarlo
 	const uint8_t retryTime = 60;
 
@@ -95,6 +117,8 @@ private:
 	//pause variable
 	int16_t elapsedPausedTask = 0;
 	int32_t pausedTime = 0;
+
+	String jsonFiles;
 
 	//default
 	void loadDefaultTaps();

@@ -4,17 +4,52 @@
  Author:	pp
 */
 
+#include <DNSServer.h>
 
 #include <FS.h>
-#include <SPIFFS.h>
+#include <LITTLEFS.h>
 #include <ESPmDNS.h>
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
+
 // SKETCH BEGIN
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
+
+DNSServer dnsServer;
+const byte DNS_PORT = 53;
+IPAddress apIP(8, 8, 4, 4); // The default android DNS
+IPAddress apIP1(8, 8, 4, 3); // The default android DNS
+IPAddress apIP3(255, 255, 255, 0); // The default android DNS
+
+const char* ssid = "Movistar_1664";
+const char* password = "EGYDRNA6H4Q";
+const char * hostName = "jardin";
+const char* http_username = "admin";
+const char* http_password = "admin";
+
+class CaptiveRequestHandler : public AsyncWebHandler {
+public:
+	CaptiveRequestHandler() {}
+	virtual ~CaptiveRequestHandler() {}
+
+	bool canHandle(AsyncWebServerRequest* request) 
+	{
+		return request->host() != WiFi.softAPIP().toString();
+	}
+
+	void handleRequest(AsyncWebServerRequest* request) {
+		AsyncResponseStream* response = request->beginResponseStream("text/html");
+		response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
+		response->print("<p>This is out captive portal front page.</p>");
+		response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
+		response->printf("<h3>Try opening <a href='http://%s' target='_blank'>Jardin</a> instead</h3>", WiFi.softAPIP().toString().c_str());
+		response->print("</body></html>");
+		request->send(response);
+	}
+};
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
 	if (type == WS_EVT_CONNECT) {
@@ -54,13 +89,6 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 	}
 }
 
-
-const char* ssid = "Movistar_1664";
-const char* password = "EGYDRNA6H4Q";
-const char * hostName = "jardin";
-const char* http_username = "admin";
-const char* http_password = "admin";
-
 void setup() {
 	Serial.begin(115200);
 	delay(1000);
@@ -71,9 +99,24 @@ void initSever() {
 
 	Serial.setDebugOutput(true);
 
-	Serial.printf("setup");
+	server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
+
+	Serial.printf("setup\n");
+
 	WiFi.mode(WIFI_AP_STA);
+	
+	WiFi.softAPConfig(apIP, apIP1, apIP3);
+
 	WiFi.softAP(hostName);
+
+	Serial.print("softIP Address: ");
+	Serial.println(WiFi.softAPIP());
+	Serial.println(apIP);
+
+	// if DNSServer is started with "*" for domain name, it will reply with
+	// provided IP to all DNS request
+	dnsServer.start(53, "*", apIP);
+
 	WiFi.begin(ssid, password);
 	if (WiFi.waitForConnectResult() != WL_CONNECTED) {
 		Serial.printf("STA: Failed!\n");
@@ -87,8 +130,8 @@ void initSever() {
 	Serial.println(WiFi.localIP());
 
 	MDNS.addService("http", "tcp", 80);
-
-	SPIFFS.begin();
+	
+	LITTLEFS.begin();
 
 	ws.onEvent(onWsEvent);
 	server.addHandler(&ws);
@@ -97,17 +140,22 @@ void initSever() {
 		request->send(200, "text/plain", String(ESP.getFreeHeap()));
 	});
 
-	server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+	server.serveStatic("/", LITTLEFS, "/").setDefaultFile("index.html");
 
 	server.onNotFound([](AsyncWebServerRequest *request) {
 		Serial.printf("NOT_FOUND: ");
 		request->send(404);
 	});
+
+	//more handlers...
 	server.begin();
+
 }
 
 void loop() {
 	static uint32_t c = 0;
+
+	dnsServer.processNextRequest();
 
 	if (millis() - c > 5000) {
 		ws.printfAll("hay %d imbeciles conectados",ws.count());

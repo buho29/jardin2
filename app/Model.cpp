@@ -39,13 +39,7 @@ void Model::begin()
 		updateSensor();
 
 		// cada 1/2 hora guardamos los valores de los sensores
-		for (int i = 0; i < 48; i++) {
-			int tmin = i * 30;
-			uint8_t min = tmin % 60;
-			uint8_t hours = tmin / 60;
-
-			tasker.setInterval(std::bind(&Model::saveLoger, this, _1), hours, min);
-		}
+		tasker.setInterval(std::bind(&Model::saveLoger, this, _1), (30*60));
 
 		//Task * t = tasker.setInterval(
 		//	std::bind(&Model::saveLoger24h, this, _1), 0,0);
@@ -80,13 +74,13 @@ void Model::begin()
 	//iniciamos las tareas
 	updateTasks();
 
-	status = Status::started;
-	dispachEvent(EventType::status);
+
+	jsonFiles = printJsonOption();
 
 	startWebServer();
-	
-	//Serial.println(printJsonOption());
-	//readModes();
+
+	status = Status::started;
+	dispachEvent(EventType::status);
 }
 
 //		loop
@@ -97,10 +91,16 @@ void Model::update()
 	uint32_t c = millis();
 	tasker.check();
 
-	ws.cleanupClients();
+	static uint32_t delayfree = 0;
+	if (millis() - delayfree > 1000) {
+		delayfree = millis();
+		ws.cleanupClients();
+	}
+
+	//dnsServer.processNextRequest();
 
 	static uint32_t delaySensors = 0;
-	if (millis() - delaySensors > 20000) {//SENSOR_INTERVAL
+	if (millis() - delaySensors > 60000) {//SENSOR_INTERVAL 1min
 		delaySensors = millis();
 		updateSensor();
 	}
@@ -117,7 +117,6 @@ void Model::update()
 	if (millis() - c > 50)
 		Serial.printf("model.update %d ms\n", millis() - c);
 }
-
 
 //		lengua
 void Model::loadDefaultLang()
@@ -532,6 +531,9 @@ String Model::printJson(const char * name, Iserializable * data)
 
 String Model::printJsonFirstRun()
 {
+
+	uint32_t c = millis();
+
 	DynamicJsonDocument doc(20000);
 	JsonObject root = doc.to<JsonObject>();
 	String str;
@@ -557,6 +559,8 @@ String Model::printJsonFirstRun()
 	}
 
 	serializeJson(root, str);
+
+	Serial.printf("printJsonFirstRun total %d ms\n", millis() - c);
 	return str;
 }
 
@@ -564,7 +568,10 @@ String Model::printJsonOption()
 {
 	DynamicJsonDocument doc(10000);
 	//StaticJsonDocument<2000> doc;
+	uint32_t c = millis();
+
 	const JsonObject & root = doc.to<JsonObject>();
+	
 
 	const JsonObject & system = root.createNestedObject("system");
 	printJsonSystem(system);
@@ -573,34 +580,45 @@ String Model::printJsonOption()
 
 	const JsonObject & www = files.createNestedObject();
 	www["path"] = "/www/";
-
 	const JsonArray & wwwFolders = www.createNestedArray("folders");
 	listDir("/www/", wwwFolders, 3);
 
 	const JsonObject & data = files.createNestedObject();
 	data["path"] = "/data/";
-
 	const JsonArray & dataFolders = data.createNestedArray("folders");
 	listDir("/data/", dataFolders, 3);
 
 	JsonObject o = root.createNestedObject("config");
 	config.serializeItem(o, true);
 
+	Serial.printf("config %d ms\n", millis() - c);
+
 	String json;
 	serializeJson(root, json);
+
+	Serial.printf("printJsonOption total %d ms\n", millis() - c);
+
 	return json;
 }
-
+//888.494 bytes
 void Model::printJsonSystem(const JsonObject & doc)
 {
+
+	uint32_t c = millis();
+
 	doc["ip"] = WiFi.localIP().toString();
 	doc["softApIp"] = WiFi.softAPIP().toString();
 	doc["gateway"] = WiFi.gatewayIP().toString();
 	doc["signalStrengh"] = -WiFi.RSSI();
 	doc["freeHeap"] = ESP.getFreeHeap();
 	doc["heapSize"] = ESP.getHeapSize();
+
+	Serial.printf("printJsonSystem %d ms\n", millis() - c);
 	doc["LITTLEFSTotalSpace"] = LITTLEFS.totalBytes();
+	Serial.printf("printJsonSystem %d ms\n", millis() - c);
 	doc["LITTLEFSUsedSpace"] = LITTLEFS.usedBytes();
+
+	Serial.printf("printJsonSystem %d ms\n", millis() - c);
 }
 
 void Model::printJsonForecast(const JsonObject & doc)
@@ -644,7 +662,9 @@ String Model::printJsonForecast()
 
 void Model::listDir(const char * dirname,const JsonArray & rootjson, uint8_t levels)
 {
-	Serial.printf("Listing %s \r\n", dirname);
+	Serial.printf("Listing %s \n", dirname);
+
+	uint32_t c = millis();
 
 	File root = LITTLEFS.open(dirname);
 	if (!root) {
@@ -677,6 +697,9 @@ void Model::listDir(const char * dirname,const JsonArray & rootjson, uint8_t lev
 		}
 		file = root.openNextFile();
 	}
+
+	Serial.printf("%dms\n", millis() - c);
+
 }
 
 void Model::sendMessage(uint8_t type, const String & msg, AsyncWebSocketClient * client)
@@ -757,7 +780,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		bool log = cmd["auth"];
 		if (log) {
 			saveClientAuth(client);
-			client->text(printJsonOption());
+			client->text(jsonFiles);
 		}
 		else removeClientAuth(client);
 	}
@@ -1440,8 +1463,6 @@ void Model::connectWifi()
 			strcpy(msgStatus, lang.get(Str::conWifi1).c_str());
 			strcat(msgStatus, config.wifi_ssid);
 
-			IPAddress ip = WiFi.localIP();
-
 			Serial.printf("%s", msgStatus);
 			Serial.print("IP address: ");
 			Serial.println(WiFi.localIP());
@@ -1466,9 +1487,31 @@ void Model::connectWifi()
 void Model::enableSoftAP()
 {
 	WiFi.mode(WIFI_AP_STA);
-	WiFi.softAP("Jardin_esp32", "123456789");
-	Serial.print("softAPIP :");
-	Serial.println(WiFi.softAPIP());
+
+	WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+	
+	WiFi.softAP("Jardin_esp32");
+
+	//IPAddress apIP(8, 8, 4, 4); // The default android DNS
+
+	
+
+	Serial.printf("softAPIP : %s , apIP %s\n",WiFi.softAPIP().toString().c_str(),
+		apIP.toString().c_str());
+
+	// modify TTL associated  with the domain name (in seconds)
+	// default is 60 seconds
+	//dnsServer.setTTL(300);
+	// set which return code will be used for all other domains (e.g. sending
+	// ServerFailure instead of NonExistentDomain will reduce number of queries
+	// sent by clients)
+	// default is AsyncDNSReplyCode::NonExistentDomain
+	//dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure);
+
+
+	//// if DNSServer is started with "*" for domain name, it will reply with
+	//// provided IP to all DNS request
+	//dnsServer.start(53, "*", apIP);
 
 	startWebServer();
 }
@@ -1740,9 +1783,9 @@ void Model::updateSunTask()
 	Serial.printf("faltan %d sun1 %d sun %d now %s\n", s, weather.sun[1], weather.sun[0],Tasker::formatTime(now));
 
 	using namespace std::placeholders;
-	Task * t = tasker.setTimeout(std::bind(&Model::onSunChanged, this, _1), s );
-	Tasker::printTask(t);
-	Serial.println("teta");
+	//Task * t = tasker.setTimeout(std::bind(&Model::onSunChanged, this, _1), s );
+	//Tasker::printTask(t);
+	//Serial.println("teta");
 	
 }
 
@@ -1782,6 +1825,8 @@ bool Model::canWatering(uint flag)
 //		web server
 void Model::startWebServer()
 {
+
+	//server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
 
 	using namespace std::placeholders;
 	//websocket
@@ -1877,7 +1922,8 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 
 			if (LITTLEFS.exists(filename) && LITTLEFS.remove(filename)) {
 				sendResponse(request, request->beginResponse(200));
-				sendAllAuth(printJsonOption());
+				jsonFiles = printJsonOption();
+				sendAllAuth(jsonFiles);
 			}
 			else
 				sendResponse(request, request->beginResponse(404));
@@ -1893,7 +1939,8 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 			LITTLEFS.exists(path +"/"+ request->getParam("file", true, true)->value())) {
 			
 			sendResponse(request, request->beginResponse(200));//ok
-			sendAllAuth(printJsonOption());
+			jsonFiles = printJsonOption();
+			sendAllAuth(jsonFiles);
 		}	
 		else 
 			sendResponse(request, request->beginResponse(404));// error

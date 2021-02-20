@@ -6,7 +6,7 @@
 			All non-arduino files created by visual micro and all visual studio project or solution files can be freely deleted and are not required to compile a sketch (do not delete your own code!).
 			Note: debugger breakpoints are stored in '.sln' or '.asln' files, knowledge of last uploaded breakpoints is stored in the upload.vmps.xml file. Both files are required to continue a previous debug session without needing to compile and upload again
 	
-	Hardware: ESP32 Dev Module, Platform=esp32, Package=esp32
+	Hardware: ESP32 Dev Teta, Platform=esp32, Package=esp32
 */
 
 #if defined(_VMICRO_INTELLISENSE)
@@ -51,7 +51,7 @@
 #define _Lockit
 #define __CLR_OR_THIS_CALL
 #define C4005
-#define _NEW
+//#define _NEW
 
 typedef bool _Bool;
 typedef int _read;
@@ -79,7 +79,8 @@ extern "C" void __cxa_pure_virtual() {;}
 
 typedef long __INTPTR_TYPE__ ;
 typedef long __UINTPTR_TYPE__ ;
-typedef long __SIZE_TYPE__ 	;
+//typedef long __SIZE_TYPE__ 	;
+#define __SIZE_TYPE__ unsigned int
 typedef long __PTRDIFF_TYPE__;
 
 typedef long pthread_t;

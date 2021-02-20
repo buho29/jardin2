@@ -5,7 +5,6 @@
 
 // TODO : not full tested using timelib.h
 #define __RTC__
-
 #ifndef __RTC__
 #include <TimeLib.h>
 #endif

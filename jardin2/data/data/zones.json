@@ -1,1 +1,30 @@
-[{"id":0,"time":25200,"name":"Cesped D","duration":180,"modes":0},{"id":1,"time":75600,"name":"Cesped N","duration":60,"modes":0},{"id":2,"time":25380,"name":"Huerta","duration":60,"modes":0}]
+[
+  {
+    "id": 0,
+    "time": 25200,
+    "name": "Cesped D",
+    "duration": 180,
+    "modes": 2
+  },
+  {
+    "id": 1,
+    "time": 75600,
+    "name": "Cesped N",
+    "duration": 60,
+    "modes": 16
+  },
+  {
+    "id": 2,
+    "time": 50400,
+    "name": "Huerta",
+    "duration": 40,
+    "modes": 774
+  },
+  {
+    "id": 3,
+    "time": 70560,
+    "name": "maria",
+    "duration": 20,
+    "modes": 1023
+  }
+]

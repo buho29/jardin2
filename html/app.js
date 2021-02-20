@@ -1,13 +1,21 @@
 
+//console.log(Foo());
 //router
 const pagesRoute = [
-  { name: 'home', path: '/', component: home ,meta: {title: 'Jardin',hideNew:true}},
-  { name: 'chart', path: '/chart', component: charts ,meta: {title: 'Historial',hideNew:true}},
-  { name: 'zones', path: '/zones/:id',component: zones ,meta: {title: 'Zonas',hideNew:false}},
-  { name: 'zone', path: '/zone/:id', component: zone ,meta: {title: 'Zona',hideNew:false}},
-  { name: 'taps', path: '/taps', component: taps ,meta: {title: 'Grifos',hideNew:true}},
-  { name: 'login', path: '/login', component: login ,meta: {title: 'Login',hideNew:true}},
-  { name: 'opciones', path: '/opciones', component: options ,meta: {title: 'Opciones',hideNew:true}},
+  { name: 'home', path: '/', component: () => import('./p-home.js') ,
+    meta: {title: 'Jardin',hideNew:true}},
+  { name: 'chart', path: '/chart', component:() => import('./p-chart.js')  ,
+    meta: {title: 'Historial',hideNew:true}},
+  { name: 'zones', path: '/zones/:id',component: () => import('./p-zones.js') ,
+    meta: {title: 'Zonas',hideNew:false}},
+  { name: 'zone', path: '/zone/:id', component: () => import('./p-zone.js') ,
+    meta: {title: 'Zona',hideNew:false}},
+  { name: 'taps', path: '/taps', component: () => import('./p-taps.js') ,
+    meta: {title: 'Grifos',hideNew:true}},
+  { name: 'login', path: '/login', component: () => import('./p-login.js') ,
+    meta: {title: 'Login',hideNew:true}},
+  { name: 'opciones', path: '/opciones', component:  () => import('./p-option.js'),
+    meta: {title: 'Opciones',hideNew:true}},
   { name: 'not found', path: "*", component: { template: '<p>Page Not Found</p>' }}
 ]
 
