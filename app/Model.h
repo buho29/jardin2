@@ -10,9 +10,17 @@
 #include <iterator>
 #include <FS.h>
 #include "mbedtls/md.h"//encript 
-//#include <DNSServer.h>
+#include <DNSServer.h>
+#include "esp_wifi.h"
 
-#include <LITTLEFS.h>
+#define USELITTLEFS
+#ifdef USELITTLEFS
+	#include <LITTLEFS.h>
+#else
+	#include <SPIFFS.h>
+#endif // USELITTLEFS
+
+
 #include <Adafruit_BME280.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -40,30 +48,15 @@ class Model :public Observer
 
 private:
 
-	class CaptiveRequestHandler : public AsyncWebHandler {
-	public:
-		CaptiveRequestHandler() {}
-		virtual ~CaptiveRequestHandler() {}
-
-		bool canHandle(AsyncWebServerRequest* request) 
-		{
-			return request->host() != WiFi.softAPIP().toString();
-		}
-
-		void handleRequest(AsyncWebServerRequest* request) {
-			AsyncResponseStream* response = request->beginResponseStream("text/html");
-			response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
-			response->print("<p>This is out captive portal front page.</p>");
-			response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
-			response->printf("<h3>Try opening <a href='http://%s' target='_blank'>Jardin</a> instead</h3>", WiFi.softAPIP().toString().c_str());
-			response->print("</body></html>");
-			request->send(response);
-		}
-	};
-
 	Model() :server(80), ws("/ws"), apIP(8, 8, 4, 4) { };
 
 	WiFiClient client;
+#ifdef USELITTLEFS
+	fs::FS& fs = LITTLEFS;
+#else
+	fs::FS& fs = SPIFFS;
+#endif // USELITTLEFS
+	
 
 	//Meteo service
 	// http://dataservice.accuweather.com/forecasts/v1/daily/1day/1451030?apikey=q329xaaTojo0koLv6A3uFgh3dQLgp6em%20&language=es-ES&details=true&metric=true
@@ -102,7 +95,7 @@ private:
 	AsyncWebSocket ws;
 
 	IPAddress apIP;
-	//DNSServer dnsServer;
+	DNSServer dnsServer;
 
 	// el tiempo para volver a intentarlo
 	const uint8_t retryTime = 60;

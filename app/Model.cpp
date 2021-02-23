@@ -15,10 +15,20 @@ void Model::begin()
 	status = Status::starting;
 	dispachEvent(EventType::status);
 
+
+	esp_wifi_set_ps(WIFI_PS_NONE);
+
+#ifdef USELITTLEFS
 	if (!LITTLEFS.begin(true)) {
 		Serial.println("LITTLEFS Mount Failed");
 		return;
 	}
+#else
+	if (!SPIFFS.begin(true)) {
+		Serial.println("SPIFFS Mount Failed");
+		return;
+	}
+#endif // USELITTLEFS
 
 	clockTime.begin();
 
@@ -97,7 +107,7 @@ void Model::update()
 		ws.cleanupClients();
 	}
 
-	//dnsServer.processNextRequest();
+	dnsServer.processNextRequest();
 
 	static uint32_t delaySensors = 0;
 	if (millis() - delaySensors > 60000) {//SENSOR_INTERVAL 1min
@@ -195,7 +205,7 @@ bool Model::writeFile(const char * path, const char * message)
 {
 	Serial.printf("path : %s\n",path);
 	int tim = millis();
-	File file = LITTLEFS.open(path, FILE_WRITE);
+	File file = fs.open(path, FILE_WRITE);
 	if (!file) {
 		Serial.println("- failed to open file for writing");
 		return false;
@@ -220,7 +230,7 @@ String Model::readFile(const char * path)
 {
 	Serial.printf("reading file: %s\r\n", path);
 
-	File file = LITTLEFS.open(path);
+	File file = fs.open(path);
 
 	String str = "";
 
@@ -598,6 +608,8 @@ String Model::printJsonOption()
 
 	Serial.printf("printJsonOption total %d ms\n", millis() - c);
 
+	Serial.println(json);
+
 	return json;
 }
 //888.494 bytes
@@ -614,9 +626,10 @@ void Model::printJsonSystem(const JsonObject & doc)
 	doc["heapSize"] = ESP.getHeapSize();
 
 	Serial.printf("printJsonSystem %d ms\n", millis() - c);
+	/*
 	doc["LITTLEFSTotalSpace"] = LITTLEFS.totalBytes();
 	Serial.printf("printJsonSystem %d ms\n", millis() - c);
-	doc["LITTLEFSUsedSpace"] = LITTLEFS.usedBytes();
+	doc["LITTLEFSUsedSpace"] = LITTLEFS.usedBytes();*/
 
 	Serial.printf("printJsonSystem %d ms\n", millis() - c);
 }
@@ -666,7 +679,7 @@ void Model::listDir(const char * dirname,const JsonArray & rootjson, uint8_t lev
 
 	uint32_t c = millis();
 
-	File root = LITTLEFS.open(dirname);
+	File root = fs.open(dirname);
 	if (!root) {
 		Serial.println("- failed to open directory");
 		return;
@@ -1486,17 +1499,20 @@ void Model::connectWifi()
 
 void Model::enableSoftAP()
 {
-	WiFi.mode(WIFI_AP_STA);
+	WiFi.persistent(false);
+	WiFi.setSleep(false);
 
+	WiFi.mode(WIFI_AP_STA);
+	delay(2000);//?
 	WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 	
-	WiFi.softAP("Jardin_esp32");
+	WiFi.softAP("Jardin");
 
 	//IPAddress apIP(8, 8, 4, 4); // The default android DNS
 
-	
+	Serial.printf("sleep %d",WiFi.getSleep());
 
-	Serial.printf("softAPIP : %s , apIP %s\n",WiFi.softAPIP().toString().c_str(),
+	Serial.printf(" softAPIP : %s , apIP %s\n",WiFi.softAPIP().toString().c_str(),
 		apIP.toString().c_str());
 
 	// modify TTL associated  with the domain name (in seconds)
@@ -1511,7 +1527,7 @@ void Model::enableSoftAP()
 
 	//// if DNSServer is started with "*" for domain name, it will reply with
 	//// provided IP to all DNS request
-	//dnsServer.start(53, "*", apIP);
+	dnsServer.start(53, "*", apIP);
 
 	startWebServer();
 }
@@ -1820,14 +1836,12 @@ bool Model::canWatering(uint flag)
 		skip, evaluate, (!skip && (evaluate < 50 || evaluate < 0)));
 	// 
 	return !skip && (evaluate < 50 || evaluate < 0);
+
 }
 
 //		web server
 void Model::startWebServer()
 {
-
-	//server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
-
 	using namespace std::placeholders;
 	//websocket
 	ws.onEvent(std::bind(&Model::onWsEvent, this,_1,_2,_3,_4,_5,_6));
@@ -1836,40 +1850,11 @@ void Model::startWebServer()
 	server.on("/file", HTTP_ANY, std::bind(&Model::onFilePage, this, _1),
 		std::bind(&Model::onUploadFile, this, _1, _2, _3, _4, _5, _6));
 	//root
-	server.serveStatic("/", LITTLEFS, "/www/").setDefaultFile("index.html");
+	server.serveStatic("/", fs, "/www/").setDefaultFile("index.html");
 
 	server.onNotFound([](AsyncWebServerRequest *request) {
-
-		int headers = request->headers();
-		int i;
-		for (i = 0;i < headers;i++) {
-			AsyncWebHeader* h = request->getHeader(i);
-			Serial.printf("_HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
-		}
-
-		int params = request->params();
-		for (i = 0;i < params;i++) {
-			AsyncWebParameter* p = request->getParam(i);
-			if (p->isFile()) {
-				Serial.printf("_FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-			}
-			else if (p->isPost()) {
-				Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-			}
-			else {
-				Serial.printf("_GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-			}
-		}
-
-
-		Serial.println(request->methodToString());
-
-		Serial.printf(" http://%s%s\n", request->host().c_str(), request->url().c_str());
-		Serial.printf("NOT_FOUND: ");
-		//request->send(404);
 		request->redirect("/");
 	});
-
 
 	server.begin();
 }
@@ -1877,6 +1862,10 @@ void Model::startWebServer()
 //fix cors errors
 void Model::sendResponse(AsyncWebServerRequest * request, AsyncWebServerResponse * response)
 {
+	//limit max requests
+	response->addHeader("Connection", "Keep-Alive");
+	response->addHeader("Keep-Alive", "max=2");
+	//fix cors errors
 	response->addHeader("Access-Control-Allow-Origin", "*");
 	request->send(response);
 }
@@ -1909,8 +1898,8 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 			String filename = request->arg("download");
 			Serial.println("Download Filename: " + filename);
 
-			if (LITTLEFS.exists(filename))
-				sendResponse(request, request->beginResponse(LITTLEFS, filename, String(), true));
+			if (fs.exists(filename))
+				sendResponse(request, request->beginResponse(fs, filename, String(), true));
 			else
 				sendResponse(request, request->beginResponse(404));
 
@@ -1920,7 +1909,7 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 			String filename = request->arg("delete");
 			Serial.println("delete Filename: " + filename);
 
-			if (LITTLEFS.exists(filename) && LITTLEFS.remove(filename)) {
+			if (fs.exists(filename) && fs.remove(filename)) {
 				sendResponse(request, request->beginResponse(200));
 				jsonFiles = printJsonOption();
 				sendAllAuth(jsonFiles);
@@ -1936,7 +1925,7 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 		if (request->hasArg("path")) path = request->arg("path");
 
 		if (request->hasParam("file", true, true) &&
-			LITTLEFS.exists(path +"/"+ request->getParam("file", true, true)->value())) {
+			fs.exists(path +"/"+ request->getParam("file", true, true)->value())) {
 			
 			sendResponse(request, request->beginResponse(200));//ok
 			jsonFiles = printJsonOption();
@@ -1963,7 +1952,7 @@ void Model::onUploadFile(AsyncWebServerRequest * request, const String & filenam
 
 			String p = path + "/" + filename;
 			Serial.printf("UploadStart: %s\n", p.c_str());
-			request->_tempFile = LITTLEFS.open(p, "w");
+			request->_tempFile = fs.open(p, "w");
 			authenticate = true;
 		}
 		else authenticate = false;
@@ -1978,7 +1967,7 @@ void Model::onUploadFile(AsyncWebServerRequest * request, const String & filenam
 		if (final) {
 			request->_tempFile.close();
 			authenticate = false;
-			Serial.printf(" existe %d", LITTLEFS.exists(filename));
+			Serial.printf(" existe %d", fs.exists(filename));
 		}
 	}
 

@@ -1,5 +1,4 @@
 
-//console.log(Foo());
 //router
 const pagesRoute = [
   { name: 'home', path: '/', component: () => import('./p-home.js') ,

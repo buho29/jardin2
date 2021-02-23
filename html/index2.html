@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link href="./quasar.css" rel="stylesheet" type="text/css">
+    <link href="./icons.css" rel="stylesheet" type="text/css">
+    <link href="./app.css" rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            background-color: #fff8e1;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .my-menu-link {
+            color: white;
+            background: #ffbb33;
+        }
+
+        .my-card {
+            width: 300px;
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -ms-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        .list-complete-item {
+            transition: all .5s;
+        }
+
+        .list-complete-enter,
+        .list-complete-leave-to {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .list-complete-leave-active {
+            position: absolute;
+            /**/
+        }
+
+        /* router animation */
+        .child-view {
+            position: absolute;
+            width: 100%;
+            left: 0;
+            transition: all 0.75s cubic-bezier(0.55, 0, 0.1, 1);
+            /**/
+        }
+
+        .slide-left-enter,
+        .slide-right-leave-active {
+            opacity: 0;
+            -webkit-transform: translate(30%, 0);
+            transform: translate(30%, 0);
+        }
+
+        .slide-left-leave-active,
+        .slide-right-enter {
+            opacity: 0;
+            -webkit-transform: translate(-30%, 0);
+            transform: translate(-30%, 0);
+        }
+
+        /* global Animation*/
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.5s ease;
+        }
+
+        .fade-enter,
+        .fade-leave-active {
+            opacity: 0;
+        }
+
+        /* Las animaciones de entrada y salida pueden usar */
+        /* funciones de espera y duración diferentes.      */
+        .slide-fade-enter-active {
+            transition: all 0.3s ease;
+        }
+
+        .slide-fade-leave-active {
+            transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
+        }
+
+        .slide-fade-enter,
+        .slide-fade-leave-to
+
+        /* .slide-fade-leave-active below version 2.1.8 */
+            {
+            transform: translateX(10px);
+            opacity: 0;
+        }
+
+        .q-transition--slide-right-enter-active,
+        .q-transition--slide-left-enter-active,
+        .q-transition--slide-up-enter-active,
+        .q-transition--slide-down-enter-active,
+        .q-transition--slide-right-leave-active,
+        .q-transition--slide-left-leave-active,
+        .q-transition--slide-up-leave-active,
+        .q-transition--slide-down-leave-active {
+            transition: transform 1s cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <q-layout view="hHh LpR ffr">
+            <q-header elevated>
+                <q-toolbar>
+                    <q-btn flat dense round @click="left = !left" aria-label="Menu" icon="icon-menu"></q-btn>
+                    <q-toolbar-title>{{$route.meta.title}}</q-toolbar-title>
+                    <q-btn v-if="authenticate" flat round @click="logout()">logout</q-btn>
+                    <q-btn v-if="!$route.meta.hideNew" dense flat round icon="icon-plus"
+                        :to="{name:'zone',params:{id:-1}}"></q-btn>
+                </q-toolbar>
+            </q-header>
+
+            <q-drawer v-model="left" show-if-above bordered class="bg-grey-2" overlay behavior="mobile">
+                <q-list>
+                    <q-item-label header>Navegacion</q-item-label>
+                    <q-item v-if="item.show" v-for="(item,index) in menu" :key="index" :to="item.path" exact>
+                        <q-item-section avatar>
+                            <q-icon :name="item.icon"></q-icon>
+                        </q-item-section>
+                        <q-item-section>
+                            <q-item-label>{{ item.title }}</q-item-label>
+                        </q-item-section>
+                    </q-item>
+                </q-list>
+            </q-drawer>
+            <q-page-container>
+                <transition :name="transitionName">
+                    <router-view class="child-view"></router-view>
+                </transition>
+            </q-page-container>
+
+            <q-dialog v-model="showMessage" persistent>
+                <q-card style="min-width: 300px;">
+                    <q-card-section class="bg-primary text-h6 text-center text-white shadow-3 q-pa-md">
+                        Alert
+                    </q-card-section>
+                    <q-card-section class="row items-center">
+                        {{message}}
+                    </q-card-section>
+                    <q-card-actions align="right">
+                        <q-btn flat label="ok" color="primary" v-close-popup></q-btn>
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
+            <q-dialog v-model="showLoading" persistent>
+                <q-card>
+                    <q-card-section class="row items-center">
+                        <q-spinner color="primary" size="3em" :thickness="10"></q-spinner>
+                    </q-card-section>
+                </q-card>
+            </q-dialog>
+        </q-layout>
+    </div>
+
+    <script>
+        window.quasarConfig = {
+            // this will NOT work on IE 11
+            brand: {
+                primary: '#008577',
+                secondary: '#00574b',
+                accent: '#ffbb33',
+
+                dark: '#3c2d21',
+
+                positive: '#21ba45',
+                negative: '#C10015',
+                info: '#31CCEC',
+                warning: '#f20000'
+            }
+        }
+    </script>
+
+    <script src="./vue.js"></script>
+    <script>/*Vue.config.devtools = */Vue.config.productionTip = false;</script>
+    <script src="./vuex.js"></script>
+    <script src="./vue-router.js"></script>
+    <script src="./quasar.js"></script>
+    <script src="./axios.js"></script>
+
+    <script src="./Chart.js"></script>
+    <script src="./vue-chartjs.js"></script>
+
+    <script>
+        Vue.use(Vuex);
+        const store = new Vuex.Store({
+            // datos que bindearemos en vue/paginas/componentes
+            state: {
+                sensor: {},
+                weather: {},
+                sensors: [],
+                zones: [],
+                taps: [],
+                alarms: [],
+                rootFiles: [],
+                config: {},
+                system: {},
+                isConnected: false,
+                loaded: false,
+                authenticate: false,
+                routingServer: null,
+            },
+            //solo se puede editar el state mediante mutation
+            mutations: {
+
+                //updates state
+                updateSensors(state, array) { state.sensors = array; },
+                updateSensor(state, obj) { state.sensor = obj; },
+
+                updateConfig(state, obj) {
+                    state.config = obj;
+                },
+
+                updateWeather(state, obj) {
+                    obj.diff = Date.now() - obj.time * 1000;
+                    state.weather = obj;
+
+                },
+
+                updateTaps(state, array) { state.taps = array; },
+
+                updateZones(state, array) { state.zones = array; },
+                //para actualizar solo una zona
+                //cuando se rega una zona y tal
+                updateZone(state, obj) {
+                    let zone = this.getters.getZoneById(obj.id);
+                    for (const key in obj) {
+                        zone[key] = obj[key];
+                    }
+                },
+
+                updateAlarms(state, array) {
+                    state.alarms = array;
+                    //alarmas es el ultimo array q se carga al inicio
+                    // usado para esconder cosas cuando aun no hay datos
+                    state.loaded = true;
+                },
+
+
+
+                //login
+                authenticated(state, token) {
+                    state.authenticate = true;
+                    state.token = token;
+                    localStorage.setItem('token', token);
+                },
+
+                //system 
+                updateSystem(state, obj) {
+                    state.system = obj;
+                },
+                //rootFiles
+                updateRootFiles(state, obj) {
+                    state.rootFiles = obj
+                },
+
+                //logout
+                logout(state) {
+                    state.authenticate = false;
+                    state.token = undefined;
+                    localStorage.removeItem('token');
+                },
+
+                setRoutingServer(state, bool) {
+                    state.routingServer = bool;
+                    localStorage.setItem('routingServer', bool);
+                },
+
+                //loadLocal
+                loadLocal(state) {
+                    let token = localStorage.getItem('token');
+                    if (token) {
+                        state.authenticate = true;
+                        state.token = token;
+                    }
+                    let b = localStorage.getItem('routingServer');
+                    if (b === null) {
+                        //default
+                        localStorage.setItem('routingServer', true);
+                        state.routingServer = true;
+                    } else {
+                        state.routingServer = b === "true";
+                    }
+
+                },
+
+                //se cierra la ventana
+                unload(state) {
+                    if (this.connection !== undefined) {
+                        this.connection.close();
+                    }
+                },
+
+                //conected
+                connected(state, bool) {
+                    state.isConnected = bool;
+                },
+            },
+            //llamadas a servidor async y cia
+            //si se tiene q modificar el state se usara commit("mutation")
+            actions: {
+
+                //TODO connexion inicial websocket
+                connect({ commit, dispatch }) {
+                    if (this.connection !== undefined) {
+                        this.connection.close();
+                    }
+                    this.host = document.location.host;
+                    //this.host = "192.168.8.105";
+
+                    this.connection = new WebSocket('ws://' + this.host + '/ws');
+
+                    //delegamos los eventos a las acciones
+                    this.connection.onmessage = event => dispatch("onMessage", event);
+                    this.connection.onclose = event => dispatch("onClose", event);
+                    this.connection.onerror = event => dispatch("onError", event);
+                    this.connection.onopen = event => dispatch("onOpen", event);
+
+                },
+                //reiniciar esp32
+                restart({ commit, dispatch }, obj) {
+                    dispatch("send", {
+                        system: { restart: true }
+                    });
+                },
+                // riego
+                //abrir grifo
+                openTap({ commit, dispatch }, obj) {
+                    dispatch("send", {
+                        tap: { id: obj.id, open: obj.value }
+                    });
+                },
+                //regar zona
+                waterZone({ commit, dispatch }, obj) {
+                    dispatch("send", {
+                        zone: { id: obj.id, runing: obj.value }
+                    });
+                },
+                pauseZone({ commit, dispatch }, obj) {
+                    dispatch("send", {
+                        zone: { id: obj.id, pause: obj.value }
+                    });
+                },
+
+                //alarmas datos
+                deleteAlarm({ commit, dispatch }, id) {
+                    dispatch("send", { alarm: { delete: id } });
+                },
+                editAlarm({ commit, dispatch }, alarm) {
+                    dispatch("send", { alarm: { edit: alarm } });
+                },
+                addAlarm({ commit, dispatch }, alarm) {
+                    dispatch("send", { alarm: { new: alarm } });
+                },
+
+                //zone datos
+                deleteZone({ commit, dispatch }, id) {
+                    dispatch("send", { zone: { delete: id } });
+                },
+                editZone({ commit, dispatch }, zone) {
+                    dispatch("send", { zone: { edit: zone } });
+                },
+                addZone({ commit, dispatch }, zone) {
+                    dispatch("send", { zone: { new: zone } });
+                },
+
+
+                editConfig({ commit, dispatch }, obj) {
+                    dispatch("send", { config: obj });
+                },
+
+                // recibe wasaps del servidor de eventos/errores
+                // hay q suscribirse a vuex para tratar los mensajes
+                message({ commit, state }, message) {
+                    //is event
+                },
+
+                // para manejar el routing desde servidor y vuex
+                // podemos abrir paginas al usuario
+                // hay q suscribirse a vuex
+                goTo({ commit, state }, path) {
+                    //is event
+                },
+
+                // intento de autentificacion
+                setAuthentication({ dispatch, commit, state }, user) {
+                    if (this.connection !== undefined) {
+                        this.connection.send(
+                            JSON.stringify({ login: user })
+                        );
+                    } else dispatch("connect");
+                },
+
+                //para recibir eventos autenticadas
+                registerAuth({ dispatch }, bool) {
+                    dispatch("send", { auth: bool });
+                },
+
+                //envia objectos/comandos en json al servidor
+                //todo pasa por aqui salvo setAuthentication
+                send({ commit, dispatch, state }, obj) {
+                    // si no estamos identificado
+                    if (!state.authenticate) {
+                        //dispatch("goTo","/login");
+                        dispatch("message", { type: 2, content: "Requiere login!" });
+                        return;
+                    }
+
+                    //metemos el token
+                    obj.token = state.token;
+
+                    if (this.connection !== undefined) {
+                        this.connection.send(
+                            JSON.stringify(obj)
+                        );
+                    } else dispatch("connect");
+                },
+
+                //file
+
+                downloadItem({ commit, dispatch, state }, name) {
+
+                    axios.get(`http://${this.host}/file`, {
+                        headers: { 'Authorization': `Basic ${state.token}` },
+                        params: { download: name },
+                        responseType: 'blob'
+                    }).then(response => {
+                        const blob = new Blob([response.data], { type: 'application/*' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = name.split("/").pop();
+                        link.click()
+                        URL.revokeObjectURL(link.href)
+                    }).catch((error) => {
+                        console.error(error);
+                        dispatch("message", {
+                            type: 1, content: `Error descarga
+                ${name} 
+                ${error.message}`
+                        });
+                    });
+                },
+                deleteItem({ commit, dispatch, state }, name) {
+
+                    axios.get(`http://${this.host}/file`, {
+                        headers: { 'Authorization': `Basic ${state.token}` },
+                        params: { delete: name },
+                    }).then(response => {
+                        dispatch("message", { type: 0, content: "Borrado con exito" });
+                    }).catch((error) => {
+                        console.error(error);
+                        dispatch("message", {
+                            type: 1, content: `Error borrando 
+                ${name} ${error.message}`
+                        });
+                    });
+                },
+                uploadItem({ commit, dispatch, state }, { file, params }) {
+                    let formData = new FormData();
+                    formData.append('file', file);
+                    let filename = file;
+                    axios.post(`http://${this.host}/file`,
+                        formData, {
+                        headers: {
+                            'Authorization': `Basic ${state.token}`,
+                            'Content-Type': 'multipart/form-data',
+                        },
+                        params: params,
+                    }
+                    ).then((res) => {
+                        dispatch("message", { type: 0, content: "Subido con exito" });
+                    })
+                        .catch((error) => {
+                            console.log(error);
+                            dispatch("message", {
+                                type: 1, content: `Error subiendo 
+                ${file ? file.name : 'no difinido'} 
+                ${error.message}`
+                            });
+                        });
+                },
+
+                //privado
+
+                // eventos websocket
+                //json recibido del servidor
+                onMessage({ commit, dispatch }, event) {
+                    //convierte json en un objecto js
+                    let json = JSON.parse(event.data);
+
+                    // TODO mutations
+                    let mutations = {
+                        sensor: "updateSensor", sensors: "updateSensors", taps: "updateTaps",
+                        zones: "updateZones", zone: "updateZone", alarms: "updateAlarms", token: "authenticated",
+                        system: 'updateSystem', root: 'updateRootFiles', weather: 'updateWeather',
+                        config: 'updateConfig',
+                    }
+                    //actualizamos los datos por commit("mutation")
+                    for (const key in mutations) {
+                        if (json[key] !== undefined)
+                            commit(mutations[key], json[key]);
+                    }
+
+                    let actions = {
+                        message: "message", goTo: "goTo"
+                    }
+                    //ejecutamos acciones dispatch("action")
+                    for (const key in actions) {
+                        if (json[key] !== undefined)
+                            dispatch(actions[key], json[key]);
+                    }
+
+                },
+                onClose({ commit, dispatch }, event) {
+                    // ponemos state.isConnected a false
+                    commit("connected", false);
+                    //reconectamos al pasar 3sg
+                    setTimeout(() => {
+                        dispatch("connect");
+                    }, 3000)
+                },
+                onError({ commit, state }, event) {
+                    //is event
+                },
+                onOpen({ commit, state }, event) {
+                    commit("connected", true);
+                },
+
+            },
+            // usado como acceso directo a datos de state
+            getters: {
+                getZoneById: (state) => (id) => {
+                    return state.zones.find(zone => zone.id === id);
+                },
+                getZoneByName: (state) => (name) => {
+                    return state.zones.find(zone => zone.name === name);
+                },
+                getTapById: (state) => (id) => {
+                    return state.taps.find(tap => tap.id === id);
+                },
+                getAllAlarmsSize: (state) => (id) => {
+                    return state.alarms.filter(alarm => alarm.zoneId === id).length;
+                },
+                getAllAlarms: (state) => (id) => {
+                    return state.alarms.filter(alarm => alarm.zoneId === id);
+                },
+                getAlarmById: (state) => (id) => {
+                    return state.alarms.find(alarm => alarm.id === id);
+                },
+                getAlarmIndex: (state, getters) => (id) => {
+                    let alarm = getters.getAlarmById(id);
+                    let alarms = getters.getAllAlarms(alarm.zoneId);
+                    return alarms.findIndex(alarm => alarm.id === id);
+                },
+                getLastAlarm: (state, getters) => (id) => {
+                    let alarms = getters.getAllAlarms(id);
+                    if (alarms.length < 1) return undefined;
+                    let lastAlarm = alarms.reduce((a, c) => {
+                        return (a.time > c.time ? a : c);
+                    });
+                    return lastAlarm;
+                },
+            },
+            strict: true,
+        });
+
+        // para formatear Time
+        var mixinFormat = {
+            methods: {
+                formatTime: function (utc) {
+
+
+                    let s = Math.floor(utc % 60);
+                    let m = Math.floor((utc / 60) % 60);
+                    let h = Math.floor((utc / (60 * 60)) % 24);
+                    let d = Math.floor(utc / (60 * 60 * 24));
+
+                    s = s < 10 ? "0" + s : "" + s;
+                    m = m < 10 ? "0" + m : "" + m;
+                    h = h < 10 ? "0" + h : "" + h;
+
+                    return h + ":" + m + ":" + s;
+                },
+                getTimeFromFormat: function (str) {
+                    let i = str.split(":");
+                    let r = parseInt(i[0]) * 3600;
+                    r += parseInt(i[1]) * 60;
+                    if (i.length > 2) r += parseInt(i[2]);
+                    return r;
+                }
+            }
+        }
+
+        var mixinNotify = {
+            methods: {
+                notify: function (msg) {
+                    //quasar notify
+                    this.$q.notify({
+                        color: 'primary',
+                        textColor: 'white',
+                        icon: 'icon-cloud-check',
+                        message: msg
+                    });
+                },
+                notifyW: function (msg) {
+                    this.$q.notify({
+                        color: 'accent',
+                        textColor: 'dark',
+                        icon: 'icon-alert-circle',
+                        message: msg
+                    })
+                },
+            }
+        }
+
+        //restingir acceso a pagina
+        var mixinRequiresAuth = {
+            // importamos un mixin para notificaciones
+            mixins: [mixinNotify],
+            computed: {
+                // importamos de vuex si esta logeado
+                ...Vuex.mapState(['authenticate'])
+            },
+            //interceptando el acceso a la pagina
+            beforeRouteEnter(to, from, next) {
+                next(vm => {
+                    // si no esta logueado
+                    if (!vm.authenticate) {
+                        // ir a la pagina de login
+                        vm.$router.push("/login")
+                        vm.notifyW("Requiere login!");
+                    }
+                })
+            }
+        }
+
+
+        Vue.component("b-container", {
+            props: ["title"],
+            template: /*html*/ `
+
+  <div class="q-ma-lg q-mx-auto text-center items-center bg-white" 
+    style="min-width: 400px;max-width: 600px;width: 90%;">
+        
+    <div class="bg-primary text-white shadow-3 ">
+      <div  class="text-h6 q-pa-sm">{{title}} </div>
+    </div>
+        
+    <div class="q-pa-md" >
+      <slot></slot>
+    </div>
+
+  </div>
+`});
+        Vue.component("b-icon", {
+            props: ["icon"],
+            template: /*html*/ `
+  <div :class="'icon-'+ icon"  style="text-shadow: 2px 2px 4px #999999;">
+    <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+  </div>
+`});
+
+        Vue.component("b-param", {
+            props: ["title"],
+            template: /*html*/`
+  <div class="row">
+    <div class="col text-bold text-capitalize text-left">{{title}}</div>
+    <div class="col text-right"><slot></slot></div>
+  </div>
+`});
+
+        Vue.component('chart', {
+            props: ['data', 'tag', 'title'],
+            template: /*html*/`
+  <q-card  class="q-ma-md">
+    <q-card-section class="q-pa-none q-ma-none">
+      <div class="bg-primary text-white shadow-3 ">
+        <div  class="text-h6 q-pa-sm">{{title}}</div>
+      </div>
+    </q-card-section>
+    <q-card-section>
+    <line-chart :data="data" :title="title" :tag="tag" 
+      style="height: 300px;"></line-chart>
+    </q-card-section>
+  </q-card>
+`})
+
+        Vue.component('line-chart', {
+            extends: VueChartJs.Line,
+            mixins: [VueChartJs.mixins.reactiveData, mixinFormat],
+            props: ['data', 'tag', 'title'],
+            data: function () {
+                return {
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { yAxes: [{ ticks: { beginAtZero: false } }] }
+                    },
+                }
+            },
+            methods: {
+                updateChart() {
+
+                    let arrData = [];
+                    let arrTime = [];
+                    for (let i = 0; i < this.data.length; i++) {
+                        arrData.push(this.data[i][this.tag]);
+                        arrTime.push(
+                            this.formatTime(this.data[i].ti)
+                        );
+                    }
+
+                    this.chartData = {
+                        labels: arrTime,
+                        datasets: [{
+                            label: this.title,
+                            data: arrData,
+                            fill: true,
+                            borderColor: '#00574b',
+                            backgroundColor: '#ffbb3355',
+                            borderWidth: 2, type: 'line',
+                            pointRadius: 0, lineTension: 0,
+                            borderWidth: 2
+                        }]
+                    }
+                }
+            },
+            watch: {
+                data: function (newQuestion, oldQuestion) {
+                    this.updateChart();
+                }
+            },
+            mounted() {
+                this.updateChart();
+                this.renderChart(this.chartData, this.options)
+            },
+        });
+
+        Vue.component('bToggle', {
+            model: {
+                prop: 'checked',
+                event: 'change'
+            },
+            props: {
+                labelOn: String,
+                labelOff: String,
+                width: { type: String, default: '120px' },
+                checked: { type: Boolean, default: false },
+                disable: { type: Boolean, default: false },
+            },
+            computed: {
+                styleW() {
+                    return `width:${this.width}`;
+                }
+            },
+            methods: {
+                onClick() {
+                    this.$emit('change', !this.checked)
+                }
+            },
+            template: /*html*/
+                `<div>
+    <q-btn v-if="checked" @click="onClick" :disable="disable" 
+      class='bg-accent text-dark q-ma-sm' :style="styleW">{{labelOff}}</q-btn>
+    <q-btn v-if="!checked" @click="onClick" :disable="disable" 
+      class='bg-primary text-white q-ma-sm' :style="styleW">{{labelOn}}</q-btn>
+  </div>`
+        })
+
+        //router
+        const pagesRoute = [
+            {
+                name: 'home', path: '/', component: () => import('./p-home.js'),
+                meta: { title: 'Jardin', hideNew: true }
+            },
+            {
+                name: 'chart', path: '/chart', component: () => import('./p-chart.js'),
+                meta: { title: 'Historial', hideNew: true }
+            },
+            {
+                name: 'zones', path: '/zones/:id', component: () => import('./p-zones.js'),
+                meta: { title: 'Zonas', hideNew: false }
+            },
+            {
+                name: 'zone', path: '/zone/:id', component: () => import('./p-zone.js'),
+                meta: { title: 'Zona', hideNew: false }
+            },
+            {
+                name: 'taps', path: '/taps', component: () => import('./p-taps.js'),
+                meta: { title: 'Grifos', hideNew: true }
+            },
+            {
+                name: 'login', path: '/login', component: () => import('./p-login.js'),
+                meta: { title: 'Login', hideNew: true }
+            },
+            {
+                name: 'opciones', path: '/opciones', component: () => import('./p-option.js'),
+                meta: { title: 'Opciones', hideNew: true }
+            },
+            { name: 'not found', path: "*", component: { template: '<p>Page Not Found</p>' } }
+        ]
+
+        //menu leftdata
+        const menu = [
+            { title: 'Home', show: true, icon: 'icon-sun-cloud', path: '/' },
+            { title: 'Gráfico', show: true, icon: 'icon-stats-dots', path: '/chart' },
+            { title: 'Zonas', show: true, icon: 'icon-watering-can', path: '/zones/0' },
+            { title: 'Grifos', show: true, icon: 'icon-water-pump', path: '/taps' },
+            { title: 'Login', show: true, icon: 'icon-cloud-check', path: '/login' },
+            { title: 'Opciones', show: true, icon: 'icon-cog', path: '/opciones' },
+        ]
+
+        const router = new VueRouter({
+            // mode: 'history', 
+            routes: pagesRoute
+        })
+
+        Vue.prototype.$window = window;
+
+        //aplication
+        const app = new Vue({
+            el: '#app',
+            router,
+            store,
+            mixins: [mixinNotify],
+            data:
+                function () {
+                    return {
+                        left: false,
+                        showMessage: false,
+                        showLoading: true,
+                        message: "",
+                        transitionName: 'slide-right',
+                        menu: menu,
+                    }
+                },
+            computed: {
+                ...Vuex.mapState(['loaded', 'isConnected', 'authenticate', 'routingServer']),
+                buttonLogin: function () {
+                    return this.menu[4];
+                }
+            },
+            methods: {
+                // importamos acciones
+                ...Vuex.mapActions(['connect']),
+                ...Vuex.mapMutations(['logout', 'unload']),
+            },
+            beforeCreate() {
+                //cargamos localStorage (token)
+                this.$store.commit('loadLocal');
+            },
+            mounted() {
+                this.$q.iconSet.field.error = 'icon-alert-circle';
+                this.$q.iconSet.arrow.dropdown = 'icon-menu-down';
+                this.$q.iconSet.datetime.now = 'icon-alarm';
+            },
+            created() {
+
+                this.connect();
+
+                //mostramos o escondemos la pagina de login
+                this.buttonLogin.show = !this.authenticate;
+
+                // nos registrammos a las llamadas de acciones en vuex
+                this.unsubscribe = this.$store.subscribeAction((action, state) => {
+
+                    //console.log('Updating mutation', action.type,action.payload);
+                    switch (action.type) {
+                        case "onClose":
+                            this.notifyW("Desconectado !!");
+                            break;
+                        case "onOpen":
+                            this.notify("Connectado !!");
+                            break;
+                        case "onError":
+                            this.notifyW("ha ocurrido un error !!");
+                            break;
+                        case "message":
+                            let msg = action.payload;
+                            //ok
+                            if (msg.type === 0) this.notify(msg.content);
+                            //error
+                            else if (msg.type === 1) {
+                                this.message = msg.content;
+                                this.showMessage = true;
+                            }// warn
+                            else if (msg.type == 2) {
+                                this.notifyW(msg.content);
+                            }
+                            break;
+                        case "goTo":
+                            let path = action.payload;
+                            if (this.$route.path != path && this.routingServer) {
+                                this.$router.push(path);
+                            }
+                            break;
+                    }
+                });
+            },
+            beforeDestroy() {
+                this.unsubscribe();
+            },
+            watch: {
+                //cambiamos el estilo de las transiciones 
+                // cada vez q se cambia de pagina 
+                '$route'(to, from) {
+                    this.transitionName = this.transitionName === 'slide-left' ? 'slide-right' : 'slide-left';
+                },
+                //mostrando o escondiendo un "loading..."
+                loaded: function (newValue, oldValue) {
+                    this.showLoading = !newValue && !this.isConnected;
+                },
+                //idem
+                isConnected: function (newValue, oldValue) {
+                    this.showLoading = !newValue;
+                },
+                authenticate: function (newValue, oldValue) {
+                    this.buttonLogin.show = !newValue;
+                }
+            }
+        }).$mount('#app')
+
+        // cuando se cierra la ventana
+        // cerrar websockets
+        window.onbeforeunload = function () {
+            store.commit('unload');
+        };
+
+    </script>
+
+</body>
+
+</html>

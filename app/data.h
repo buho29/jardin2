@@ -66,8 +66,8 @@ struct Config :public Item
 	char wifi_pass[64] = "EGYDRNA6H4Q";
 	char cityID[10] = "1451030";// tintores
 	char cityName[20] = "Tintores";
-	//q329xaaTojo0koLv6A3uFgh3dQLgp6em%20&language=es-ES&details=true&metric=true
-	char accuURL[100] = "SoOCQzMkcUaK83HlGPMz3rxaxlUsEr1a%20&language=es-ES&details=true&metric=true";
+	//char accuURL[100] = "SoOCQzMkcUaK83HlGPMz3rxaxlUsEr1a%20&language=es-ES&details=true&metric=true";
+	char accuURL[100] = "q329xaaTojo0koLv6A3uFgh3dQLgp6em%20&language=es-ES&details=true&metric=true";
 	char www_user[32] = "admin";
 	char www_pass[64] = "admin";
 
@@ -109,7 +109,8 @@ struct Config :public Item
 
 
 	void setDst(const char * dst) {
-
+		Serial.println(dst);
+		return;
 		char str[30];
 		strcpy(str, dst);
 
@@ -150,7 +151,7 @@ struct Config :public Item
 
 			r += tt;
 		}
-
+		Serial.println(r);
 		return r;
 	};
 	
@@ -165,7 +166,8 @@ struct Config :public Item
 		obj["cityName"] = this->cityName;
 		obj["accuURL"] = this->accuURL;
 		obj["tz"] = this->tz;
-		obj["dst"] = getDst().c_str();
+		const char * d = getDst().c_str();
+		obj["dst"] = d;
 	};
 
 	void deserializeItem(JsonObject &obj) {

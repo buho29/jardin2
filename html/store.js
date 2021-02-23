@@ -121,7 +121,7 @@ const store = new Vuex.Store({
         this.connection.close();
       }
       //this.host = document.location.host;
-      this.host = "192.168.8.102";
+      this.host = "192.168.8.105";
 
       this.connection = new WebSocket('ws://' + this.host + '/ws');
 
