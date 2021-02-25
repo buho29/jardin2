@@ -1,8 +1,7 @@
 
 //router
 const pagesRoute = [
-  { name: 'home', path: '/', component: () => import('./p-home.js') ,
-    meta: {title: 'Jardin',hideNew:true}},
+  { name: 'home', path: '/', component: () => import('./p-home.js') ,meta: {title: 'Jardin',hideNew:true}},
   { name: 'chart', path: '/chart', component:() => import('./p-chart.js')  ,
     meta: {title: 'Historial',hideNew:true}},
   { name: 'zones', path: '/zones/:id',component: () => import('./p-zones.js') ,
@@ -41,8 +40,7 @@ const app = new Vue({
   router,
   store,
   mixins:[mixinNotify],
-  data: 
-  function () {
+  data: function () {
     return {
       left: false,
       showMessage: false,

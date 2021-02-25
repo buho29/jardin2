@@ -1,17 +1,17 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hHh LpR ffr">
     <q-header elevated>
       <q-toolbar>
         <q-btn
           flat
           dense
           round
-          icon="icon-menu"
-          aria-label="Menu"
           @click="leftDrawerOpen = !leftDrawerOpen"
-        />
-
-        <q-toolbar-title> Quasar App </q-toolbar-title>
+          aria-label="Menu"
+          icon="icon-menu"
+        ></q-btn>
+        <q-toolbar-title>{{ $route.meta.title }}</q-toolbar-title>
+        <q-btn v-if="authenticate" flat round @click="logout()">logout</q-btn>
       </q-toolbar>
     </q-header>
 
@@ -22,79 +22,66 @@
       content-class="bg-grey-1"
     >
       <q-list>
-        <q-item-label header class="text-grey-8">
-          Essential Links
-        </q-item-label>
-        <EssentialLink
-          v-for="link in essentialLinks"
-          :key="link.title"
-          v-bind="link"
-        />
+        <q-item-label header>Navegacion</q-item-label>
+        <q-item
+          v-for="(item, index) in menu"
+          :key="index"
+          :to="item.path"
+          exact
+        >
+          <q-item-section avatar>
+            <q-icon :name="item.icon"></q-icon>
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{ item.title }}</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
     <q-page-container>
-      <router-view />
+      <transition :name="transitionName">
+        <router-view class="child-view"></router-view>
+      </transition>
     </q-page-container>
   </q-layout>
 </template>
 
 <script>
-import EssentialLink from "components/EssentialLink.vue";
-
-const linksData = [
-  {
-    title: "Docs",
-    caption: "quasar.dev",
-    icon: "school",
-    link: "https://quasar.dev",
-  },
-  {
-    title: "Github",
-    caption: "github.com/quasarframework",
-    icon: "code",
-    link: "https://github.com/quasarframework",
-  },
-  {
-    title: "Discord Chat Channel",
-    caption: "chat.quasar.dev",
-    icon: "chat",
-    link: "https://chat.quasar.dev",
-  },
-  {
-    title: "Forum",
-    caption: "forum.quasar.dev",
-    icon: "record_voice_over",
-    link: "https://forum.quasar.dev",
-  },
-  {
-    title: "Twitter",
-    caption: "@quasarframework",
-    icon: "rss_feed",
-    link: "https://twitter.quasar.dev",
-  },
-  {
-    title: "Facebook",
-    caption: "@QuasarFramework",
-    icon: "public",
-    link: "https://facebook.quasar.dev",
-  },
-  {
-    title: "Quasar Awesome",
-    caption: "Community Quasar projects",
-    icon: "favorite",
-    link: "https://awesome.quasar.dev",
-  },
+//menu leftdata
+const menu = [
+  { title: "Home", icon: "icon-sun-cloud", path: "/" },
+  { title: "Gráfico", icon: "icon-stats-dots", path: "/chart" },
+  { title: "Zonas", icon: "icon-watering-can", path: "/zones/0" },
+  { title: "Grifos", icon: "icon-water-pump", path: "/taps" },
+  { title: "Login", icon: "icon-cloud-check", path: "/login" },
+  { title: "Opciones", icon: "icon-cog", path: "/options" }
 ];
+
+import { mapActions, mapMutations, mapState, mapGetters } from "vuex";
 
 export default {
   name: "MainLayout",
-  components: { EssentialLink },
   data() {
     return {
       leftDrawerOpen: false,
-      essentialLinks: linksData,
+      transitionName: "slide-right",
+      menu: menu
     };
   },
+  computed: {
+    ...mapState(["authenticate"])
+  },
+  watch: {
+    //cambiamos el estilo de las transiciones
+    // cada vez q se cambia de pagina
+    $route(to, from) {
+      this.transitionName =
+        this.transitionName === "slide-left" ? "slide-right" : "slide-left";
+    },
+    authenticate: function(newValue, oldValue) {
+      this.buttonLogin.show = !newValue;
+    }
+  }
 };
 </script>

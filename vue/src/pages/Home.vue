@@ -1,47 +1,78 @@
 <template>
-  <q-page class="flex flex-center">
-    <img
-      alt="Quasar logo"
-      src="~assets/quasar-logo-full.svg"
-    >
-    <b-icon icon="10"></b-icon>
-    
-        <b-container title="Icons">
-          <div class="text-purple q-pa-md row items-start">
-            <div v-for="(item,id) in icons" :key="id"  style="width: 110px;">
-              <q-icon :name="item" style="font-size: 2em;"></q-icon>  
-              <p>{{item}}</p>    
-            </div>
-          </div>
-        </b-container>
+  <q-page class=""> 
+        <q-page>
+  
+      <b-container title="Sensores" v-if="loaded" >
+        <div class="row q-gutter-md" >
+          <b-sensor prop="Temperatura" :value="sensor.te+'°'"></b-sensor>
+          <b-sensor prop="Humedad" :value="sensor.hu+'%'"></b-sensor>
+          <b-sensor prop="Presion" :value="sensor.pr"></b-sensor>
+        </div>
+      </b-container>
+      
+      <b-container title="Tiempo" v-if="loaded" >
+      
+        <div class='row '>
+          <b-icon :icon="weather.icon1" style="font-size:120px;"/>
+          
+          <b-timer local="es-ES" :weather="weather" style="flex-grow: 1;"/>
+        </div>
+  
+        <br/>
+        <div class="q-mx-auto" style="width:250px;">
+          <b-param title="Viento">
+            {{weather.winSpeed}}km/h - {{weather.winDirection}}°
+          </b-param>
+          <b-param title="Nubosidad">{{weather.cloudCover}}%</b-param>
+          <b-param title="Temperatura"> min.{{weather.minTemp}}° max.{{weather.maxTemp}}°</b-param>
+          <b-param title="Precipitacion">{{getInfo()}}</b-param>
+          <b-param title="sol">{{formatTime(weather.sunStart)}} {{formatTime(weather.sunEnd)}}</b-param>
+        </div>
+        <br/>
+        <div class="text-h6">{{weather.phrase}}</div>
+      
+      </b-container>
+    </q-page>
   </q-page>
 </template>
 
 <script>
-import bSensor from 'src/components/bSensor.vue'
-import BTimer from 'src/components/bTimer.vue'
-import mixinNotify from 'src/components/mixin/mixinNotify.vue'
-import BIcon from 'src/components/bIcon.vue'
-import BContainer from 'src/components/bContainer.vue'
+import {mapState} from 'vuex'
+
+import bSensor from "src/components/home/bSensor.vue";
+import BTimer from "src/components/home/bTimer.vue";
+import mixinNotify from "src/components/mixin/mixinNotify.js";
+import BIcon from "src/components/bIcon.vue";
+import BContainer from "src/components/bContainer.vue";
+import BParam from 'src/components/bParam.vue';
+
 export default {
-  components: { bSensor, BTimer, BIcon, BContainer },
-  mixins:[mixinNotify],
-  name: 'Home',
-  data () {
-    return {
-        icons:["icon-alarm" , "icon-alert-circle" , "icon-chevron-down" , 
-          "icon-chevron-up" , "icon-cloud-check" , "icon-cog" , "icon-delete" , 
-          "icon-menu" , "icon-menu-down" , "icon-moon" , "icon-pencil" , "icon-plus" ,
-          "icon-stats-dots" , "icon-sun" , "icon-sun-cloud" , "icon-thermometer",
-          "icon-watering-can" , "icon-water-pump","icon-eye-off", "icon-eye",
-          "icon-cloud-upload", "icon-cloud-download" , "icon-file-outline",
-          "icon-folder", "icon-folder-multiple","icon-help",
-        ],
-    }
+  components: { bSensor, BTimer, BIcon, BContainer, BParam },
+  mixins: [mixinNotify],
+  name: "Home",
+  computed: {
+    ...mapState(["weather", "sensor", "loaded"]),
   },
-  created (){
-    console.log("sqsd");
-    this.notify("sqsdqsd");
-  }
-}
+  data: function () {
+    return {
+      icon: 1,
+    };
+  },
+  methods: {
+    getInfo() {
+      let w = this.weather;
+      return `${w.precipitationProbability}% / ${w.totalLiquid} mm / ${w.hoursOfPrecipitation}h`;
+    },
+    formatTime(time) {
+      return new Date(time * 1000).toLocaleTimeString("es-ES");
+    },
+    getFileIcon(id) {
+      let r = "/asset/";
+      if (id < 10) r += "0" + id;
+      else r += id;
+      r += "-m.webp";
+      return r;
+    },
+  },
+};
 </script>

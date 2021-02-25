@@ -1,4 +1,3 @@
-<script>
 export default {
       methods: {
       notify: function (msg) {
@@ -20,4 +19,3 @@ export default {
       },
   }
 }
-</script>
