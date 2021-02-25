@@ -603,6 +603,7 @@ String Model::printJsonOption()
 
 	Serial.printf("config %d ms\n", millis() - c);
 
+
 	String json;
 	serializeJson(root, json);
 
