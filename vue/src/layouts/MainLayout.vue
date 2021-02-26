@@ -10,7 +10,7 @@
           aria-label="Menu"
           icon="icon-menu"
         ></q-btn>
-        <q-toolbar-title>{{ $route.meta.title }}</q-toolbar-title>
+        <q-toolbar-title>{{ $t(`titles.${$route.name}`) }}</q-toolbar-title>
         <q-btn v-if="authenticate" flat round @click="logout()">logout</q-btn>
       </q-toolbar>
     </q-header>
@@ -33,7 +33,7 @@
             <q-icon :name="item.icon"></q-icon>
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ item.title }}</q-item-label>
+            <q-item-label>{{ $t(`titles.${item.title}`) }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
@@ -50,12 +50,12 @@
 <script>
 //menu leftdata
 const menu = [
-  { title: "Home", icon: "icon-sun-cloud", path: "/" },
-  { title: "Gráfico", icon: "icon-stats-dots", path: "/chart" },
-  { title: "Zonas", icon: "icon-watering-can", path: "/zones/0" },
-  { title: "Grifos", icon: "icon-water-pump", path: "/taps" },
-  { title: "Login", icon: "icon-cloud-check", path: "/login" },
-  { title: "Opciones", icon: "icon-cog", path: "/options" }
+  { title: "home", icon: "icon-sun-cloud", path: "/" },
+  { title: "charts", icon: "icon-stats-dots", path: "/chart" },
+  { title: "zones", icon: "icon-watering-can", path: "/zones/0" },
+  { title: "taps", icon: "icon-water-pump", path: "/taps" },
+  { title: "login", icon: "icon-cloud-check", path: "/login" },
+  { title: "options", icon: "icon-cog", path: "/options" }
 ];
 
 import { mapActions, mapMutations, mapState, mapGetters } from "vuex";

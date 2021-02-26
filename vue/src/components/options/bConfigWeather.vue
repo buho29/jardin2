@@ -2,10 +2,10 @@
     <b-container title="Accuweather.com">
       <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-sm" >
       
-      <q-input filled v-model="cityName" label="Tu nombre ciudad *" dense
+      <q-input filled v-model="cityName" :label="$t('config.nameCity')" dense
         lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']">
       </q-input>
-      <q-input filled v-model="cityID" label="Tu cityID *" dense
+      <q-input filled v-model="cityID" label="cityID *" dense
         lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']">
       </q-input>
       <q-input filled v-model="accuURL" label="extra url *" dense 
@@ -13,10 +13,7 @@
         lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']">
       </q-input>
   
-        <div>
-          <q-btn label="Enviar" type="submit" color="primary"/>
-          <q-btn label="Reset" type="reset" color="primary" flat class="q-ml-sm" />
-        </div>
+        <b-btn-send/>
       </q-form>   
     </b-container>
 </template>
@@ -24,11 +21,12 @@
 
 
 import {mapActions} from 'vuex';
+import BBtnSend from '../bBtnSend.vue';
 import bContainer from '../bContainer.vue';
 import mixinOption from '../mixin/mixinOption';
 
 export default {
-  components: { bContainer },
+  components: { bContainer, BBtnSend },
     name:"b-config-weather",   
     data() {
         return {

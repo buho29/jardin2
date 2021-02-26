@@ -1,5 +1,5 @@
 <template>
-  <b-container title="File">
+  <b-container :title="$t('config.files')">
     <div class="row">
       <q-select
         v-model="root"
@@ -61,7 +61,7 @@
           dense
           filled
           v-model="file"
-          label="File"
+          :label="$t('config.up')"
           style="flex-grow: 1;"
           lazy-rules
           :rules="[val => !!val || 'Selectiona un fichero por favor']"

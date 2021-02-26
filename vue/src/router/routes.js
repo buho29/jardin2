@@ -3,13 +3,13 @@ const routes = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { name: 'home', path: '', component: () => import('pages/Home.vue'), meta: { title: 'Jardin' } },
-      { name: 'chart', path: '/chart', component: () => import('pages/Charts.vue'), meta: { title: 'Historial' } },
-      { name: 'zones', path: '/zones/:id', component: () => import('pages/Zones.vue'), meta: { title: 'Zonas' } },
-      { name: 'zone', path: '/zone/:id', component: () => import('pages/Zone.vue'), meta: { title: 'Zona' } },
-      { name: 'taps', path: '/taps', component: () => import('pages/Taps.vue'), meta: { title: 'Grifos' } },
-      { name: 'login', path: '/login', component: () => import('pages/Login.vue'), meta: { title: 'Login' } },
-      { name: 'opciones', path: '/options', component: () => import('pages/Options.vue'), meta: { title: 'Opciones' } },
+      { name: 'home', path: '', component: () => import('pages/Home.vue')},
+      { name: 'charts', path: '/chart', component: () => import('pages/Charts.vue')},
+      { name: 'zones', path: '/zones/:id', component: () => import('pages/Zones.vue')},
+      { name: 'zone', path: '/zone/:id', component: () => import('pages/Zone.vue')},
+      { name: 'taps', path: '/taps', component: () => import('pages/Taps.vue')},
+      { name: 'login', path: '/login', component: () => import('pages/Login.vue')},
+      { name: 'options', path: '/options', component: () => import('pages/Options.vue')},
     ]
   },
 

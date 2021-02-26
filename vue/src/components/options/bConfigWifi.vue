@@ -2,13 +2,13 @@
     <b-container title="Wifi">
       <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-sm" >
       
-        <q-input filled v-model="name" label="Tu SSID(wifi) *" dense
+        <q-input filled v-model="name" label="SSID(wifi)" dense
           lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']">
         </q-input>
         
         <q-input v-model="pass" filled dense
           lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']"
-          :type="isPwd ? 'password' : 'text'" label="Tu password *">
+          :type="isPwd ? 'password' : 'text'" :label="$t('pass')">
           <template v-slot:append>
             <q-icon
               :name="isPwd ? 'icon-eye-off' : 'icon-eye'"
@@ -17,21 +17,19 @@
             />
           </template>
         </q-input>
-  
-        <div>
-          <q-btn label="Enviar" type="submit" color="primary"/>
-          <q-btn label="Reset" type="reset" color="primary" flat class="q-ml-sm" />
-        </div>
+        
+        <b-btn-send/>
       </q-form>   
     </b-container>
 </template>
 <script>
 
 import {mapActions} from 'vuex'
+import BBtnSend from '../bBtnSend.vue';
 import bContainer from '../bContainer.vue';
 import mixinOption from '../mixin/mixinOption';
 export default {
-  components: { bContainer },
+  components: { bContainer, BBtnSend },
     name:"b-config-wifi",   
      data () {
         return {

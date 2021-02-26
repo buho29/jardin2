@@ -1,5 +1,5 @@
 <template>
-    <b-container title="Config Time">
+    <b-container :title="$t('config.time')">
       <q-form class="q-gutter-sm row" @submit="onSubmit" @reset="onReset">
 
         <q-input :value="getTz()" label="Time zone" filled hint="Offset(hours)" style="max-width: 110px;" 
@@ -16,19 +16,17 @@
           </template>
         </q-input>
         
-        <div class="q-mt-xl" style="width: 100%">
-          <q-btn label="Enviar" type="submit" color="primary"/>
-          <q-btn label="Reset" type="reset" color="primary" flat class="q-ml-sm" />
-        </div>
+        <b-btn-send/>
       </q-form>
     </b-container>
 </template>
 <script>
 
 import {mapState,mapActions} from 'Vuex';
+import BBtnSend from '../bBtnSend.vue';
 import bContainer from '../bContainer.vue';
 export default {
-  components: { bContainer },
+  components: { bContainer, BBtnSend },
     name:"b-config-tz",  
     data() {
         return {

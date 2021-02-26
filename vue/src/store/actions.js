@@ -117,7 +117,7 @@ export function send({ commit, dispatch ,state}, obj) {
 //file
 export function downloadItem ({commit, dispatch,state },name) {
   
-  axios.get(`http://${this.host}/file`,{          
+  this.$axios.get(`http://${this.host}/file`,{          
     headers: { 'Authorization': `Basic ${state.token}`},
     params: {download:name},
     responseType: 'blob'
@@ -137,7 +137,7 @@ export function downloadItem ({commit, dispatch,state },name) {
 }
 export function deleteItem ({commit, dispatch,state },name) {
   
-  axios.get(`http://${this.host}/file`, {          
+  this.$axios.get(`http://${this.host}/file`, {          
     headers: { 'Authorization': `Basic ${state.token}`},
     params: {delete:name},
   }).then(response => {

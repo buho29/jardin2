@@ -1,5 +1,5 @@
 <template>
-  <q-page class=""> 
+  <q-page> 
         <q-page>
   
       <b-container title="Sensores" v-if="loaded" >
@@ -9,7 +9,7 @@
           <b-sensor prop="Presion" :value="sensor.pr"></b-sensor>
         </div>
       </b-container>
-      
+
       <b-container title="Tiempo" v-if="loaded" >
       
         <div class='row '>
