@@ -203,6 +203,7 @@ private:
 
 	// wasap websocket
 	void sendMessage(uint8_t type, const String& msg, AsyncWebSocketClient* client = nullptr);
+	void sendMessage(uint8_t type,Str str, const String& msg, AsyncWebSocketClient* client = nullptr);
 	void sendClient(const char* tag, const char* msg, AsyncWebSocketClient* client = nullptr);
 
 	//file

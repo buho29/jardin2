@@ -725,6 +725,7 @@ void Model::sendMessage(uint8_t type, const String & msg, AsyncWebSocketClient *
 	o["type"] = type;
 	o["content"] = msg;
 
+	Serial.println(msg);
 	String json;
 	serializeJson(root, json);
 
@@ -732,6 +733,11 @@ void Model::sendMessage(uint8_t type, const String & msg, AsyncWebSocketClient *
 	else ws.textAll(json);
 
 	Serial.println(json);
+}
+
+void Model::sendMessage(uint8_t type, Str str, const String& msg, AsyncWebSocketClient* client)
+{
+	sendMessage(type, String(str) + "|" + msg,client);
 }
 
 void Model::sendClient(const char* tag,const char* msg, AsyncWebSocketClient * client)
@@ -764,10 +770,10 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 				//go home
 				sendClient("goTo", "/", client);
 
-				sendMessage(0, lang.get(Str::welcome)+String(name), client);
+				sendMessage(0, Str::welcome,String(name), client);
 				return;
 			}else {
-				sendMessage(1, lang.get(Str::errorLogin), client);
+				sendMessage(1, String(Str::errorLogin), client);
 				return;
 			}
 		}
@@ -785,7 +791,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		// si no estamos identificado
 		// llevamos al cliente a la pagina de login
 		sendClient("goTo", "/login");
-		sendMessage(1, lang.get(Str::reqLogin), client);
+		sendMessage(1, String(Str::reqLogin), client);
 		return;
 	}
 
@@ -805,16 +811,16 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		if (tap.containsKey("id") && tap.containsKey("open"))
 		{
 			int id = tap["id"]; bool open = tap["open"];
-			String name = String(taps[id]->name);
+			String const & name = String(taps[id]->name);
 			// abrir/cerrar grifo
 			if (openTap(id, open)) {
 				//notificamos 
-				sendMessage(0, name + " " + (open ? lang.get(Str::open): lang.get(Str::close)));
+				sendMessage(0, (open ? Str::open: Str::close),name);
 				//mostamos la pagina grifos
 				if (open) sendClient("goTo", "/taps");
 			}
 			else // a ocurrido un error
-				sendMessage(1, lang.get(Str::errorOpen) + name, client);
+				sendMessage(1, Str::errorOpen , name, client);
 		}
 	}
 
@@ -827,20 +833,18 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 	if (cmd.containsKey("system") && cmd["system"].containsKey("restart")) {
 		ESP.restart();
 	}
-
+	bool modified = false;
 	if (cmd.containsKey("config")) {
 		JsonObject con = cmd["config"];
 		if (con.containsKey("tz") && con.containsKey("dst")) {
 			config.setTimeZone(con["dst"], con["tz"]);
 			updateTimeZone();
-			sendMessage(0, lang.get(Str::edit));
-			writeJson("/data/config.json", &config);
+			modified = true;
 		}
 
 		if (con.containsKey("wifi_ssid") && con.containsKey("wifi_pass")) {
 			config.setWifi(con["wifi_ssid"], con["wifi_pass"]);
-			sendMessage(0, lang.get(Str::edit));
-			writeJson("/data/config.json", &config);
+			modified = true;
 			//TODO actualizar wifi o resetEsp
 		}
 
@@ -848,16 +852,20 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 				&& con.containsKey("cityID")) 
 		{
 			config.setAccu(con["cityID"], con["cityName"], con["accuURL"]);
-			sendMessage(0, lang.get(Str::edit));
-			writeJson("/data/config.json", &config);
+			modified = true;
 			if (connectedWifi) loadForecast();
 		}
 
 		if (con.containsKey("www_user") && con.containsKey("www_pass")) {
 			config.setAdmin(con["www_user"], con["www_pass"]);
-			sendMessage(0, lang.get(Str::edit));
-			writeJson("/data/config.json", &config);
+			modified = true;
 			//TODO actualizar werver pass :???
+		}
+
+		if (modified) {
+			sendMessage(0, String(Str::edit));
+			writeJson("/data/config.json", &config);
+
 		}
 	}
 
@@ -868,23 +876,27 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 	if (zone.containsKey("id") && zone.containsKey("runing")
 		&& zone["runing"].as<bool>())
 	{
-		int id = zone["id"];String name = String(zones[id]->name);
+		int id = zone["id"];
+		const String & name = String(zones[id]->name);
 
-		if (waterZone(id))
-			sendMessage(0, name + " "+ lang.get(Str::open));
+
+		if (waterZone(id)) {
+			sendMessage(0, Str::open, name);
+
+		}
 		else if(isWatering()) 
-			sendMessage(1, lang.get(Str::errorBusy), client);
-		else sendMessage(1, lang.get(Str::errorOpen) + name, client);
+			sendMessage(1, String(Str::errorBusy), client);
+		else sendMessage(1, Str::errorOpen , name, client);
 	}
 	else if (zone.containsKey("runing") && !zone["runing"].as<bool>())
 	{
 		String name = "";
-		if (currentZone != nullptr) name = String(currentZone->name);
+		if (currentZone) name = String(currentZone->name);
 
 		if (stopWaterZone()) {
-			sendMessage(0, name + " "+ lang.get(Str::close));
+			sendMessage(0, Str::close, name);
 		}
-		else sendMessage(1, "Error cerrando " + name, client);
+		else sendMessage(1, Str::errorClose, name, client);
 	}
 	else if (zone.containsKey("pause"))
 	{
@@ -894,19 +906,19 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 		if (currentZone != nullptr) name = String(currentZone->name);
 
 		if (pauseWaterZone(pause))
-			sendMessage(0, name + lang.get(Str::pause));
-		else sendMessage(1, lang.get(Str::errorPause) + name, client);
+			sendMessage(0, Str::pause, name);
+		else sendMessage(1, Str::errorPause, name, client);
 	}
 	else if (zone.containsKey("delete"))
 	{
 		int id = zone["delete"];
 
-		String name = lang.get(Str::notFound);
+		String name = String(Str::notFound);
 		if (zones.has(id)) name = String(zones[id]->name);
 
 		if (removeZone(id))
-			sendMessage(0, lang.get(Str::deleteItem) + name);
-		else sendMessage(1, lang.get(Str::errorDelete) + name, client);
+			sendMessage(0, Str::deleteItem , name);
+		else sendMessage(1, Str::errorDelete , name, client);
 	}
 	else if (zone.containsKey("edit"))
 	{
@@ -915,8 +927,8 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 		const char * name = edit["name"];
 
 		if (editZone(id, name, modes))
-			sendMessage(0, lang.get(Str::edit) +String(name));
-		else sendMessage(1, lang.get(Str::errorEdit) + String(name), client);
+			sendMessage(0, Str::edit , name);
+		else sendMessage(1, Str::errorEdit , name, client);
 	}
 	else if (zone.containsKey("new"))
 	{
@@ -926,9 +938,9 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 		const char * name = newZone["name"];
 
 		if (addZone(name, modes))
-			sendMessage(0, lang.get(Str::create) + String(name));
+			sendMessage(0, Str::create , name);
 		else
-			sendMessage(1, lang.get(Str::errorCreate) + String(name), client);
+			sendMessage(1, Str::errorCreate , name, client);
 	}
 }
 
@@ -946,9 +958,9 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 		}
 
 		if (removeAlarm(id))
-			sendMessage(0, lang.get(Str::deleteItem) +msg  );
+			sendMessage(0, Str::deleteItem + "|" + msg);
 		else
-			sendMessage(1, lang.get(Str::errorDelete) + msg, client);
+			sendMessage(1, Str::errorDelete + "|" + msg, client);
 	}
 	else if (alarm.containsKey("edit"))
 	{
@@ -965,17 +977,18 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 
 		if (alarms.has(id)) {
 			AlarmItem* a = alarms[id];
-			msg = String(zones[a->zoneId]->name) + " " + Tasker::formatTime(time);
+			msg = String(zones[a->zoneId]->name) + " : " + Tasker::formatTime(time);
 		}
 
-		if (ocuped != nullptr) {
-			msg = lang.get(Str::occupied) + String(zones[ocuped->zoneId]->name) + " :" +
-				Tasker::formatTime(ocuped->time) + lang.get(Str::desired) + Tasker::formatTime(time);
-			sendMessage(1, lang.get(Str::errorEdit) + msg, client);
+		if (ocuped) {
+			msg = String(zones[ocuped->zoneId]->name) + " : " +
+				Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
+
+			sendMessage(1, Str::occupied + "|" + msg, client);
 		}
 		else if (editAlarm(id, tapId, time, duration))
-			sendMessage(0, lang.get(Str::edit) + msg  );
-		else sendMessage(1, lang.get(Str::errorEdit) + msg, client);
+			sendMessage(0, Str::edit + "|" + msg);
+		else sendMessage(1, Str::errorEdit + "|" + msg, client);
 	}
 	else if (alarm.containsKey("new"))
 	{
@@ -992,16 +1005,18 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 		
 
 		if (zones.has(zoneId))
-			msg = String(zones[zoneId]->name) + " " + Tasker::formatTime(time);
+			msg = String(zones[zoneId]->name) + " : " + Tasker::formatTime(time);
 
-		if (ocuped != nullptr) {
-			msg = lang.get(Str::occupied) + String(zones[ocuped->zoneId]->name) + " " + Tasker::formatTime(time);
-			sendMessage(1, lang.get(Str::errorCreate) + msg, client);
+		if (ocuped) {
+			msg = String(zones[ocuped->zoneId]->name) + " : " +
+				Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
+
+			sendMessage(1, Str::occupied + "|" + msg, client);
 		}
 		else if (addAlarm(zoneId, tapId, time, duration)>-1)
-			sendMessage(0, lang.get(Str::create) + msg);
+			sendMessage(0, Str::create + "|" + msg);
 		else
-			sendMessage(1, lang.get(Str::errorCreate) + msg, client);
+			sendMessage(1, Str::errorCreate + "|" + msg, client);
 	}
 }
 

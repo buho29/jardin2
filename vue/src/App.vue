@@ -48,10 +48,19 @@ export default {
   methods: {
     // importamos acciones
     ...mapActions(['connect']),
-    ...mapMutations(['logout','unload']),
+    ...mapMutations(['logout','unload']),    
+    getMsg(pl) {
+      if (pl) {
+        let args = pl.split("|");
+        if(args.length>0){
+          return this.$t(`server[${args[0]}]`, [args[1]])
+        }
+      }
+      return this.$t(`server[${pl}]`);
+    },
   },
   beforeCreate() { 
-    //cargamos localStorage (token)
+    //cargamos localStorage (token,lang)
     this.$store.commit('loadLocal');
   },
   mounted() {
@@ -66,28 +75,29 @@ export default {
     // nos registrammos a las llamadas de acciones en vuex
     this.unsubscribe = this.$store.subscribeAction((action, state) => {
       
-      //console.log('Updating mutation', action.type,action.payload);
       switch (action.type) {
           case "onClose":
-            this.notifyW("Desconectado !!");
+            this.notifyW(this.$t('app.disconnected'));
             break;
           case "onOpen":
-            this.notify("Connectado !!");
+            this.notify(this.$t('app.connected'));
             break;
           case "onError":
-            this.notifyW("ha ocurrido un error !!");
+            this.notifyW(this.$t('app.error'));
             break;
           case "message":
-            let msg = action.payload;
+      console.log('Updating mutation', action.type,action.payload);
+            let pl = action.payload;
+            let msg = this.getMsg(pl.content);
             //ok
-            if(msg.type ===0) this.notify(msg.content);
+            if(pl.type ===0) this.notify(msg);
             //error
-            else if(msg.type ===1){
-              this.message = msg.content;
+            else if(pl.type ===1){
+              this.message = msg;
               this.showMessage = true;
             }// warn
-            else if(msg.type == 2){
-              this.notifyW(msg.content);
+            else if(pl.type == 2){
+              this.notifyW(msg);
             }
             break;
           case "goTo":

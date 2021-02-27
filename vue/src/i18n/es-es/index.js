@@ -1,6 +1,4 @@
 export default {
-  failed: 'las cagao!',
-  success: 'Oh Sii nena!',
   titles:{
     home:'Casa',
     charts:'Graficas',
@@ -12,8 +10,8 @@ export default {
   },
   config:{
     browser:'Navegador',
-    helpRouting:`
-      Permite al servidor redireccionarte a una pagina <br/> 
+    helpRouting:
+      `Permite al servidor redireccionarte a una pagina <br/> 
       por ejemplo cuando se riega una zona`,
     time: 'Configurar hora',
     nameCity : 'Nombre ciudad',
@@ -24,8 +22,75 @@ export default {
     info: 'Info esp32',
     resetEsp: 'Restar esp32',
   },
+  weather: {
+    name:'Tiempo',
+    win: 'Viento',
+    clouds: 'Nubosidad',
+    precipitation: 'Precipitacion',
+    sun : 'Sol'
+  },
+  zones: {
+    pause: 'Pausar',
+    water: 'Regar',
+    resume: 'Reanudar',
+    todayWatering: 'Hoy se riega',
+    todayNotWatering: 'Hoy no se riega',
+  },
+  zone:{
+    modes: 'Modos de riego',
+    alarms: 'Alarmas',
+    alarm: 'Alarma',
+    time: 'Hora',
+    duration: 'Duracion (min)',
+    durationErrors: [
+      'Esta mal...',
+      'Usar de 1 a 180min',
+    ],
+    tap: 'Grifo',
+    tapErrors: 'Selecciona un grifo',
+    lastAlarm: 'Ultima Alarma'
+  },
+  app:{
+    disconnected: 'Desconectado !!',
+    connected: 'Connectado !!',
+    error: 'ha ocurrido un error !!'
+  },
+  server:{
+    0: 'Bienvenido {0}',
+    1: 'usuario o pass no valido',
+    2: 'Requierre logearse',
+    3: 'no encontrada',
+    4: 'Error creando ocupada por {0}',
+    5: ' deseada: ',
+    6: '{0} abierto',
+    7: '{0} cerrado',
+    8: '{0} pausado',
+    9: 'Borrada correctamente {0}',
+    10: 'Editado correctamente',
+    11: 'Creado correctamente {0}',
+    12: 'Error abriendo {0}',
+    13: 'Error cerrando {0}',
+    14: 'Error pausando {0}',
+    15: 'Error borrando {0}',
+    16: 'Error editando {0}',
+    17: 'Error creando {0}',
+    18: 'Estoy regando',
+  },
+  localeTime: 'es-ES',
+  accept: 'Aceptar',
   send: 'Enviar',
   reset: 'Resetear',
   name: 'Nombre',
   pass: 'Contraseña',
+  temp: 'Temperatura',
+  hum: 'Humedad',
+  press: 'Presion',
+  sensors:'Sensores',
+  new: 'Nueva',
+  delete: 'Borrar',
+  edit: 'Editar',
+  cancel: 'Cancelar',
+  save: 'Guardar',
+  failed: 'las cagao!',
+  success: 'Oh Sii nena!',
 }

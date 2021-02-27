@@ -4,29 +4,29 @@
   
       <b-container title="Sensores" v-if="loaded" >
         <div class="row q-gutter-md" >
-          <b-sensor prop="Temperatura" :value="sensor.te+'°'"></b-sensor>
-          <b-sensor prop="Humedad" :value="sensor.hu+'%'"></b-sensor>
-          <b-sensor prop="Presion" :value="sensor.pr"></b-sensor>
+          <b-sensor :prop="$t('temp')" :value="sensor.te+'°'"></b-sensor>
+          <b-sensor :prop="$t('hum')" :value="sensor.hu+'%'"></b-sensor>
+          <b-sensor :prop="$t('press')" :value="sensor.pr"></b-sensor>
         </div>
       </b-container>
 
-      <b-container title="Tiempo" v-if="loaded" >
+      <b-container :title="$t('weather.name')" v-if="loaded" >
       
         <div class='row '>
           <b-icon :icon="weather.icon1" style="font-size:120px;"/>
           
-          <b-timer local="es-ES" :weather="weather" style="flex-grow: 1;"/>
+          <b-timer :local="$t('localeTime')" :weather="weather" style="flex-grow: 1;"/>
         </div>
   
         <br/>
         <div class="q-mx-auto" style="width:250px;">
-          <b-param title="Viento">
+          <b-param :title="$t('weather.win')">
             {{weather.winSpeed}}km/h - {{weather.winDirection}}°
           </b-param>
-          <b-param title="Nubosidad">{{weather.cloudCover}}%</b-param>
-          <b-param title="Temperatura"> min.{{weather.minTemp}}° max.{{weather.maxTemp}}°</b-param>
-          <b-param title="Precipitacion">{{getInfo()}}</b-param>
-          <b-param title="sol">{{formatTime(weather.sunStart)}} {{formatTime(weather.sunEnd)}}</b-param>
+          <b-param :title="$t('weather.clouds')">{{weather.cloudCover}}%</b-param>
+          <b-param :title="$t('temp')"> min.{{weather.minTemp}}° max.{{weather.maxTemp}}°</b-param>
+          <b-param :title="$t('weather.precipitation')">{{infoPrecipitation}}</b-param>
+          <b-param title="sol">{{formatTime(weather.sunStart)}}-{{formatTime(weather.sunEnd)}}</b-param>
         </div>
         <br/>
         <div class="text-h6">{{weather.phrase}}</div>
@@ -52,6 +52,10 @@ export default {
   name: "Home",
   computed: {
     ...mapState(["weather", "sensor", "loaded"]),
+    infoPrecipitation() {
+      let w = this.weather;
+      return `${w.precipitationProbability}% / ${w.totalLiquid} mm / ${w.hoursOfPrecipitation}h`;
+    },
   },
   data: function () {
     return {
@@ -59,19 +63,8 @@ export default {
     };
   },
   methods: {
-    getInfo() {
-      let w = this.weather;
-      return `${w.precipitationProbability}% / ${w.totalLiquid} mm / ${w.hoursOfPrecipitation}h`;
-    },
     formatTime(time) {
-      return new Date(time * 1000).toLocaleTimeString("es-ES");
-    },
-    getFileIcon(id) {
-      let r = "/asset/";
-      if (id < 10) r += "0" + id;
-      else r += id;
-      r += "-m.webp";
-      return r;
+      return new Date(time * 1000).toLocaleTimeString(this.$t('localeTime'));
     },
   },
 };

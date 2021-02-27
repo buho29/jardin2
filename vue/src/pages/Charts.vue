@@ -1,9 +1,9 @@
 <template>
   <q-page>
     <div class="col text-center">
-      <b-chart :data="sensors" title="Temperatura" tag="te"></b-chart>
-      <b-chart :data="sensors" title="Pression" tag="pr"></b-chart>
-      <b-chart :data="sensors" title="Humedad" tag="hu"></b-chart>
+      <b-chart :data="sensors" :title="$t('temp')" tag="te"></b-chart>
+      <b-chart :data="sensors" :title="$t('press')" tag="pr"></b-chart>
+      <b-chart :data="sensors" :title="$t('hum')" tag="hu"></b-chart>
     </div>
   </q-page>
 </template>

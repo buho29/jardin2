@@ -1,42 +1,38 @@
 <template>
   <q-page class="q-pa-none">
-    <div
-      class="q-mt-lg q-mx-auto text-center bg-white"
-      style="max-width: 400px"
-    >
+    <div class="q-mt-lg q-mx-auto text-center bg-white"
+      style="max-width: 400px">
       <div class="bg-primary text-white shadow-3">
         <div class="text-h6 q-pa-sm">{{ name }}</div>
       </div>
 
       <q-form @submit="onSaveZone" class="q-gutter-md q-pa-md">
-        <div class="text-h6 text-blue-5" v-if="can_watering">Hoy se riega</div>
-        <div class="text-h6 text-red-5" v-else>Hoy no se riega</div>
-        <q-input
-          dense
-          filled
-          v-model="name"
-          label="Nombre *"
-          lazy-rules
-          :rules="[
+        <div class="text-h6 text-blue-5" v-if="can_watering">
+          {{$t('zones.todayWatering')}}
+        </div>
+        <div class="text-h6 text-red-5" v-else>
+           {{$t('zones.todayNotWatering')}}
+        </div>
+        <q-input dense filled
+          v-model="name" :label="$t('name')"
+          lazy-rules :rules="[
             (val) => (val && val.length > 0) || 'Por favor escriba algo',
           ]"
         >
         </q-input>
         <b-select-flags
-          label="Modos"
+          :label="$t('zone.modes')"
           :options="modesData"
           :flags="modesFlags"
           @input="change"
         />
         <div class="col-12 text-right">
-          <q-btn
-            flat
-            label="Cancelar"
+          <q-btn flat class="text-primary"
+            :label="$t('cancel')"
             @click="$router.go(-1)"
-            class="text-primary"
           ></q-btn>
           <q-btn
-            label="Guardar"
+            :label="$t('save')"
             type="submit"
             class="bg-primary text-white"
           ></q-btn>
@@ -44,28 +40,21 @@
       </q-form>
 
       <div class="bg-primary text-white shadow-3 row">
-        <div class="text-h6 q-pa-sm col">Alarmas</div>
+        <div class="text-h6 q-pa-sm col">{{$t('zone.alarms')}}</div>
 
-        <q-fab
-          v-model="fab"
-          v-if="zoneId > -1"
-          flat
-          dense
-          class="col-auto"
-          icon="icon-cog"
-          active-icon="icon-cog"
-          direction="left"
-          padding="sm"
+        <q-fab flat dense class="col-auto" icon="icon-cog"
+          active-icon="icon-cog" direction="left" padding="sm"
+          v-model="fab" v-if="zoneId > -1"
         >
           <q-fab-action
-            v-if="selectedAlarmId > -1"
             padding="5px"
             color="warning"
             icon="icon-delete"
             external-label
             label-position="bottom"
+            v-if="selectedAlarmId > -1"
             @click="deleteAlarm(selectedAlarmId)"
-            label="Borrar"
+            :label="$t('delete')"
           />
 
           <q-fab-action
@@ -76,7 +65,7 @@
             external-label
             @click="showDialogAlarm(selectedAlarmId)"
             icon="icon-pencil"
-            label="Editar"
+            :label="$t('edit')"
           />
 
           <q-fab-action
@@ -86,7 +75,7 @@
             class="text-dark bg-white"
             @click="showDialogAlarm(-1)"
             icon="icon-plus"
-            label="Nueva"
+            :label="$t('new')"
           />
         </q-fab>
       </div>
@@ -116,35 +105,26 @@
       <q-card>
         <q-card-section class="q-pa-none">
           <div
-            class="bg-primary text-h6 text-center text-white shadow-3 q-pa-md"
-          >
-            Alarma
+            class="bg-primary text-h6 text-center text-white shadow-3 q-pa-md">
+            {{$t('zone.alarm')}}
           </div>
         </q-card-section>
         <q-card-section>
           <q-form @submit="onSaveAlarm" class="q-pa-md q-gutter-sm row">
-            <q-input
-              :disable="lastAlarm"
-              filled
-              v-model="time"
-              hint="Hora"
-              mask="fulltime"
-              :rules="['fulltime']"
-              style="width: 120px"
-            >
+            <q-input filled style="width: 120px" 
+              v-model="time" :disable="lastAlarm"
+              mask="fulltime" :rules="['fulltime']"
+              :hint="$t('zone.time')">
+
               <template v-slot:append>
                 <q-icon name="icon-alarm" class="cursor-pointer">
                   <q-popup-proxy
                     transition-show="scale"
-                    transition-hide="scale"
-                  >
+                    transition-hide="scale" >
                     <q-time v-model="time" format24h now-btn with-seconds>
                       <div class="row items-center justify-end">
-                        <q-btn
-                          v-close-popup
-                          label="Aceptar"
-                          color="primary"
-                          flat
+                        <q-btn color="primary" flat
+                          v-close-popup label="$t('accept')"
                         ></q-btn>
                       </div>
                     </q-time>
@@ -152,48 +132,37 @@
                 </q-icon>
               </template>
             </q-input>
-            <q-input
-              filled
-              type="number"
-              hint="Duracion (min)"
-              lazy-rules
-              :rules="[
-                (val) => (val !== null && val !== '') || 'Esta mal...',
-                (val) => (val > 0 && val < 180) || 'Use de 1 a 180min',
+
+            <q-input filled type="number" style="width: 120px"
+              :hint="$t('zone.duration')"
+              lazy-rules :rules="[
+                (val) => (val !== null && val !== '') || $t('zone.durationErrors[0]'),
+                (val) => (val > 0 && val < 180) ||  $t('zone.durationErrors[1]'),
               ]"
-              v-model="duration"
-              style="width: 120px"
-            >
+              v-model="duration">
             </q-input>
-            <q-select
-              filled
-              v-model="tap"
-              :options="taps"
-              option-label="name"
-              hint="Grifo"
-              style="width: 120px"
-              lazy-rules
-              :rules="[
-                (val) => (val !== null && val !== '') || 'Selecciona un grifo',
-              ]"
-            >
+
+            <q-select filled style="width: 120px"
+              v-model="tap" :options="taps" option-label="name"
+              :hint="$t('zone.tap')"
+              lazy-rules :rules="[
+                (val) => (val !== null && val !== '') || $t('zone.tapErrors'),
+              ]">
             </q-select>
+
             <div class="col-12">
               <q-checkbox
                 v-model="lastAlarm"
-                label="Ultima Alarma"
+                :label="$t('zone.lastAlarm')"
                 @input="onLastAlarm"
               ></q-checkbox>
-              <q-btn
-                flat
-                label="Cancelar"
+              <q-btn flat class="text-primary"
+                :label="$t('cancel')"
                 v-close-popup
-                class="text-primary"
               ></q-btn>
-              <q-btn
-                label="Guardar"
+              <q-btn class="bg-primary text-white"
+                :label="$t('save')"
                 type="submit"
-                class="bg-primary text-white"
               ></q-btn>
             </div>
           </q-form>
@@ -209,8 +178,10 @@ import {mapActions,mapState,mapGetters} from 'vuex'
 
 import mixinFormat from 'src/components/mixin/mixinFormat';
 import mixinRequiresAuth from 'src/components/mixin/mixinRequiresAuth';
+import bSelectFlags from 'src/components/zone/bSelectFlags.vue';
 
 export default {
+  components: { bSelectFlags },
     name :"Zone",
     mixins: [mixinFormat, mixinRequiresAuth],
     data() {

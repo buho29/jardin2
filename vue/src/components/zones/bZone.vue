@@ -22,13 +22,13 @@
             color="warning"
             icon="icon-delete"
             @click="onDelete"
-            label="Borrar"
+            :label="$t('delete')"
           />
 
           <q-fab-action
             padding="5px"
             icon="icon-pencil"
-            label="Editar"
+            :label="$t('edit')"
             :to="{ name: 'zone', params: { id: data.id } }"
             external-label
             label-position="left"
@@ -40,9 +40,11 @@
 
     <q-card-section style="height: 180px">
       <div class="text-h6 q-pa-sm text-blue-5" v-if="data.can_watering">
-        Hoy se riega
+        {{$t('zones.todayWatering')}}
       </div>
-      <div class="text-h6 q-pa-sm text-red-5" v-else>Hoy no se riega</div>
+      <div class="text-h6 q-pa-sm text-red-5" v-else>
+        {{$t('zones.todayNotWatering')}}
+      </div>
       <!-- parado  -->
       <div v-if="!data.runing" class="text-center">
         <div class="text-h3 q-ma-none">
@@ -73,14 +75,14 @@
         :checked="data.paused"
         @change="onPause"
         :disable="!data.runing"
-        label-off="Reanudar"
-        label-on="Pausar"
+        :label-off="$t('zones.resume')"
+        :label-on="$t('zones.pause')"
       ></b-toggle>
       <b-toggle
         :checked="data.runing"
         @change="onWater"
-        label-off="Cancelar"
-        label-on="Regar"
+        :label-off="$t('cancel')"
+        :label-on="$t('zones.water')"
       ></b-toggle>
     </q-card-actions>
   </q-card>

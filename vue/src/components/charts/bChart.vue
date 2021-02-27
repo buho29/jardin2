@@ -1,3 +1,4 @@
+
 <template>
   <q-card class="q-ma-md">
     <q-card-section class="q-pa-none q-ma-none">
@@ -6,11 +7,10 @@
       </div>
     </q-card-section>
     <q-card-section>
-      <b-line-chart
+      <b-line-chart style="height: 300px;"
         :data="data"
         :title="title"
         :tag="tag"
-        style="height: 300px"
       ></b-line-chart>
     </q-card-section>
   </q-card>
