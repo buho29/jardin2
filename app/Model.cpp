@@ -958,9 +958,9 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 		}
 
 		if (removeAlarm(id))
-			sendMessage(0, Str::deleteItem + "|" + msg);
+			sendMessage(0, Str::deleteItem, msg);
 		else
-			sendMessage(1, Str::errorDelete + "|" + msg, client);
+			sendMessage(1, Str::errorDelete, msg, client);
 	}
 	else if (alarm.containsKey("edit"))
 	{
@@ -984,11 +984,11 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 			msg = String(zones[ocuped->zoneId]->name) + " : " +
 				Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
 
-			sendMessage(1, Str::occupied + "|" + msg, client);
+			sendMessage(1, Str::occupied, msg, client);
 		}
 		else if (editAlarm(id, tapId, time, duration))
-			sendMessage(0, Str::edit + "|" + msg);
-		else sendMessage(1, Str::errorEdit + "|" + msg, client);
+			sendMessage(0, Str::edit, msg);
+		else sendMessage(1, Str::errorEdit, msg, client);
 	}
 	else if (alarm.containsKey("new"))
 	{
@@ -1011,12 +1011,12 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 			msg = String(zones[ocuped->zoneId]->name) + " : " +
 				Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
 
-			sendMessage(1, Str::occupied + "|" + msg, client);
+			sendMessage(1, Str::occupied, msg, client);
 		}
 		else if (addAlarm(zoneId, tapId, time, duration)>-1)
-			sendMessage(0, Str::create + "|" + msg);
+			sendMessage(0, Str::create, msg);
 		else
-			sendMessage(1, Str::errorCreate + "|" + msg, client);
+			sendMessage(1, Str::errorCreate, msg, client);
 	}
 }
 
