@@ -78,7 +78,7 @@ export default {
   },
   localeTime: 'en-US',
   accept: 'Accept',
-  send: 'Send to',
+  send: 'Send',
   reset: 'Reset',
   name: 'Name',
   pass: 'Password',

@@ -15,7 +15,6 @@ export function updateConfig(state, obj) {
 export function updateWeather(state, obj) {
   obj.diff = Date.now() - obj.time*1000;
   state.weather = obj;
-
 }
 
 export function updateTaps(state, array) { state.taps = array; }
@@ -79,6 +78,11 @@ export function loadLocal(state){
     state.routingServer = true; 
   } else {
     state.routingServer = b === "true";
+  }
+
+  let lang = localStorage.getItem('lang');
+  if(lang){
+    this.$i18n.locale = lang;
   }
 
 }

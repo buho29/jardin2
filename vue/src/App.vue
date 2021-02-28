@@ -53,7 +53,7 @@ export default {
       if (pl) {
         let args = pl.split("|");
         if(args.length>0){
-          return this.$t(`server[${args[0]}]`, [args[1]])
+          return this.$t(`server[${args[0]}]`, [args[1]]);
         }
       }
       return this.$t(`server[${pl}]`);
@@ -72,6 +72,7 @@ export default {
     
     this.connect();
 
+    // console.log('Updating mutation', action.type,action.payload);
     // nos registrammos a las llamadas de acciones en vuex
     this.unsubscribe = this.$store.subscribeAction((action, state) => {
       
@@ -86,7 +87,6 @@ export default {
             this.notifyW(this.$t('app.error'));
             break;
           case "message":
-      console.log('Updating mutation', action.type,action.payload);
             let pl = action.payload;
             let msg = this.getMsg(pl.content);
             //ok

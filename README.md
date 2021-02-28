@@ -26,11 +26,30 @@ esta en vue + quasar para los componentes , no se usa cli , las libreria js se u
 el proyect usa estas librerias:
 
 https://github.com/bblanchon/ArduinoJson
+<br/>
 https://github.com/me-no-dev/AsyncTCP
+<br/>
 https://github.com/me-no-dev/ESPAsyncWebServer
+<br/>
 https://github.com/adafruit/Adafruit_BME280_Library
+<br/>
 https://github.com/lorol/LITTLEFS
+<br/>
 https://github.com/adafruit/RTClib
-
+<br/>
 cuando no usas rtc (real-time clock) hay q comentar el #define __RTC__ en Clock.h
+
+<br/>
 https://github.com/PaulStoffregen/Time
+
+html libreria
+<br/>
+https://vuejs.org/
+<br/>
+https://router.vuejs.org/
+<br/>
+https://vuex.vuejs.org/
+<br/>
+https://vue-chartjs.org
+<br/>
+https://quasar.dev/
