@@ -15,9 +15,6 @@ void Model::begin()
 	status = Status::starting;
 	dispachEvent(EventType::status);
 
-
-	esp_wifi_set_ps(WIFI_PS_NONE);
-
 #ifdef USELITTLEFS
 	if (!LITTLEFS.begin(true)) {
 		Serial.println("LITTLEFS Mount Failed");
@@ -78,14 +75,11 @@ void Model::begin()
 		//Serial.printf("pin %d\n", tap->pin);
 	}
 
-	//imprime las zonas y sus alarmas
-	//printZones();
-
 	//iniciamos las tareas
 	updateTasks();
 
 
-	jsonFiles = printJsonOption();
+	jsonFiles = printJsonFiles();
 
 	startWebServer();
 
@@ -582,37 +576,49 @@ String Model::printJsonOption()
 
 	const JsonObject & root = doc.to<JsonObject>();
 	
-
 	const JsonObject & system = root.createNestedObject("system");
 	printJsonSystem(system);
 
-	const JsonArray & files = root.createNestedArray("root");
-
-	const JsonObject & www = files.createNestedObject();
-	www["path"] = "/www/";
-	const JsonArray & wwwFolders = www.createNestedArray("folders");
-	listDir("/www/", wwwFolders, 3);
-
-	const JsonObject & data = files.createNestedObject();
-	data["path"] = "/data/";
-	const JsonArray & dataFolders = data.createNestedArray("folders");
-	listDir("/data/", dataFolders, 3);
-
 	JsonObject o = root.createNestedObject("config");
 	config.serializeItem(o, true);
-
-	Serial.printf("config %d ms\n", millis() - c);
-
 
 	String json;
 	serializeJson(root, json);
 
 	Serial.printf("printJsonOption total %d ms\n", millis() - c);
 
-	Serial.println(json);
+	return json;
+}
+
+String Model::printJsonFiles()
+{
+	DynamicJsonDocument doc(10000);
+	uint32_t c = millis();
+
+	const JsonObject& root = doc.to<JsonObject>();
+
+	const JsonArray& files = root.createNestedArray("root");
+
+	const JsonObject& www = files.createNestedObject();
+	www["path"] = "/www/";
+	const JsonArray& wwwFolders = www.createNestedArray("folders");
+	listDir("/www/", wwwFolders, 3);
+
+	const JsonObject& data = files.createNestedObject();
+	data["path"] = "/data/";
+	const JsonArray& dataFolders = data.createNestedArray("folders");
+	listDir("/data/", dataFolders, 3);
+
+	Serial.printf("config %d ms\n", millis() - c);
+
+	String json;
+	serializeJson(root, json);
+
+	Serial.printf("printJsonFiles total %d ms\n", millis() - c);
 
 	return json;
 }
+
 //888.494 bytes
 void Model::printJsonSystem(const JsonObject & doc)
 {
@@ -627,10 +633,14 @@ void Model::printJsonSystem(const JsonObject & doc)
 	doc["heapSize"] = ESP.getHeapSize();
 
 	Serial.printf("printJsonSystem %d ms\n", millis() - c);
-	/*
-	doc["LITTLEFSTotalSpace"] = LITTLEFS.totalBytes();
-	Serial.printf("printJsonSystem %d ms\n", millis() - c);
-	doc["LITTLEFSUsedSpace"] = LITTLEFS.usedBytes();*/
+
+
+#ifdef USELITTLEFS
+	doc["totalSpace"] = LITTLEFS.totalBytes();
+	doc["usedSpace"] = LITTLEFS.usedBytes();
+#else
+// TODO: print spiff
+#endif
 
 	Serial.printf("printJsonSystem %d ms\n", millis() - c);
 }
@@ -800,6 +810,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		bool log = cmd["auth"];
 		if (log) {
 			saveClientAuth(client);
+			client->text(printJsonOption());
 			client->text(jsonFiles);
 		}
 		else removeClientAuth(client);
@@ -836,14 +847,20 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 	bool modified = false;
 	if (cmd.containsKey("config")) {
 		JsonObject con = cmd["config"];
+		String r;
+		serializeJson(con, r);
+		Serial.println(r);
+
 		if (con.containsKey("tz") && con.containsKey("dst")) {
-			config.setTimeZone(con["dst"], con["tz"]);
+			config.setTimeZone(con["dst"].as<char*>(), con["tz"].as<int>());
 			updateTimeZone();
 			modified = true;
 		}
 
 		if (con.containsKey("wifi_ssid") && con.containsKey("wifi_pass")) {
-			config.setWifi(con["wifi_ssid"], con["wifi_pass"]);
+			config.setWifi(
+				con["wifi_ssid"].as<char*>(), con["wifi_pass"].as<char*>()
+			);
 			modified = true;
 			//TODO actualizar wifi o resetEsp
 		}
@@ -851,13 +868,20 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		if (con.containsKey("cityName") && con.containsKey("accuURL") 
 				&& con.containsKey("cityID")) 
 		{
-			config.setAccu(con["cityID"], con["cityName"], con["accuURL"]);
+			config.setAccu(
+				con["cityID"].as<char*>(),
+				con["cityName"].as<char*>(), 
+				con["accuURL"].as<char*>()
+			);
 			modified = true;
 			if (connectedWifi) loadForecast();
 		}
 
 		if (con.containsKey("www_user") && con.containsKey("www_pass")) {
-			config.setAdmin(con["www_user"], con["www_pass"]);
+			config.setAdmin(
+				con["www_user"].as<char*>(),
+				con["www_pass"].as<char*>()
+			);
 			modified = true;
 			//TODO actualizar werver pass :???
 		}
@@ -865,7 +889,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		if (modified) {
 			sendMessage(0, String(Str::edit));
 			writeJson("/data/config.json", &config);
-
+			// dispach event
 		}
 	}
 
@@ -1927,7 +1951,7 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 
 			if (fs.exists(filename) && fs.remove(filename)) {
 				sendResponse(request, request->beginResponse(200));
-				jsonFiles = printJsonOption();
+				jsonFiles = printJsonFiles();
 				sendAllAuth(jsonFiles);
 			}
 			else
@@ -1944,7 +1968,7 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 			fs.exists(path +"/"+ request->getParam("file", true, true)->value())) {
 			
 			sendResponse(request, request->beginResponse(200));//ok
-			jsonFiles = printJsonOption();
+			jsonFiles = printJsonFiles();
 			sendAllAuth(jsonFiles);
 		}	
 		else 

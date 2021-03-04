@@ -74,6 +74,8 @@ struct Config :public Item
 	//offset, irregularity, beginDay, beginMonth, endDay, endMonth, beginHour, endHour
 	uint8_t dst[8] = {0, 5, 3, 5, 10, 2, 3 };
 	int8_t tz = 1;
+	//private print result;
+	String r;
 
 	void set(
 		const char * wifi_ssid, const char * wifi_pass,
@@ -134,9 +136,8 @@ struct Config :public Item
 	};
 
 	String getDst() {
-
 		//write
-		String r;
+		r = "";
 		for (int i = 0;i < 7;i++)
 		{
 			int param = dst[i];
@@ -166,8 +167,7 @@ struct Config :public Item
 		obj["cityName"] = this->cityName;
 		obj["accuURL"] = this->accuURL;
 		obj["tz"] = this->tz;
-		const char * d = getDst().c_str();
-		obj["dst"] = d;
+		obj["dst"] = getDst();
 	};
 
 	void deserializeItem(JsonObject &obj) {

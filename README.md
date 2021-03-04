@@ -27,7 +27,9 @@ el proyect usa estas librerias:
 
 https://github.com/bblanchon/ArduinoJson
 <br/>
-https://github.com/me-no-dev/AsyncTCP
+(https://www.gitmemory.com/issue/me-no-dev/ESPAsyncWebServer/825/748538037)
+
+https://github.com/yubox-node-org/AsyncTCPSock
 <br/>
 https://github.com/me-no-dev/ESPAsyncWebServer
 <br/>
@@ -42,6 +44,8 @@ cuando no usas rtc (real-time clock) hay q comentar el #define __RTC__ en Clock.
 <br/>
 https://github.com/PaulStoffregen/Time
 
+<br/>
+<br/>
 html libreria
 <br/>
 https://vuejs.org/

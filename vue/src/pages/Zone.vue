@@ -199,16 +199,16 @@ export default {
             alarmsZone: [],
             modesFlags: 0,
             modesData: [
-                { label: 'Desactivar 24h', value: 0b0000000001},
-                { label: 'Meteorologia', value  : 0b0000000010},
-                { label: 'Sensores', value      : 0b0000000100},
-                { label: 'Lunes', value         : 0b0000001000},
-                { label: 'Martes', value        : 0b0000010000},
-                { label: 'Miercoles', value     : 0b0000100000},
-                { label: 'Jueves', value        : 0b0001000000},
-                { label: 'Viernes', value       : 0b0010000000},
-                { label: 'Sabado', value        : 0b0100000000},
-                { label: 'Domingo', value       : 0b1000000000}
+                { label: this.$t('modes[0]'), value: 0b0000000001},
+                { label: this.$t('modes[1]'), value: 0b0000000010},
+                { label: this.$t('modes[2]'), value: 0b0000000100},
+                { label: this.$t('modes[3]'), value: 0b0000001000},
+                { label: this.$t('modes[4]'), value: 0b0000010000},
+                { label: this.$t('modes[5]'), value: 0b0000100000},
+                { label: this.$t('modes[6]'), value: 0b0001000000},
+                { label: this.$t('modes[7]'), value: 0b0010000000},
+                { label: this.$t('modes[8]'), value: 0b0100000000},
+                { label: this.$t('modes[9]'), value: 0b1000000000}
             ],
         }
     },

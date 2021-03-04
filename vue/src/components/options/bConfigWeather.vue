@@ -2,6 +2,8 @@
     <b-container title="Accuweather.com">
       <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-sm" >
       
+      <b-search-city @input="searchResult"/>
+
       <q-input filled v-model="cityName" :label="$t('config.nameCity')" dense
         lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']">
       </q-input>
@@ -24,9 +26,10 @@ import {mapActions} from 'vuex';
 import BBtnSend from '../bBtnSend.vue';
 import bContainer from '../bContainer.vue';
 import mixinOption from '../mixin/mixinOption';
+import BSearchCity from './bSearchCity.vue';
 
 export default {
-  components: { bContainer, BBtnSend },
+  components: { bContainer, BBtnSend, BSearchCity },
     name:"b-config-weather",   
     data() {
         return {
@@ -53,6 +56,10 @@ export default {
           this.cityName = this.config.cityName;
           this.cityID = this.config.cityID;
           this.accuURL = this.config.accuURL;
+        },
+        searchResult(obj){
+          this.cityName = obj.label;
+          this.cityID = obj.cityID;
         }
     },
 }

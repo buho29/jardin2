@@ -2,7 +2,7 @@
   <q-page> 
         <q-page>
   
-      <b-container title="Sensores" v-if="loaded" >
+      <b-container :title="$t('sensors')" v-if="loaded" >
         <div class="row q-gutter-md" >
           <b-sensor :prop="$t('temp')" :value="sensor.te+'°'"></b-sensor>
           <b-sensor :prop="$t('hum')" :value="sensor.hu+'%'"></b-sensor>

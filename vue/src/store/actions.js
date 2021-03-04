@@ -1,5 +1,5 @@
 
-//TODO connexion inicial websocket
+// connexion inicial websocket
 export function connect({ commit, dispatch }) {
   if (this.connection !== undefined) {
     this.connection.close();

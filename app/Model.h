@@ -191,6 +191,8 @@ private:
 
 	String printJsonFirstRun();
 	String printJsonOption();
+	String printJsonFiles();
+
 	String printJsonForecast();
 
 	void printJsonSystem(const JsonObject& obj);

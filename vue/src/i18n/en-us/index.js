@@ -76,6 +76,27 @@ export default {
     17: 'Error creating {0}',
     18: 'I am watering',
   },
+  date: {
+    days: 'Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday'.split('_'),
+    daysShort: 'Sun_Mon_Tue_Wed_Thu_Fri_Sat'.split('_'),
+    months: 'January_February_March_April_May_June_July_August_September_October_November_December'.split('_'),
+    monthsShort: 'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec'.split('_'),
+    firstDayOfWeek: 0, // 0-6, 0 - Sunday, 1 Monday, ...
+    format24h: false,
+    pluralDay: 'days'
+  },
+  modes: {
+    0: 'Deactivate 24h',
+    1: 'Meteorology',
+    2: '@:sensors',
+    3: '@:date.days.1',
+    4: '@:date.days.2',
+    5: '@:date.days.3',
+    6: '@:date.days.4',
+    7: '@:date.days.5',
+    8: '@:date.days.6',
+    9: '@:date.days.0',
+  },
   localeTime: 'en-US',
   accept: 'Accept',
   send: 'Send',
