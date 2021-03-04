@@ -1,6 +1,7 @@
 <template>
   <div class="text-center q-pa-sm">
-    <div class="text-primary text-h5">{{ currentDate }}</div>
+    <div class="text-primary text-h4">{{ currentDate }}</div>
+    <div class="text-primary text-h6">{{ dataString }}</div>
     <div class="text-h5 q-ma-none">
       {{ localTime }}<span class="text-body1 text-blue-5"> Local</span>
     </div>
@@ -14,25 +15,35 @@ export default {
   name: "b-timer",
   data() {
     return {
-      localTime: new Date().toLocaleTimeString("es-ES"),
-      currentDate: new Date().toLocaleDateString("es-ES"),
-      diff: 0,
-      serverTime: 0,
+      date: new Date(),
+      localTime: new Date().toLocaleTimeString(this.$t('localeTime')),
+      local: this.$t('localeTime'),
     };
   },
-  props: ["weather", "local"],
+  props: ["diff"],
   mounted() {
     this.id = setInterval(this.tick, 1000);
   },
   beforeDestroy() {
     clearInterval(this.id);
   },
+  computed:{
+    serverTime(){
+      return this.date.toLocaleTimeString(this.local);
+    },
+    currentDate(){
+      return this.date.toLocaleDateString(this.local);
+    },
+    dataString(){
+      return this.$t('date.days.'+this.date.getDay())+", "+
+        this.date.getDate()+ ' '+
+        this.$t('date.months.'+this.date.getMonth());
+    }
+  },
   methods: {
     tick() {
-      let date = new Date(Date.now() - this.weather.diff);
+      this.date = new Date(Date.now() - this.diff);
       this.localTime = new Date().toLocaleTimeString(this.local);
-      this.serverTime = date.toLocaleTimeString(this.local);
-      this.currentDate = date.toLocaleDateString(this.local);
     },
   },
 };

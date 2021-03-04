@@ -15,10 +15,11 @@
         <div class='row '>
           <b-icon :icon="weather.icon1" style="font-size:120px;"/>
           
-          <b-timer :local="$t('localeTime')" :weather="weather" style="flex-grow: 1;"/>
+          <b-timer :diff="weather.diff" style="flex-grow: 1;"/>
         </div>
   
         <br/>
+        <div class="text-h6 text-primary"> {{weather.cityName}} </div>
         <div class="q-mx-auto" style="width:250px;">
           <b-param :title="$t('weather.win')">
             {{weather.winSpeed}}km/h - {{weather.winDirection}}°

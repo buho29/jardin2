@@ -361,8 +361,8 @@ struct WeatherData {
 	time_t sun[2]; // inicio final
 
 	bool isDay() {
-		ClockTime & clockTime = ClockTime::instance();
-		return clockTime.timeNow() > sun[0] && clockTime.timeNow() < sun[1];
+		uint32_t t = ClockTime::instance().local();
+		return t > sun[0] && t < sun[1];
 	};
 
 	Forecast * getCurrent() {

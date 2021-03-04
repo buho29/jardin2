@@ -4,10 +4,10 @@
       <q-select
         v-model="root"
         :options="rootFiles"
-        dense
+        dense filled
         @input="rootClick"
         option-label="path"
-        filled
+        
         class="col-4"
       ></q-select>
 

@@ -6,7 +6,7 @@
           <q-toggle label= "routing server" :value="routingServer" 
             @input="setRoutingServer(!routingServer)">
           </q-toggle>
-          <q-select v-model="lang" :options="langs" label="Language" dense 
+          <q-select v-model="lang" :options="langs" label="Language" dense filled
             borderless emit-value map-options options-dense />
         </b-container>
 

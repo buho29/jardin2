@@ -1,6 +1,6 @@
 <template>
   <q-card class="text-h6">
-    <q-card-section class="q-pa-none text-primary">
+    <q-card-section class="q-pa-none text-primary" style="width:130px;">
       <div class="q-pa-sm">{{ prop }}</div>
       <q-separator />
     </q-card-section>

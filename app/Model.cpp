@@ -661,13 +661,14 @@ void Model::printJsonForecast(const JsonObject & doc)
 	doc["cloudCover"] = fore->cloudCover;
 	doc["icon1"] = fore->icon;
 	
-	clockTime.timeNow();
+	//clockTime.timeNow();
 	doc["time"] = clockTime.utc();
 	doc["minTemp"] = weather.minTemp();
 	doc["maxTemp"] = weather.maxTemp();
 	doc["sunStart"] = weather.sun[0]-clockTime.tz();
 	doc["sunEnd"] = weather.sun[1]-clockTime.tz();
 	doc["isDay"] = weather.isDay();
+	doc["cityName"] = config.cityName;
 }
 
 String Model::printJsonForecast()
@@ -854,6 +855,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		if (con.containsKey("tz") && con.containsKey("dst")) {
 			config.setTimeZone(con["dst"].as<char*>(), con["tz"].as<int>());
 			updateTimeZone();
+			sendAll(printJsonForecast());
 			modified = true;
 		}
 
@@ -887,8 +889,9 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		}
 
 		if (modified) {
-			sendMessage(0, String(Str::edit));
 			writeJson("/data/config.json", &config);
+			sendMessage(0, String(Str::edit));
+			sendAllAuth(printJsonOption());
 			// dispach event
 		}
 	}
@@ -1736,7 +1739,7 @@ void Model::loadForecast()
 
 bool Model::parseForescast()
 {
-	DynamicJsonDocument doc(20000);
+	DynamicJsonDocument doc(60000);
 
 	String json = client.readStringUntil('\r');
 
@@ -1767,7 +1770,7 @@ bool Model::parseForescast()
 	weather.temp[0] = DailyForecasts["Temperature"]["Minimum"]["Value"];
 	weather.temp[1] = DailyForecasts["Temperature"]["Maximum"]["Value"];
 
-	Serial.printf("Temperatura min %d° max %d°", weather.temp[0], weather.temp[1]);
+	Serial.printf("Temperatura min %d° max %d°\n", weather.temp[0], weather.temp[1]);
 
 	JsonObject sun = DailyForecasts["Sun"];
 
@@ -1825,10 +1828,10 @@ void Model::updateSunTask()
 
 	uint32_t s;
 
-	uint32_t now = clockTime.timeNow();
+	uint32_t now = clockTime.local();
 
-	if (isDay()) s = weather.sun[1] - clockTime.timeNow();
-	else s = weather.sun[0] - clockTime.timeNow();
+	if (isDay()) s = weather.sun[1] - clockTime.local();
+	else s = weather.sun[0] - clockTime.local();
 
 	char buff[9], buff1[9];
 	Tasker::formatTime(buff, weather.sun[0]);
