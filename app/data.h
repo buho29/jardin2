@@ -312,7 +312,7 @@ struct AlarmItem :public Item
 	};
 };
 
-struct SensorsItem :public Item
+struct SensorItem :public Item
 {
 	float temperature;
 	float pressure;
@@ -340,6 +340,84 @@ struct SensorsItem :public Item
 		set(
 			obj["te"].as<float>(), obj["pr"].as<float>(),
 			obj["hu"].as<int>(), obj["ti"].as<int>()
+		);
+	};
+};
+
+
+struct SensorAvgItem :public Item
+{
+	int8_t minTemp;int8_t avgTemp;int8_t maxTemp;
+	int8_t minHum;int8_t avgHum;int8_t maxHum;
+
+	uint32_t time;
+
+	void set(
+		int8_t minTemp, int8_t avgTemp, int8_t maxTemp,
+		int8_t minHum, int8_t avgHum, int8_t maxHum,
+		uint32_t time
+	)
+	{
+		this->minTemp = minTemp; this->avgTemp = avgTemp; this->maxTemp = maxTemp;
+		this->minHum = minHum; this->avgHum = avgHum; this->maxHum = maxHum;
+		this->time = time;
+	};
+	void serializeItem(JsonObject& obj, bool extra = false)
+	{
+		obj["mite"] = this->minTemp; obj["avte"] = this->avgTemp; obj["mate"] = this->maxTemp;
+		obj["mihu"] = this->minHum; obj["avhu"] = this->avgHum; obj["mahu"] = this->maxHum;
+		obj["ti"] = this->time;
+	};
+	void deserializeItem(JsonObject& obj)
+	{
+		if (
+			!obj.containsKey("mite") || !obj.containsKey("avte") || !obj.containsKey("mate") ||
+			!obj.containsKey("mihu") || !obj.containsKey("avhu") || !obj.containsKey("mahu") ||
+			!obj.containsKey("ti"))
+		{
+			Serial.println("faill deserializeItem SensorsAvgItem");
+			return;
+		}
+		set(
+			obj["mite"].as<int8_t>(), obj["avte"].as<int8_t>(), obj["mate"].as<int8_t>(),
+			obj["mihu"].as<int8_t>(), obj["avhu"].as<int8_t>(), obj["mahu"].as<int8_t>(),
+
+			obj["ti"].as<uint32_t>()
+		);
+	};
+};
+
+
+struct actionItem :public Item
+{
+	uint32_t idItem;
+	uint8_t type;// 0:taps-time 1:taps-manual 2:zone-time 3:zone-manual
+	uint32_t start;
+	uint32_t end;
+
+	void set(uint32_t start, uint32_t end,uint8_t type,uint32_t idItem)
+	{
+		this->start = start;
+		this->end = end;
+		this->type = type;
+		this->idItem = idItem;
+	};
+	void serializeItem(JsonObject& obj, bool extra = false)
+	{
+		obj["s"] = this->start; obj["e"] = this->end;
+		obj["idi"] = this->idItem; obj["t"] = this->type;
+	};
+	void deserializeItem(JsonObject& obj)
+	{
+		if (!obj.containsKey("s") || !obj.containsKey("e") ||
+			!obj.containsKey("idi") || !obj.containsKey("t"))
+		{
+			Serial.println("faill deserializeItem waterItem");
+			return;
+		}
+		set(
+			obj["s"].as<uint32_t>(), obj["e"].as<uint32_t>(),
+			obj["idi"].as<uint8_t>(), obj["t"].as<uint32_t>()
 		);
 	};
 };

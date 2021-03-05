@@ -4,7 +4,7 @@
 DataTable<10, ZoneItem> zones;
 DataTable<200, AlarmItem> alarms;
 DataTable<20, TapItem> taps;
-DataList<24, SensorsItem> sensors;
+DataList<24, SensorItem> sensors;
 
 StringTable<30> lang;
 

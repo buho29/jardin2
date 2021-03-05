@@ -70,6 +70,15 @@ class Tasker
 
 		return t;
 	};
+	Task* setTimeout(p_callbackTask callback, uint8_t h, uint8_t m, uint8_t s = 0)
+	{
+		uint32_t dateStart = getTickTime(h, m, s);
+
+		Task* t = add(dateStart, dateStart + s, callback);
+		t->mode = 1;// lo marcamos para q ejecute solo una vez
+
+		return t;
+	};
 	Task *  setInterval(p_callbackTask callback, uint16_t s) 
 	{
 

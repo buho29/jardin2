@@ -1,6 +1,6 @@
-
 <template>
-  <q-card class="q-ma-md">
+  <q-card class="q-ma-md q-mx-auto"
+    style="width: 90%; min-width: 200px; max-width: 600px;">
     <q-card-section class="q-pa-none q-ma-none">
       <div class="bg-primary text-white shadow-3">
         <div class="text-h6 q-pa-sm">{{ title }}</div>

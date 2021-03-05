@@ -58,7 +58,7 @@ int8_t SensorExpression::evaluate()
 
 	if (!sensors.size()) return -1;
 
-	for (SensorsItem* item : sensors)
+	for (SensorItem* item : sensors)
 	{
 		averageTmp += item->temperature;
 		averageHum += item->humidity;

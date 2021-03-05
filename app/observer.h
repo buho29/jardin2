@@ -25,6 +25,7 @@ enum EventType {
 	loadedTime,
 	sensor,
 	sensorLog,
+	sensorLog24,
 	status,
 	zoneChanged,
 	modesChanged

@@ -14,7 +14,6 @@
       
         <div class='row '>
           <b-icon :icon="weather.icon1" style="font-size:120px;"/>
-          
           <b-timer :diff="weather.diff" style="flex-grow: 1;"/>
         </div>
   

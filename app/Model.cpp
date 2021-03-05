@@ -48,8 +48,8 @@ void Model::begin()
 		// cada 1/2 hora guardamos los valores de los sensores
 		tasker.setInterval(std::bind(&Model::saveLoger, this, _1), (30*60));
 
-		//Task * t = tasker.setInterval(
-		//	std::bind(&Model::saveLoger24h, this, _1), 0,0);
+		Task * t = tasker.setInterval(
+			std::bind(&Model::saveLoger24, this, _1), 0,0);
 
 	}
 	else {
@@ -209,7 +209,7 @@ bool Model::writeFile(const char * path, const char * message)
 		file.close();
 		return true;
 
-		//// comprobamos que se guardo correctamente comparando 
+		//// comprobamos que se guardo correctamente comparando string
 		//const String &str = readFile(path);
 		//if (!strcmp(message, str.c_str())){
 		//	Serial.printf("- file written in %dms :%s len:%d\n",elapsed, path, strlen(message));
@@ -302,6 +302,7 @@ void Model::readFiles()
 		writeJson("/data/config.json", &config);
 
 	readJson("/data/logSensors.json", &sensors);
+	readJson("/data/logSensors24.json", &sensors24);
 	calcZones();
 }
 
@@ -1651,7 +1652,7 @@ void Model::saveLoger(Task * t)
 		sensors.shift();
 	}
 
-	SensorsItem* sensor = sensors.getEmpty();
+	SensorItem* sensor = sensors.getEmpty();
 
 	sensor->set(
 		currentSensor.temperature,
@@ -1662,16 +1663,6 @@ void Model::saveLoger(Task * t)
 
 	sensors.push(sensor);
 
-
-	char buff[9];
-	char buff1[9];
-	Tasker::formatTime(buff, t->start);
-	Tasker::formatTime(buff1, tasker.timeNow());
-
-	Serial.printf(" saveLogger %d %s %s temp %.1f pression %.1f hum %d%%\n",
-		t->id, buff1, buff,
-		currentSensor.temperature, currentSensor.pressure, currentSensor.humidity);
-
 	const String & str = sensors.serializeString();
 
 	writeFile("/data/logSensors.json", str.c_str());
@@ -1679,14 +1670,60 @@ void Model::saveLoger(Task * t)
 	uint32_t c = millis();
 	const String & json = printJson("sensors", &sensors);
 	ws.textAll(json.c_str());
-	
-	Serial.printf("ws.printfAll(str.c_str())%d\n", millis() - c);
-
-	Serial.printf("write LITTLEFS size: %d sizeof: %d len: \n", sensors.size(), sizeof(sensors), str.length());
 
 	//Serial.println(str);
 
 	dispachEvent(EventType::sensorLog);
+}
+
+void Model::saveLoger24(Task* t)
+{
+	if (sensors24.size() >= sensors24.maxSize) {
+		sensors24.shift();
+	}
+
+	SensorAvgItem* sensor = sensors24.getEmpty();
+
+	int8_t minTemp = 100; int avgTemp; int8_t maxTemp;
+	int8_t minHum = 100; int avgHum; int8_t maxHum;
+
+	if (!sensors.size()) return;
+
+	for (SensorItem* item : sensors)
+	{
+		minTemp = (minTemp < item->temperature) ? minTemp : item->temperature;
+		minHum = (minHum < item->humidity) ? minHum : item->humidity;
+
+		avgTemp += item->temperature;
+		avgHum += item->humidity;
+
+		maxTemp = (maxTemp > item->temperature) ? maxTemp : item->temperature;
+		maxHum = (maxHum > item->humidity) ? maxHum : item->humidity;
+	};
+
+	avgTemp /= sensors.size();
+	avgHum /= sensors.size();
+
+	uint32_t time = clockTime.local();
+	sensor->set(
+		minTemp, avgTemp, maxTemp,
+		minHum, avgHum, maxHum,
+		time
+	);
+
+	sensors24.push(sensor);
+
+	const String& str = sensors.serializeString();
+
+	writeFile("/data/logSensors24.json", str.c_str());
+
+	uint32_t c = millis();
+	const String& json = printJson("sensors24", &sensors24);
+	ws.textAll(json.c_str());
+
+	//Serial.println(str);
+
+	dispachEvent(EventType::sensorLog24);
 }
 
 //		Meteo

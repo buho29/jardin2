@@ -99,14 +99,18 @@ private:
 
 	// el tiempo para volver a intentarlo
 	const uint8_t retryTime = 60;
-
+	//app
 	DataTable<10, ZoneItem> zones;
 	DataTable<20, TapItem> taps;
 	DataTable<200, AlarmItem> alarms;
-
-	static const uint logSize = 48;
-	DataList<logSize, SensorsItem> sensors;
-
+	//log
+	//30min x 24h
+	DataList<48, SensorItem> sensors;
+	// 24h x year
+	DataList<365, SensorAvgItem> sensors24;
+	//history action (water)
+	DataList<100, actionItem> history;
+	
 	//pause variable
 	int16_t elapsedPausedTask = 0;
 	int32_t pausedTime = 0;
@@ -139,6 +143,8 @@ private:
 
 	// cuando guardamos el log sensor cada 1/2h
 	void saveLoger(Task* t);
+	// cuando guardamos el log sensor cada 24h
+	void saveLoger24(Task* t);
 
 	//crypto
 	String sha1(const String& msg);
@@ -254,7 +260,7 @@ public:
 	// esta pausado ?
 	bool isPaused();
 
-	DataList<logSize, SensorsItem> & getSensorsLog() {
+	DataList<logSize, SensorItem> & getSensorsLog() {
 		return sensors;
 	}
 
@@ -278,7 +284,7 @@ public:
 	bool stopWaterZone();
 	bool pauseWaterZone(bool pause);
 
-	SensorsItem currentSensor;
+	SensorItem currentSensor;
 
 	WeatherData weather;
 	bool loadedForescast = false;

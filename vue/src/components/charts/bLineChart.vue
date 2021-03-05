@@ -4,7 +4,7 @@ import { Line, mixins } from 'vue-chartjs';
 const { reactiveData } = mixins;
 
 export default {
-    name: "b-line-chart",
+  name: "b-line-chart",
   extends: Line,
   mixins: [reactiveData,mixinFormat],
   props: ['data', 'tag', 'title'],
@@ -17,7 +17,8 @@ export default {
     }
   },
   methods: {
-    updateChart() {
+    updateChart() 
+    {
 
       let arrData = [];
       let arrTime = [];
@@ -37,7 +38,7 @@ export default {
           borderColor: '#00574b',
           backgroundColor: '#ffbb3355',
           borderWidth: 2, type: 'line',
-					pointRadius: 0,lineTension: 0,
+					pointRadius: 2,lineTension: 0,
 					borderWidth: 2
         }]
       }
