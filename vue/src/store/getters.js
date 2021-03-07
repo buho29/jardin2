@@ -2,6 +2,14 @@ export const getZoneById = (state) => (id) => {
     return state.zones.find(zone => zone.id === id);
 }
 
+export const getZoneByAlarmId = (state, getters) => (id) => {
+    let alarm = getters.getAlarmById(id);
+    if(alarm)
+        return getters.getZoneById(alarm.zoneId);
+    else
+        return undefined;
+}
+
 export const getZoneByName = (state) => (name) => {
     return state.zones.find(zone => zone.name === name);
 }

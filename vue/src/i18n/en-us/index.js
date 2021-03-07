@@ -5,6 +5,7 @@ export default {
     zones:'Zones',
     zone:'Zone',
     taps:'Taps',
+    history:'History',
     login:'Login',
     options:'Options'
   },

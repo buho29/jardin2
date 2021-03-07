@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2036
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31025.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jardin2", "jardin2\jardin2.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
@@ -22,6 +22,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_write_read", "examples\test_write_read\test_write_read.vcxproj", "{B886A065-91BB-4C45-9F1B-AE434F62D171}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_modes", "examples\test_modes\test_modes.vcxproj", "{08495144-1C42-4CFA-A7AE-3213DD3AB7BC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_ota", "examples\test_ota\test_ota.vcxproj", "{7BA47093-71A0-4E68-9B8C-01AF68693AD4}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -75,6 +77,10 @@ Global
 		{08495144-1C42-4CFA-A7AE-3213DD3AB7BC}.Debug|x86.Build.0 = Debug|Win32
 		{08495144-1C42-4CFA-A7AE-3213DD3AB7BC}.Release|x86.ActiveCfg = Release|Win32
 		{08495144-1C42-4CFA-A7AE-3213DD3AB7BC}.Release|x86.Build.0 = Release|Win32
+		{7BA47093-71A0-4E68-9B8C-01AF68693AD4}.Debug|x86.ActiveCfg = Debug|Win32
+		{7BA47093-71A0-4E68-9B8C-01AF68693AD4}.Debug|x86.Build.0 = Debug|Win32
+		{7BA47093-71A0-4E68-9B8C-01AF68693AD4}.Release|x86.ActiveCfg = Release|Win32
+		{7BA47093-71A0-4E68-9B8C-01AF68693AD4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

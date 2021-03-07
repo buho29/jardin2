@@ -1,7 +1,15 @@
 
 //updates state
 export function updateSensors(state, array) { 
-    state.sensors = array; 
+  state.sensors = array; 
+}
+
+export function updateSensors24(state, array) { 
+  state.sensors24 = array; 
+}
+
+export function updatehHistory(state, array) { 
+  state.history = array; 
 }
 
 export function updateSensor(state, obj) { 
