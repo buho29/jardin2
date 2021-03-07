@@ -5,6 +5,7 @@ export default {
     zones:'Zonas',
     zone:'Zona',
     taps:'Grifos',
+    history:'Historial',
     login:'Login',
     options:'Opciones'
   },
@@ -76,6 +77,20 @@ export default {
     17: 'Error creando {0}',
     18: 'Estoy regando',
   },
+  //Action { tapA,tapManualA,zoneA,zoneManualA,pausedA};
+  actions:{
+    0: 'Grifo {0}',
+    1: 'Grifo manual {0}',
+    2: 'Zona Alarma {0}',
+    3: 'Zona Manual {0}',
+    4: 'Pausado {0}',
+  },  
+  stats:{
+    open: '{0} abierto',
+    close: '{0} cerrado',
+    pause: 'pausado {0}',
+  },
+  
   date: {
     days: 'Domingo_Lunes_Martes_Miércoles_Jueves_Viernes_Sábado'.split('_'),
     daysShort: 'Dom_Lun_Mar_Mié_Jue_Vie_Sáb'.split('_'),

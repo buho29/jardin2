@@ -270,7 +270,7 @@ bool Model::readJson(const char * path, Item * item)
 
 void Model::writeJson(const char * path, Iserializable * data)
 {
-	String json = data->serializeString();
+	 const String & json = data->serializeString();
 	writeFile(path, json.c_str());
 }
 
@@ -303,6 +303,7 @@ void Model::readFiles()
 
 	readJson("/data/logSensors.json", &sensors);
 	readJson("/data/logSensors24.json", &sensors24);
+	readJson("/data/history.json", &history);
 	calcZones();
 }
 
@@ -530,7 +531,7 @@ String Model::printJson(const char * name, Iserializable * data)
 	JsonArray a = root.createNestedArray(name);
 	data->serializeData(a, true);
 
-	serializeJsonPretty(root, str);
+	serializeJson(root, str);//Pretty
 	return str;
 }
 
@@ -539,7 +540,7 @@ String Model::printJsonFirstRun()
 
 	uint32_t c = millis();
 
-	DynamicJsonDocument doc(20000);
+	DynamicJsonDocument doc(60000);
 	JsonObject root = doc.to<JsonObject>();
 	String str;
 
@@ -557,6 +558,12 @@ String Model::printJsonFirstRun()
 
 	a = root.createNestedArray("sensors");
 	sensors.serializeData(a, true);
+
+	a = root.createNestedArray("sensors24");
+	sensors24.serializeData(a, true);
+
+	a = root.createNestedArray("history");
+	history.serializeData(a, true);
 
 	if (loadedForescast) {
 		o = root.createNestedObject("weather");
@@ -1156,6 +1163,8 @@ bool Model::pauseWaterZone(bool pause)
 
 		sendAll(printJson("zone", currentZone));
 
+
+		addHistory(clockTime.local(),Action::pausedA, 1, currentZone->id);
 		// cerramos el q esta activo 
 		r = openTap(currentAlarm->tapId, false); // apaga el pin
 
@@ -1208,6 +1217,8 @@ bool Model::pauseWaterZone(bool pause)
 		currentZone->elapsed = getElapsedAlarm();
 
 		sendAll(printJson("zone", currentZone));
+
+		addHistory(clockTime.local(), Action::pausedA, 0, currentZone->id);
 
 		r = openTap(currentAlarm->tapId, true); // enciende el pin;
 
@@ -1267,11 +1278,16 @@ void Model::onWater(Task * t)
 			const String & str = printJson("zone", currentZone);
 			sendAll(str);
 			Serial.println(str);
-			//mostrar a todos q sa iniciado
+
+			
+			//mostrar a todos los clientes q sa iniciado
 			String path = "/zones/"+String(currentZone->id);
 			sendClient("goTo", path.c_str());
 		}
 
+		addHistory(clockTime.local(), 
+			isManualZoneWater ? Action::zoneManualA : Action::zoneA, t->runing, currentAlarm->id);
+		
 		openTap(currentAlarm->tapId, t->runing);
 
 		if (!t->runing) {
@@ -1343,6 +1359,9 @@ bool Model::stopWaterZone()
 
 	sendAll(printJson("zone", currentZone));
 
+
+	addHistory(clockTime.local(),Action::zoneManualA, 0, currentAlarm->id);
+
 	// cancelamos el q esta activo 
 	bool r = openTap(currentAlarm->tapId, false); // apaga el pin
 
@@ -1400,6 +1419,9 @@ bool Model::openTap(uint8_t tapId, bool val)
 	//update Clients
 	sendAll(printJson("taps", &taps));
 
+	addHistory(clockTime.local(), isManualWater ? Action::tapManualA : Action::tapA, val, tap->id);
+	saveHistory();
+
 	status = Status::watering;
 	dispachEvent(EventType::status);
 
@@ -1445,6 +1467,7 @@ void Model::loadDefaultZones()
 	writeJson("/data/alarms.json", &alarms);
 	firevent = true;
 }
+
 
 void Model::loadDefaultTaps()
 {
@@ -1644,6 +1667,27 @@ void Model::updateSensor()
 	ws.textAll(json);
 
 	dispachEvent(EventType::sensor);
+}
+
+
+void Model::saveHistory()
+{
+	const String &json = printJson("history", &history);
+	Serial.println(json);
+	ws.textAll(json);
+	writeJson("/data/history.json", &history);
+}
+
+void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idItem)
+{
+	if (history.size() >= history.maxSize) {
+		history.shift();
+	}
+
+	ActionItem* a = history.getEmpty();
+	a->set(time, action, value, idItem);
+
+	history.push(a);
 }
 
 void Model::saveLoger(Task * t)

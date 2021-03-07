@@ -59,7 +59,6 @@ public:
 // dato que se guardara en la eeprom
 struct Config :public Item 
 {
-
 	//char wifi_ssid[32] = "AndroidAP";
 	//char wifi_pass[64] = "gzfq4137";
 	char wifi_ssid[32] = "Movistar_1664";
@@ -344,7 +343,6 @@ struct SensorItem :public Item
 	};
 };
 
-
 struct SensorAvgItem :public Item
 {
 	int8_t minTemp;int8_t avgTemp;int8_t maxTemp;
@@ -387,39 +385,40 @@ struct SensorAvgItem :public Item
 	};
 };
 
-
-struct actionItem :public Item
+enum Action {
+	tapA,tapManualA,zoneA,zoneManualA,pausedA
+};
+struct ActionItem :public Item
 {
-	uint32_t idItem;
-	uint8_t type;// 0:taps-time 1:taps-manual 2:zone-time 3:zone-manual
-	uint32_t start;
-	uint32_t end;
+	int32_t idItem = -1;
+	uint8_t action;// 0:taps 1:zone-time 2:zone-manual
+	uint8_t value;// 0:false 1:true  
+	uint32_t time;
 
-	void set(uint32_t start, uint32_t end,uint8_t type,uint32_t idItem)
+	void set(uint32_t time, uint8_t action, uint8_t value,int32_t idItem =-1)
 	{
-		this->start = start;
-		this->end = end;
-		this->type = type;
-		this->idItem = idItem;
+		this->time = time; this->action = action;
+		this->value = value; this->idItem = idItem;
 	};
 	void serializeItem(JsonObject& obj, bool extra = false)
 	{
-		obj["s"] = this->start; obj["e"] = this->end;
-		obj["idi"] = this->idItem; obj["t"] = this->type;
+		obj["t"] = this->time; obj["a"] = this->action; 
+		obj["v"] = this->value; obj["idi"] = this->idItem; 
 	};
 	void deserializeItem(JsonObject& obj)
 	{
-		if (!obj.containsKey("s") || !obj.containsKey("e") ||
-			!obj.containsKey("idi") || !obj.containsKey("t"))
+		if (!obj.containsKey("t") || !obj.containsKey("a") ||
+			!obj.containsKey("v") || !obj.containsKey("idi"))
 		{
 			Serial.println("faill deserializeItem waterItem");
 			return;
 		}
 		set(
-			obj["s"].as<uint32_t>(), obj["e"].as<uint32_t>(),
-			obj["idi"].as<uint8_t>(), obj["t"].as<uint32_t>()
+			obj["t"].as<uint32_t>(), obj["a"].as<uint8_t>(),
+			obj["v"].as<uint8_t>(), obj["idi"].as<int32_t>()
 		);
 	};
+
 };
 
 /* meteo */

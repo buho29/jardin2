@@ -12,6 +12,7 @@
         ></q-btn>
         <q-toolbar-title>{{ $t(`titles.${$route.name}`) }}</q-toolbar-title>
         <q-btn v-if="authenticate" flat round @click="logout()">logout</q-btn>
+        <q-btn v-else flat round to="/login">login</q-btn>
       </q-toolbar>
     </q-header>
 
@@ -54,7 +55,7 @@ const menu = [
   { title: "charts", icon: "icon-stats-dots", path: "/chart" },
   { title: "zones", icon: "icon-watering-can", path: "/zones/0" },
   { title: "taps", icon: "icon-water-pump", path: "/taps" },
-  { title: "login", icon: "icon-cloud-check", path: "/login" },
+  { title: "history", icon: "icon-cloud-check", path: "/history" },
   { title: "options", icon: "icon-cog", path: "/options" }
 ];
 

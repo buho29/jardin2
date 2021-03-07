@@ -9,6 +9,7 @@ const routes = [
       { name: 'zone', path: '/zone/:id', component: () => import('pages/Zone.vue')},
       { name: 'taps', path: '/taps', component: () => import('pages/Taps.vue')},
       { name: 'login', path: '/login', component: () => import('pages/Login.vue')},
+      { name: 'history', path: '/history', component: () => import('pages/History.vue')},
       { name: 'options', path: '/options', component: () => import('pages/Options.vue')},
     ]
   },
