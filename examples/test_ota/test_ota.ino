@@ -8,48 +8,14 @@ const char* password = "EGYDRNA6H4Q";
 
 void setup() {
     Serial.begin(115200);
-	ConnectToWiFi();
-	StartOTAIfRequired();
-	PrintWifiStatus();
-	Serial.println("Connected to wifi");
-}
-uint loopC = 0;
-void loop()
-{
-	static uint c = 0;
-	if (millis() - c > 1000) {
-		c = millis();
-		loopC++;
-		Serial.println("Hello world");
-	}
-		
-	HandleOTA();
-}
-
-void ConnectToWiFi()
-{
-
     Serial.println("Booting");
     WiFi.mode(WIFI_STA);
-	Serial.println("Mode set");
     WiFi.begin(ssid, password);
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
         Serial.println("Connection Failed! Rebooting...");
         delay(5000);
         ESP.restart();
     }
-void HandleOTA()
-{
-	StartOTAIfRequired();
-	ArduinoOTA.handle();
-}
-void StartOTAIfRequired()
-{
-	if (ota_started) return;
-	// Port defaults to 8266
-	// ArduinoOTA.setPort(8266);
-	// Hostname defaults to esp8266-[ChipID]
-	//if (ArduinoOTA.getHostname() && ArduinoOTA.getHostname().length())
 
     // Port defaults to 3232
     // ArduinoOTA.setPort(3232);
@@ -91,8 +57,6 @@ void StartOTAIfRequired()
     });
 
     ArduinoOTA.begin();
-	ota_started = true;
-	delay(500);
 
     Serial.println("Ready");
     Serial.print("IP address: ");
@@ -100,6 +64,7 @@ void StartOTAIfRequired()
 }
 
 void loop() {
+    ArduinoOTA.handle();
     static uint c = 0;
     if (millis() - c > 1000) {
         Serial.println("tettaaaaa");
