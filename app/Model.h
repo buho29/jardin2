@@ -11,7 +11,7 @@
 #include <FS.h>
 #include "mbedtls/md.h"//encript 
 #include <DNSServer.h>
-#include "esp_wifi.h"
+#include <ArduinoOTA.h>
 
 #define USELITTLEFS
 #ifdef USELITTLEFS
@@ -19,7 +19,6 @@
 #else
 	#include <SPIFFS.h>
 #endif // USELITTLEFS
-
 
 #include <Adafruit_BME280.h>
 #include <AsyncTCP.h>
@@ -230,6 +229,8 @@ private:
 		AwsEventType type, void* arg, uint8_t* data, size_t len);
 	//update clients and write data
 	void dispachZone(bool alarm);
+
+	void beginOTA();
 
 public:
 

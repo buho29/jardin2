@@ -25,4 +25,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\examples\test_ota\board.txt">
+      <Filter>Misc Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

@@ -18,7 +18,7 @@ void setup() {
     }
 
     // Port defaults to 3232
-     ArduinoOTA.setPort(8266);
+    ArduinoOTA.setPort(8266);
 
     // Hostname defaults to esp3232-[MAC]
     // ArduinoOTA.setHostname("myesp32");
