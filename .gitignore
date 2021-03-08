@@ -3,6 +3,12 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# visualmicro
+jardin2/Debug
+examples/**/Debug
+jardin2/__vm
+examples/**/__vm
+
 # User-specific files
 *.rsuser
 *.suo
