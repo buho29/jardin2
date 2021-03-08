@@ -18,13 +18,13 @@ void setup() {
     }
 
     // Port defaults to 3232
-    // ArduinoOTA.setPort(3232);
+     ArduinoOTA.setPort(8266);
 
     // Hostname defaults to esp3232-[MAC]
     // ArduinoOTA.setHostname("myesp32");
 
     // No authentication by default
-    // ArduinoOTA.setPassword("admin");
+    ArduinoOTA.setPassword("123");
 
     // Password can be set with it's md5 value as well
     // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
@@ -67,7 +67,7 @@ void loop() {
     ArduinoOTA.handle();
     static uint c = 0;
     if (millis() - c > 1000) {
-        Serial.println("tettaaaaa");
+        Serial.println("tettooooo");
         c = millis();
     }
 }
