@@ -73,6 +73,9 @@ export default {
   computed: {
     ...mapState(["authenticate"])
   },
+  methods:{
+    ...mapMutations(["logout"])
+  },
   watch: {
     //cambiamos el estilo de las transiciones
     // cada vez q se cambia de pagina

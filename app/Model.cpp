@@ -1618,6 +1618,7 @@ void Model::connectWifi()
 
 void Model::enableSoftAP()
 {
+	//TODO revisar si es necesario
 	WiFi.persistent(false);
 	WiFi.setSleep(false);
 
@@ -1626,8 +1627,6 @@ void Model::enableSoftAP()
 	WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 	
 	WiFi.softAP("Jardin");
-
-	//IPAddress apIP(8, 8, 4, 4); // The default android DNS
 
 	Serial.printf("sleep %d",WiFi.getSleep());
 

@@ -47,7 +47,9 @@ class Model :public Observer
 
 private:
 
-	Model() :server(80), ws("/ws"), apIP(8, 8, 4, 4) { };
+	Model() :
+		server(80), ws("/ws"), 
+		apIP(8, 8, 4, 4) { };// The default android DNS
 
 	WiFiClient client;
 #ifdef USELITTLEFS

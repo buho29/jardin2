@@ -5,7 +5,7 @@ export function connect({ commit, dispatch }) {
     this.connection.close();
   }
   //this.host = document.location.host;
-  this.host = "192.168.8.105";
+  this.host = "192.168.8.101";
 
   this.connection = new WebSocket('ws://' + this.host + '/ws');
 
