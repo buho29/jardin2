@@ -10,7 +10,7 @@
             borderless emit-value map-options options-dense />
         </b-container>
 
-        <b-config-tz/>
+        <b-tz/>
         <b-config-weather/>
 
 
@@ -54,13 +54,13 @@ import BContainer from 'src/components/bContainer.vue';
 import mixinRequiresAuth from 'src/components/mixin/mixinRequiresAuth';
 import BFiles from 'src/components/options/bFiles.vue';
 import BIcon from 'src/components/bIcon.vue';
-import BConfigTz from 'src/components/options/bConfigTz.vue';
 import BConfigWeather from 'src/components/options/bConfigWeather.vue';
 import BConfigAdmin from 'src/components/options/bConfigAdmin.vue';
 import BConfigWifi from 'src/components/options/bConfigWifi.vue';
+import BTz from 'src/components/options/bTz.vue';
 
 export default {
-  components: {BContainer, BFiles, BIcon, BConfigTz, BConfigWeather, BConfigAdmin, BConfigWifi },
+  components: {BContainer, BFiles, BIcon, BConfigWeather, BConfigAdmin, BConfigWifi, BTz },
   name:"Options",
   mixins: [mixinRequiresAuth],
   data() {

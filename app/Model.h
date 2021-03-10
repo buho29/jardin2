@@ -109,12 +109,13 @@ private:
 	DataList<48, SensorItem> sensors;
 	// 24h x year
 	DataList<365, SensorAvgItem> sensors24;
+
 	//history action (water log)
 	DataList<100, ActionItem> history;
 	void saveHistory();
 	void addHistory(
 		uint32_t time, Action action, 
-		uint8_t value, int32_t idItem =-1
+		uint8_t value = 1, int32_t idItem = -1
 	);
 	
 	//pause variable
@@ -155,7 +156,7 @@ private:
 	//crypto
 	String sha1(const String& msg);
 
-	bool openTap(uint8_t tapId, bool val);
+	bool openTap(uint8_t tapId, bool val, bool save = false);
 
 	void loadLocalTime();
 	// en caso de error 
@@ -178,6 +179,7 @@ private:
 	void updateTasks(uint8_t zone);
 
 	bool isLastAlarm(AlarmItem* a);
+	bool isFirstAlarm(AlarmItem* a);
 
 	//servidor
 	void startWebServer();
@@ -289,7 +291,7 @@ public:
 	//riego zona manual
 	bool waterZone(uint8_t zone);
 	//parar el riego de la zona actual
-	bool stopWaterZone();
+	bool stopWaterZone(bool save = true);
 	bool pauseWaterZone(bool pause);
 
 	SensorItem currentSensor;

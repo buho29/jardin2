@@ -77,18 +77,20 @@ export default {
     17: 'Error creando {0}',
     18: 'Estoy regando',
   },
-  //Action { tapA,tapManualA,zoneA,zoneManualA,pausedA};
+  //Action { tapA,tapManualA,zoneA,zoneManualA,pausedA,InitA};
   actions:{
-    0: 'Grifo {0}',
-    1: 'Grifo manual {0}',
-    2: 'Zona Alarma {0}',
-    3: 'Zona Manual {0}',
-    4: 'Pausado {0}',
+    0: '. . {0}',
+    1: '{0} manual',
+    2: 'Zona {0} alarma',
+    3: 'Zona {0} manual',
+    4: '. . Zona {0}',
+    5: 'Sistema iniciado{0}',
   },  
   stats:{
     open: '{0} abierto',
     close: '{0} cerrado',
-    pause: 'pausado {0}',
+    pause: '{0} pausado',
+    unpause: '{0} reanudado'
   },
   
   date: {

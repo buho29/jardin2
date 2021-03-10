@@ -4,8 +4,6 @@ export function connect({ commit, dispatch }) {
   if (this.connection !== undefined) {
     this.connection.close();
   }
-  //this.host = document.location.host;
-  this.host = "192.168.8.101";
 
   this.connection = new WebSocket('ws://' + this.host + '/ws');
 
@@ -17,7 +15,7 @@ export function connect({ commit, dispatch }) {
 
 }
 //reiniciar esp32
-export function restart({ commit, dispatch }, obj) {
+export function restart({dispatch }) {
   dispatch("send", {
     system: { restart: true}
   });

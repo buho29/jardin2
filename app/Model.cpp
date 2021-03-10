@@ -81,7 +81,13 @@ void Model::begin()
 
 	jsonFiles = printJsonFiles();
 
+
+	addHistory(clockTime.timeNow(),Action::initA);
+	saveHistory();
+
 	startWebServer();
+
+	saveLoger24(nullptr);
 
 	status = Status::started;
 	dispachEvent(EventType::status);
@@ -212,6 +218,7 @@ bool Model::writeFile(const char * path, const char * message)
 	if (file.print(message)) {
 		int elapsed = (millis() - tim);
 		file.close();
+		Serial.printf("- file written in %dms :%s len:%d\n", elapsed, path, strlen(message));
 		return true;
 
 		//// comprobamos que se guardo correctamente comparando string
@@ -882,12 +889,15 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		{
 			int id = tap["id"]; bool open = tap["open"];
 			String const & name = String(taps[id]->name);
+			isManualWater = true;
 			// abrir/cerrar grifo
 			if (openTap(id, open)) {
 				//notificamos 
 				sendMessage(0, (open ? Str::open: Str::close),name);
 				//mostamos la pagina grifos
 				if (open) sendClient("goTo", "/taps");
+				// guardamos history
+				else saveHistory();
 			}
 			else // a ocurrido un error
 				sendMessage(1, Str::errorOpen , name, client);
@@ -1319,7 +1329,7 @@ void Model::onWater(Task * t)
 		if (t->runing && !isManualZoneWater 
 			&& !canWatering(currentZone->modes)) 
 		{
-			stopWaterZone();
+			stopWaterZone(false);
 			return;
 		}
 
@@ -1335,19 +1345,20 @@ void Model::onWater(Task * t)
 			sendClient("goTo", path.c_str());
 		}
 
-		addHistory(clockTime.local(), 
-			isManualZoneWater ? Action::zoneManualA : Action::zoneA, t->runing, currentAlarm->id);
+		bool lastAlarm = isLastAlarm(currentAlarm);
+
+		//only save first alarm from zone
+		if (isFirstAlarm(currentAlarm) && t->runing)
+		{
+			addHistory(clockTime.local(),
+				isManualZoneWater ? Action::zoneManualA : Action::zoneA,
+				t->runing, currentAlarm->id);
+		}
+
 		
 		openTap(currentAlarm->tapId, t->runing);
 
 		if (!t->runing) {
-			// si fue activado el riego de la zona manualmente
-			// y es la ultima alarma de la zona
-			if (isManualZoneWater && isLastAlarm(currentAlarm)) {
-				isManualZoneWater = false;
-				// reseteamos los tasks de la zona
-				reloadTasks(currentZone->id);
-			}
 
 			//stop current
 			currentZone->runing = false;
@@ -1356,7 +1367,27 @@ void Model::onWater(Task * t)
 			//actualizamos clientes
 			const String & str = printJson("zone", currentZone);
 			sendAll(str);
-			Serial.println(str);
+			//Serial.println(str);
+			
+			//only save last alarm from zone
+			if (lastAlarm)
+			{
+				addHistory(clockTime.local(),
+					isManualZoneWater ? Action::zoneManualA : Action::zoneA,
+					t->runing, currentAlarm->id);
+				//TODO delay write history ?
+				saveHistory();
+			}
+
+			// si fue activado el riego de la zona manualmente
+			// y es la ultima alarma de la zona
+			if (isManualZoneWater && lastAlarm) {
+				isManualZoneWater = false;
+				// reseteamos los tasks de la zona
+				reloadTasks(currentZone->id);
+			}
+
+
 			//borramos
 			currentZone = nullptr;
 			currentAlarm = nullptr;
@@ -1375,7 +1406,7 @@ void Model::onWater(Task * t)
 
 
 // detiene el riego de la zona en curso
-bool Model::stopWaterZone()
+bool Model::stopWaterZone(bool save)
 {
 	Serial.println("stopWaterZone");
 
@@ -1410,10 +1441,14 @@ bool Model::stopWaterZone()
 	sendAll(printJson("zone", currentZone));
 
 
-	addHistory(clockTime.local(),Action::zoneManualA, 0, currentAlarm->id);
-
 	// cancelamos el q esta activo 
 	bool r = openTap(currentAlarm->tapId, false); // apaga el pin
+
+	if (save) {
+		addHistory(clockTime.local(),Action::zoneManualA, 0, currentAlarm->id);
+		saveHistory();
+	}
+		
 
 	currentZone = nullptr;
 	currentAlarm = nullptr;
@@ -1453,10 +1488,10 @@ bool Model::waterZone(uint8_t zoneId)
 	return false;
 }
 
-bool Model::openTap(uint8_t tapId, bool val)
+bool Model::openTap(uint8_t tapId, bool val, bool save)
 {
 	// no existe nos salimos
-	if (!taps.has(tapId)) return false;
+	if (!taps.has(tapId) || taps[tapId]->open == val) return false;
 
 	TapItem * tap = taps[tapId];
 
@@ -1469,8 +1504,10 @@ bool Model::openTap(uint8_t tapId, bool val)
 	//update Clients
 	sendAll(printJson("taps", &taps));
 
-	addHistory(clockTime.local(), isManualWater ? Action::tapManualA : Action::tapA, val, tap->id);
-	saveHistory();
+	addHistory(clockTime.local(), 
+		(isManualWater ? Action::tapManualA : Action::tapA), 
+		val, tap->id);
+	if (save && !val) saveHistory();
 
 	status = Status::watering;
 	dispachEvent(EventType::status);
@@ -1723,10 +1760,9 @@ void Model::updateSensor()
 
 void Model::saveHistory()
 {
-	const String &json = printJson("history", &history);
-	Serial.println(json);
-	ws.textAll(json);
+	uint t = millis();
 	writeJson("/data/history.json", &history);
+	Serial.printf("saveHistory elapsed:%dms size: %d",(millis()-t), history.size());
 }
 
 void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idItem)
@@ -1739,6 +1775,7 @@ void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idIt
 	a->set(time, action, value, idItem);
 
 	history.push(a);
+	sendAll(printJson("history", &history));
 }
 
 void Model::saveLoger(Task * t)
@@ -1779,8 +1816,8 @@ void Model::saveLoger24(Task* t)
 
 	SensorAvgItem* sensor = sensors24.getEmpty();
 
-	int8_t minTemp = 100; int avgTemp; int8_t maxTemp;
-	int8_t minHum = 100; int avgHum; int8_t maxHum;
+	int8_t minTemp = 100; int avgTemp = 0; int8_t maxTemp = 0;
+	int8_t minHum = 100; int avgHum = 0; int8_t maxHum = 0;
 
 	if (!sensors.size()) return;
 
@@ -1808,7 +1845,7 @@ void Model::saveLoger24(Task* t)
 
 	sensors24.push(sensor);
 
-	const String& str = sensors.serializeString();
+	const String& str = sensors24.serializeString();
 
 	writeFile("/data/logSensors24.json", str.c_str());
 
@@ -1816,7 +1853,7 @@ void Model::saveLoger24(Task* t)
 	const String& json = printJson("sensors24", &sensors24);
 	ws.textAll(json.c_str());
 
-	//Serial.println(str);
+	Serial.println(str);
 
 	dispachEvent(EventType::sensorLog24);
 }
@@ -2332,6 +2369,17 @@ bool Model::isLastAlarm(AlarmItem * a)
 		if (zoneId == alarm->zoneId &&
 			a->time < alarm->time) {
 			return false;
+		}
+	}
+	return true;
+}
+
+bool Model::isFirstAlarm(AlarmItem* a)
+{
+	for (auto& it : alarms) {
+		AlarmItem* alarm = it.second;
+		if (a->zoneId == alarm->zoneId) {
+			return (alarm->id == a->id);
 		}
 	}
 	return true;

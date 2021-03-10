@@ -83,9 +83,6 @@ export default {
       this.transitionName =
         this.transitionName === "slide-left" ? "slide-right" : "slide-left";
     },
-    authenticate: function(newValue, oldValue) {
-      this.buttonLogin.show = !newValue;
-    }
   }
 };
 </script>

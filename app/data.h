@@ -386,7 +386,7 @@ struct SensorAvgItem :public Item
 };
 
 enum Action {
-	tapA,tapManualA,zoneA,zoneManualA,pausedA
+	tapA,tapManualA,zoneA,zoneManualA,pausedA,initA
 };
 struct ActionItem :public Item
 {
