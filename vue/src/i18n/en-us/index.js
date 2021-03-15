@@ -99,6 +99,7 @@ export default {
     9: '@:date.days.0',
   },
   localeTime: 'en-US',
+  localeMoment: 'en',
   accept: 'Accept',
   send: 'Send',
   reset: 'Reset',

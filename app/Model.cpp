@@ -78,16 +78,12 @@ void Model::begin()
 	//iniciamos las tareas
 	updateTasks();
 
-
 	jsonFiles = printJsonFiles();
-
 
 	addHistory(clockTime.timeNow(),Action::initA);
 	saveHistory();
 
 	startWebServer();
-
-	saveLoger24(nullptr);
 
 	status = Status::started;
 	dispachEvent(EventType::status);
@@ -1762,7 +1758,7 @@ void Model::saveHistory()
 {
 	uint t = millis();
 	writeJson("/data/history.json", &history);
-	Serial.printf("saveHistory elapsed:%dms size: %d",(millis()-t), history.size());
+	Serial.printf("saveHistory elapsed:%dms size: %d\n",(millis()-t), history.size());
 }
 
 void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idItem)
@@ -2000,7 +1996,7 @@ void Model::updateSunTask()
 	uint32_t now = clockTime.local();
 
 	if (isDay()) s = weather.sun[1] - clockTime.local();
-	else s = weather.sun[0] - clockTime.local();
+	else s = clockTime.local() - weather.sun[0];
 
 	char buff[9], buff1[9];
 	Tasker::formatTime(buff, weather.sun[0]);
@@ -2008,25 +2004,25 @@ void Model::updateSunTask()
 
 	Serial.printf("sol se levanta a %s se acuesta a %s\n", buff, buff1);
 	Serial.printf("proxima actualizacion sol a %s\n", isDay() ? buff1 : buff);
-	Serial.printf("faltan %d sun1 %d sun %d now %s\n", s, weather.sun[1], weather.sun[0],Tasker::formatTime(now));
+	Serial.printf("faltan %d %s sun1 %d sun %d now %s\n", s, Tasker::formatTime(s).c_str(),
+		weather.sun[1], weather.sun[0],Tasker::formatTime(now).c_str());
 
 	using namespace std::placeholders;
-	//Task * t = tasker.setTimeout(std::bind(&Model::onSunChanged, this, _1), s );
-	//Tasker::printTask(t);
-	//Serial.println("teta");
+	Task * t = tasker.setTimeout(std::bind(&Model::onSunChanged, this, _1), s );
+	Tasker::printTask(t);
+	Serial.println("teta");
 	
 }
 
 void Model::onSunChanged(Task * t)
 {
-	Serial.printf("onSunChanged, %s %s %s\n",
-		Tasker::formatTime(tasker.timeNow()).c_str(),
-		Tasker::formatTime(clockTime.timeNow()).c_str(),
-		Tasker::formatTime(clockTime.timeNow() % TASK_TICKS_24H).c_str()
+	Serial.printf("onSunChanged, %s %s\n",
+		Tasker::formatTime(clockTime.local()).c_str(),
+		Tasker::formatTime(clockTime.local() % TASK_TICKS_24H).c_str()
 	);
 	Tasker::printTask(t);
 
-	//loadForecast();
+	loadForecast();
 }
 
 bool Model::isDay()

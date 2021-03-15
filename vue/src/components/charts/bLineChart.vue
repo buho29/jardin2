@@ -8,7 +8,7 @@ export default {
   extends: Line,
   mixins: [reactiveData,mixinFormat],
   props: ['data', 'tag', 'title'],
-  data: function () {
+  data() {
     return {
       options: {
         responsive: true, maintainAspectRatio: false,

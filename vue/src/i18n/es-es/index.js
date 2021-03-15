@@ -85,14 +85,15 @@ export default {
     3: 'Zona {0} manual',
     4: '. . Zona {0}',
     5: 'Sistema iniciado{0}',
-  },  
-  stats:{
+  },
+  history:{
+    system: 'Sistema',
+    paused: 'Pausado',
     open: '{0} abierto',
     close: '{0} cerrado',
     pause: '{0} pausado',
     unpause: '{0} reanudado'
   },
-  
   date: {
     days: 'Domingo_Lunes_Martes_Miércoles_Jueves_Viernes_Sábado'.split('_'),
     daysShort: 'Dom_Lun_Mar_Mié_Jue_Vie_Sáb'.split('_'),
@@ -115,6 +116,7 @@ export default {
     9: '@:date.days.0',
   },
   localeTime: 'es-ES',
+  localeMoment: 'es',
   accept: 'Aceptar',
   send: 'Enviar',
   reset: 'Resetear',

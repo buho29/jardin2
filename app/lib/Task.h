@@ -61,7 +61,7 @@ class Tasker
 		 return pInstance;
 	 };
 
-	Task *  setTimeout(p_callbackTask callback, uint16_t s) {
+	Task *  setTimeout(p_callbackTask callback, uint32_t s) {
 
 		uint32_t dateStart = getTickTime(clockTime.hour(), clockTime.min(), clockTime.sec() + s);
 
