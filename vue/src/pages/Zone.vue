@@ -3,11 +3,12 @@
     <div class="q-mt-lg q-mx-auto text-center bg-white"
       style="max-width: 400px">
       <div class="bg-primary text-white shadow-3">
-        <div class="text-h6 q-pa-sm">{{ name }}</div>
+        <div class="text-h6 q-pa-sm" v-if="zoneId > -1" >{{ name }}</div>
+        <div class="text-h6 q-pa-sm" v-else >{{ $t('new') }}</div>
       </div>
 
       <q-form @submit="onSaveZone" class="q-gutter-md q-pa-md">
-        <div class="text-h6 text-blue-5" v-if="can_watering">
+        <div class="text-h6 text-blue-5" v-if="can_watering && zoneId > -1">
           {{$t('zones.todayWatering')}}
         </div>
         <div class="text-h6 text-red-5" v-else>
@@ -96,7 +97,7 @@
 
           <q-item-section>
             {{ taps[alarm.tapId].name }} - {{ formatTime(alarm.time) }} -
-            {{ alarm.duration }}sg
+            {{ alarm.duration /60 }} min
           </q-item-section>
         </q-item>
       </q-list>
@@ -124,7 +125,7 @@
                     <q-time v-model="time" format24h now-btn with-seconds>
                       <div class="row items-center justify-end">
                         <q-btn color="primary" flat
-                          v-close-popup label="$t('accept')"
+                          v-close-popup :label="$t('accept')"
                         ></q-btn>
                       </div>
                     </q-time>
@@ -246,13 +247,13 @@ export default {
             if (this.selectedAlarmId > -1) {
                 this.editAlarm({
                     id: this.selectedAlarmId, zoneId: this.zoneId,
-                    tapId: this.tap.id, time: time, duration: this.duration
+                    tapId: this.tap.id, time: time, duration: this.duration*60
                 });
                 this.showDialog = false;
             } else {
                 this.addAlarm({
                     zoneId: this.zoneId, tapId: this.tap.id,
-                    time: time, duration: this.duration
+                    time: time, duration: this.duration*60
                 });
                 this.showDialog = false;
             }

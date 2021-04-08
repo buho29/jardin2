@@ -14,14 +14,15 @@ export default {
     helpRouting:
       `Permite al servidor redireccionarte a una pagina <br/> 
       por ejemplo cuando se riega una zona`,
-    time: 'Configurar hora',
+    time: 'Hora',
     nameCity : 'Nombre ciudad',
-    admin:'Administrador',
+    user:'Usuario',
     helpAdmin:'Cambiar login',
     files: 'Ficheros',
     up: 'Subir fichero',
-    info: 'Info esp32',
+    info: 'Info',
     resetEsp: 'Restar esp32',
+    weather: 'Meteo'
   },
   weather: {
     name:'Tiempo',

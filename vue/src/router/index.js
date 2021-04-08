@@ -27,7 +27,10 @@ export default function ({ store}) {
   })
 
   //set host var in vuex
-  store.host = process.env.URL;
+  if(process.env.URL === 'document.location.host')
+    store.host = document.location.host;
+  else
+    store.host = process.env.URL;
 
   return Router;
 }

@@ -41,7 +41,7 @@ export default {
         await this.$axios.get("https://dataservice.accuweather.com/locations/v1/cities/search",
             {
               params: {
-                apikey: "q329xaaTojo0koLv6A3uFgh3dQLgp6em ",
+                apikey: "SoOCQzMkcUaK83HlGPMz3rxaxlUsEr1a ",
                 q: val.toLocaleLowerCase()
               }
             }

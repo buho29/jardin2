@@ -1,23 +1,15 @@
 <template>
-  <b-container :title="$t('config.files')">
+  <div>
     <div class="row">
       <q-select
-        v-model="root"
-        :options="rootFiles"
-        dense filled
-        @input="rootClick"
-        option-label="path"
-        
-        class="col-4"
-      ></q-select>
+        dense filled option-label="path" class="col-4"
+        @input="rootClick" v-model="root" :options="rootFiles"
+      />
 
       <q-select
-        v-model="folder"
-        :options="root.folders"
-        class="col"
-        dense
+        dense filled class="col"
+        v-model="folder" :options="root.folders"
         @input="indexFolder = getIndex(folder.path, root.folders)"
-        filled
         :option-label="
           item => (!!item.path ? '/' + item.path.replace(root.path, '') : null)
         "
@@ -26,29 +18,23 @@
 
     <q-list bordered>
       <transition-group name="list-complete">
-        <q-item
-          v-ripple
-          v-for="file in folder.files"
-          :key="file.name"
-          class="list-complete-item"
-          style=""
+        <q-item v-ripple class="list-complete-item"
+          v-for="file in folder.files" :key="file.name"
         >
           <q-item-section>
             <q-item-label>{{ file.name }}</q-item-label>
-            <q-item-label caption>{{ file.size }}byte</q-item-label>
+            <q-item-label caption>{{ file.size }} byte</q-item-label>
           </q-item-section>
           <q-item-section side>
             <div class=" q-gutter-sm text-white" style="display:flex;">
               <q-btn
-                icon="icon-cloud-download"
-                class="bg-primary"
+                icon="icon-cloud-download" class="bg-primary"
                 @click="downloadItem(file.name)"
               ></q-btn>
               <q-btn
-                icon="icon-delete"
-                class="bg-warning"
+                icon="icon-delete" class="bg-warning"
                 @click="deleteItem(file.name)"
-              ></q-btn>
+              />
             </div>
           </q-item-section>
         </q-item>
@@ -57,30 +43,22 @@
 
     <q-form @submit="submitFile()" class="q-mt-sm">
       <div style="display:flex;">
-        <q-file
-          dense
-          filled
+        <q-file dense filled style="flex-grow: 1;"
           v-model="file"
-          :label="$t('config.up')"
-          style="flex-grow: 1;"
-          lazy-rules
+          lazy-rules :label="$t('config.up')"
           :rules="[val => !!val || 'Selectiona un fichero por favor']"
         />
         <q-btn
-          icon="icon-cloud-upload"
-          color="primary"
-          class="q-mb-lg q-ml-sm"
+          icon="icon-cloud-upload" color="primary" class="q-mb-lg q-ml-sm"
           type="submit"
-        ></q-btn>
+        />
       </div>
     </q-form>
-  </b-container>
+  </div>
 </template>
 <script>
-import { mapActions,mapState } from "vuex";
-import bContainer from '../bContainer.vue';
+import { mapActions, mapState } from "vuex";
 export default {
-  components: { bContainer },
   name: "b-files",
   data() {
     return {
@@ -117,14 +95,20 @@ export default {
     },
     getIndex(path, array) {
       return array.findIndex(file => file.path === path);
-    }
-  },
-  watch: {
+    },
     // los datos cambiaron
-    rootFiles: function(newValue, oldValue) {
+    update(){
       //volver a seleccionar los selects con los index
       this.root = this.rootFiles[this.indexRoot];
-      this.folder = this.root.folders[this.indexFolder];
+      this.folder = this.root.folders[this.indexFolder];      
+    }
+  },
+  mounted() {
+    this.update();
+  },
+  watch: {
+    rootFiles: function(newValue, oldValue) {
+      this.update();
     }
   }
 };

@@ -1,50 +1,82 @@
 <template>
     <q-page>
-      
-        <b-container :title="$t('config.browser')">
-          <p v-html="$t('config.helpRouting')"/>
-          <q-toggle label= "routing server" :value="routingServer" 
-            @input="setRoutingServer(!routingServer)">
-          </q-toggle>
-          <q-select v-model="lang" :options="langs" label="Language" dense filled
-            borderless emit-value map-options options-dense />
-        </b-container>
 
-        <b-tz/>
-        <b-config-weather/>
+      <div class="q-ma-lg q-mx-auto text-center items-center bg-white"
+        style="min-width: 300px; max-width: 600px; width: 90%">
+        
+        <q-tabs
+          v-model="tab"
+          class="bg-primary text-white shadow-2" dense
+          indicator-color="accent" align="justify" narrow-indicator
+        >
+          <q-tab name="browser" :label="$t('config.browser')"/>
+          <q-tab name="time" :label="$t('config.time')"/>
+          <q-tab name="weather" :label="$t('config.weather')"/>
+          <q-tab name="user" :label="$t('config.user')"/>
+          <q-tab name="wifi" label="Wifi"/>
+          <q-tab name="files" :label="$t('config.files')"/>
+          <q-tab name="info" :label="$t('config.info')"/>
+          <q-tab name="icons" label="Icons"/>
+        </q-tabs>
 
+        <q-separator/>
 
-        <b-config-admin/>
-        <b-config-wifi/> 
-        <b-files/>
-        <b-container :title="$t('config.info')">
-          
-          <div  v-for="(value,key) in system" class="row q-mx-auto " :key="key" style="width:60%;" >
-            <div class="col text-bold text-capitalize text-left"> {{key}}</div>
-            <div class="col text-right"> {{value}}</div>
-          </div>
-          
-          <q-btn color="primary" @click="restart()" class="q-ma-sm">{{$t('config.resetEsp')}}</q-btn>
-  
-        </b-container>  
-  
-        <b-container title="Icons">
-          <div class="text-purple q-pa-md row items-start">
+        <q-tab-panels v-model="tab" animated keep-alive>
+
+          <q-tab-panel name="browser">
+            <p v-html="$t('config.helpRouting')"/>
+            <q-toggle label= "routing server" :value="routingServer" 
+              @input="setRoutingServer(!routingServer)">
+            </q-toggle>
+            <q-select v-model="lang" :options="langs" label="Language" dense filled
+              borderless emit-value map-options options-dense />
+          </q-tab-panel>
+
+          <q-tab-panel name="time">
+            <b-tz/>
+          </q-tab-panel>
+
+          <q-tab-panel name="weather">
+            <b-config-weather/>
+          </q-tab-panel>
+
+          <q-tab-panel name="user">
+            <b-config-admin/>
+          </q-tab-panel>
+
+          <q-tab-panel name="wifi">
+            <b-config-wifi/> 
+          </q-tab-panel>
+
+          <q-tab-panel name="files">
+            <b-files/>
+          </q-tab-panel>
+
+          <q-tab-panel name="info">
+            <div  v-for="(value,key) in system" class="row q-mx-auto " :key="key" style="width:60%;" >
+              <div class="col text-bold text-capitalize text-left"> {{key}}</div>
+              <div class="col text-right"> {{value}}</div>
+            </div>
+            
+            <q-btn color="primary" class="q-ma-sm"
+              @click="restart()" >
+              {{$t('config.resetEsp')}}
+            </q-btn>
+          </q-tab-panel>
+
+          <q-tab-panel name="icons">
+            <div class="text-purple q-pa-md row items-start">
             <div v-for="(item,id) in icons" :key="id"  style="width: 110px;">
               <q-icon :name="item" style="font-size: 2em;"></q-icon>  
               <p>{{item}}</p>    
             </div>
           </div>
-        </b-container>
-  
-        <b-container title="Meteo">
-          <div class="q-pa-md row items-start">
-            <b-icon  v-for="(item) in meteo" :key="item"
-              :icon="item"  style="font-size:80px;"/>
-          </div>
-        </b-container>
-  
-      </q-page>
+          </q-tab-panel>
+
+        </q-tab-panels>
+      </div>
+
+    </q-page>
 </template>
 
 <script>
@@ -69,6 +101,7 @@ export default {
         { label: 'Español', value: 'es-es' },
         { label: 'English', value: 'en-us' },
       ],
+      tab:"browser",
       lang: this.$i18n.locale,
       icons:["icon-alarm" , "icon-alert-circle" , "icon-chevron-down" , 
         "icon-chevron-up" , "icon-cloud-check" , "icon-cog" , "icon-delete" , 
@@ -77,10 +110,7 @@ export default {
         "icon-watering-can" , "icon-water-pump","icon-eye-off", "icon-eye",
         "icon-cloud-upload", "icon-cloud-download" , "icon-file-outline",
         "icon-folder", "icon-folder-multiple","icon-help","icon-magnify",
-      ],
-      meteo:[1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,
-        18,19,20,21,22,23,24,25, 26,29,30,31,32,33,34,35,
-        36,37,38,39,40,41,42,43,44,
+        "icon-chevron-right","icon-chevron-right"
       ],
     }
   },

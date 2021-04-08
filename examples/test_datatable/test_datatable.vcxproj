@@ -124,7 +124,7 @@
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties VM_AUTOGEN_PROTOTYPES="" />
+      <UserProperties config.Debug.customdebug_esp32_esp32Teta_debugger_type="universal" VM_AUTOGEN_PROTOTYPES="" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

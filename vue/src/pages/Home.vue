@@ -10,7 +10,7 @@
         </div>
       </b-container>
 
-      <b-container :title="$t('weather.name')" v-if="loaded" >
+      <b-container :title="$t('weather.name')" v-if="loaded && weather.cityName" >
       
         <div class='row '>
           <b-icon :icon="weather.icon1" style="font-size:120px;"/>
@@ -30,6 +30,11 @@
         </div>
         <br/>
         <div class="text-h6">{{weather.phrase}}</div>
+      
+      </b-container>
+      <b-container :title="$t('weather.name')" v-if="loaded && !weather.cityName" >
+  
+        <div class="text-h6 text-primary"> Error loading data</div>
       
       </b-container>
     </q-page>

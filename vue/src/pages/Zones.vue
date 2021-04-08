@@ -1,18 +1,14 @@
 <template>
   <q-page>
-    <q-carousel
-      swipeable
-      animated
-      v-model="slide"
-      ref="carousel"
-      infinite
-      @input="rewritePath"
-      vertical
-      class="text-center bg-amber-1"
+    <q-carousel swipeable animated infinite vertical
+      v-model="slide" ref="carousel" @input="rewritePath"
+      
+     
+      class="text-center bg-amber-1" style="position: relative"
       height="94vh"
-      style="position: relative"
-      transition-prev="slide-up"
-      transition-next="slide-down"
+     
+      transition-prev="slide-up" transition-next="slide-down"
+     
     >
       <q-carousel-slide v-for="item in zones" :key="item.id" :name="item.id">
         <b-zone :data="item"></b-zone>
@@ -41,7 +37,12 @@
           ></q-btn>
         </q-carousel-control>
       </template>
-    </q-carousel>
+    </q-carousel>  
+      <q-page-sticky position="bottom-right" :offset="[18, 18]">
+        <q-btn fab icon="icon-plus" color="accent" class="text-primary" 
+            :to="{name:'zone',params:{id:-1}}"
+            ></q-btn>
+          </q-page-sticky>
   </q-page>
 </template>
 

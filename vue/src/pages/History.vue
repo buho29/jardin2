@@ -1,9 +1,9 @@
 <template>
   <q-page>
-    
+<!--     
     <b-container :title="$t('titles.history')" class="text-left" >
       <b-time-line :data="history"></b-time-line>
-    </b-container>
+    </b-container> -->
     <b-container :title="$t('titles.history')" class="text-left" >
       <p class="bg-white"
         v-for="(item, index) in history" :key="index">
@@ -19,14 +19,19 @@
 import {mapState,mapGetters} from 'vuex';
 import mixinFormat from 'src/components/mixin/mixinFormat';
 import bContainer from 'src/components/bContainer.vue';
-import BTimeLine from 'src/components/history/bTimeLine.vue';
+//import BTimeLine from 'src/components/history/bTimeLine.vue';
 export default {
-  components: { bContainer, BTimeLine },
+  components: { bContainer },//, BTimeLine
   name :"History",
   mixins: [mixinFormat],
   computed: {
     ...mapState(["history"]), //importamos de vuex el array taps
     ...mapGetters(["getZoneByAlarmId","getTapById"]),
+  },
+  watch: {
+    history: function (newLoaded, oldLoaded) {
+      window.scrollTo(0,document.body.scrollHeight)
+    },
   },
   methods: {
     getStringAction(item){

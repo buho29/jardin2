@@ -1,0 +1,110 @@
+[
+  {
+    "id": 0,
+    "value": "Bienvenido "
+  },
+  {
+    "id": 1,
+    "value": "usuario o pass no valido "
+  },
+  {
+    "id": 2,
+    "value": "Requierre logearse"
+  },
+  {
+    "id": 3,
+    "value": "no encontrada"
+  },
+  {
+    "id": 4,
+    "value": "ocupada por "
+  },
+  {
+    "id": 5,
+    "value": " deseada: "
+  },
+  {
+    "id": 6,
+    "value": "abierto"
+  },
+  {
+    "id": 7,
+    "value": "cerrado"
+  },
+  {
+    "id": 8,
+    "value": " pausado"
+  },
+  {
+    "id": 9,
+    "value": "Borrada correctamente "
+  },
+  {
+    "id": 10,
+    "value": "Editado correctamente "
+  },
+  {
+    "id": 11,
+    "value": "Creado correctamente "
+  },
+  {
+    "id": 12,
+    "value": "Error abriendo "
+  },
+  {
+    "id": 13,
+    "value": "Error cerrando "
+  },
+  {
+    "id": 14,
+    "value": "Error pausando "
+  },
+  {
+    "id": 15,
+    "value": "Error borrando "
+  },
+  {
+    "id": 16,
+    "value": "Error editando "
+  },
+  {
+    "id": 17,
+    "value": "Error creando "
+  },
+  {
+    "id": 18,
+    "value": "Estoy regando"
+  },
+  {
+    "id": 19,
+    "value": "Error con sensor bme280"
+  },
+  {
+    "id": 20,
+    "value": "Error Wifi"
+  },
+  {
+    "id": 21,
+    "value": "Conectando a "
+  },
+  {
+    "id": 22,
+    "value": "Conectado a "
+  },
+  {
+    "id": 23,
+    "value": "Error descargando Meteo"
+  },
+  {
+    "id": 24,
+    "value": "Meteo actualizada"
+  },
+  {
+    "id": 25,
+    "value": "Hora actualizada"
+  },
+  {
+    "id": 26,
+    "value": "Error actualizando la hora"
+  }
+]

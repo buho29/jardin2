@@ -148,7 +148,6 @@ public:
 		// initializing the rtc
 
 #ifdef __RTC__
-		DateTime st = rtc.now();
 		if (!rtc.begin()) {
 			Serial.println("Couldn't find RTC!");
 			return false;
@@ -162,6 +161,8 @@ public:
 
 			//we don't need the 32K Pin, so disable it
 			rtc.disable32K();
+
+			timeNow();
 
 			return true;
 		}

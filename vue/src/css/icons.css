@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'icons';
-  src: url('icons.woff?ojtkju') format('woff');
+  src:  url('icons.woff?xqokap') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -400,6 +400,12 @@
   content: "\e96d";
   margin-left: -1em;
   color: rgb(40, 138, 219);
+}
+.icon-chevron-left:before {
+  content: "\e96f";
+}
+.icon-chevron-right:before {
+  content: "\e970";
 }
 .icon-magnify:before {
   content: "\e96e";

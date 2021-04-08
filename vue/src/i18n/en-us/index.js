@@ -14,14 +14,15 @@ export default {
     helpRouting:
       `Allows the server to redirect you to a page<br/> 
       for example when watering a zone`,
-    time: 'Set time',
+    time: 'Time',
     nameCity : 'City name',
-    admin:'Administrator',
+    user:'User',
     helpAdmin:'Change login',
     files: 'Files',
     up: 'Upload file',
-    info: 'Info esp32',
+    info: 'Info',
     resetEsp: 'Reset esp32',
+    weather: 'Weather'
   },
   weather: {
     name:'Weather',

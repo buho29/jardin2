@@ -1,6 +1,5 @@
 <template>
-    <b-container title="Accuweather.com">
-      <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-sm" >
+    <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-sm" >
       
       <b-search-city @input="searchResult"/>
 
@@ -16,20 +15,18 @@
       </q-input>
   
         <b-btn-send/>
-      </q-form>   
-    </b-container>
+      </q-form>
 </template>
 <script>
 
 
 import {mapActions} from 'vuex';
 import BBtnSend from '../bBtnSend.vue';
-import bContainer from '../bContainer.vue';
 import mixinOption from '../mixin/mixinOption';
 import BSearchCity from './bSearchCity.vue';
 
 export default {
-  components: { bContainer, BBtnSend, BSearchCity },
+  components: { BBtnSend, BSearchCity },
     name:"b-config-weather",   
     data() {
         return {

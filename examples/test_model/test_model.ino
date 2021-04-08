@@ -103,7 +103,7 @@ void testEditAlarm() {
 	// creamos zona con 3 alarmas 
 	createZone(clockTime.timeNow() - 3600);
 
-	int32_t time = Tasker::timeNow() +1;
+	int32_t time = tasker.timeNow() +1;
 
 	int i=0;
 	AlarmItem * alarms[3];
@@ -143,19 +143,62 @@ void testEditAlarm() {
 	Serial.printf("testEditAlarm acabada con %d errors\n////////////////////////////////\n", e);
 }
 
+void onTimeOut(Task* current)
+{
+	Tasker::printTask(current);
+
+	//tasker.add(Tasker::getTickTime(23, 59, 0), Tasker::getTickTime(23, 59, 30), &taskCallback);
+}
+
+void testLoadTime() {
+	/*
+	02:11:40:146 -> Temperatura min 2° max 15° sol se levanta a 07:24:00 se acuesta a 19:48:00
+proxima actualizacion sol a 19:48:00
+faltan 23328 06:28:48 sun1 1616788080 sun 1616743440 now 13:19:12
+--- task time: 19:48:00 duration: 23328 id: 15 mode: 1 runing: 0 enabled 1
+*/
+
+	uint32_t s;
+
+	//uint32_t t = 1616766950;//13:55:50
+	clockTime.setTimeNow(1616788550);//19:55:50
+	uint32_t t = clockTime.timeNow() % TASK_TICKS_24H;
+	uint32_t sun1 = 1616743440 % TASK_TICKS_24H;//07:24:00 
+	uint32_t sun2 = 1616788080 % TASK_TICKS_24H;//19:48:00
+	bool isday = t > sun1 && t < sun2;
+
+	if (isday) s = sun2 - t;
+	else s = TASK_TICKS_24H - t + sun1;
+
+	char buff[9], buff1[9];
+	Tasker::formatTime(buff, sun1);
+	Tasker::formatTime(buff1, sun2);
+
+	Serial.printf("sol se levanta a %s se acuesta a %s\n", buff, buff1);
+	Serial.printf("proxima actualizacion sol a %s\n", isday ? buff1 : buff);
+	Serial.printf("faltan %d %s sun1 %d sun %d now %s %d\n", s, Tasker::formatTime(s).c_str(),
+		sun2, sun1, Tasker::formatTime(t).c_str(),t);
+
+	using namespace std::placeholders;
+	Task* ta = tasker.setTimeout(onTimeOut, s);
+	Tasker::printTask(ta);
+	Serial.println("teta");
+}
+
 void setup() {
 
 	Serial.begin(115200);
 	delay(1000);
 
-	model->loadDefaultTaps();
+	//model->loadDefaultTaps();
 	clockTime.begin();
 
 	uint32_t c = millis();
 
 	//testRemoveZone();
 	//testPause();//40sg
-	testEditAlarm();
+	//testEditAlarm();
+	testLoadTime();
 
 	Serial.printf("elapsed time result  %d", (millis() - c));
 }

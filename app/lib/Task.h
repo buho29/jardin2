@@ -61,15 +61,23 @@ class Tasker
 		 return pInstance;
 	 };
 
-	Task *  setTimeout(p_callbackTask callback, uint32_t s) {
+	 Task* setTimeout(p_callbackTask callback, uint32_t s) {
 
-		uint32_t dateStart = getTickTime(clockTime.hour(), clockTime.min(), clockTime.sec() + s);
+		 uint32_t dateStart = getTickTime(clockTime.hour(), clockTime.min(), clockTime.sec() + s);
 
-		Task * t = add(dateStart, dateStart + s, callback);
-		t->mode = 1;// lo marcamos para q se ejecute solo una vez
+		 Task* t = add(dateStart, dateStart + s, callback);
+		 t->mode = 1;// lo marcamos para q se ejecute solo una vez
 
-		return t;
-	};
+		 return t;
+	 };
+	 Task* setDateout(p_callbackTask callback, uint32_t dateStart) {
+
+		 dateStart %= TASK_TICKS_24H;
+		 Task* t = add(dateStart, dateStart + 60, callback);
+		 t->mode = 1;// lo marcamos para q se ejecute solo una vez
+
+		 return t;
+	 };
 	Task* setTimeout(p_callbackTask callback, uint8_t h, uint8_t m, uint8_t s = 0)
 	{
 		uint32_t dateStart = getTickTime(h, m, s);

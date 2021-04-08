@@ -80,7 +80,7 @@ void Model::begin()
 
 	jsonFiles = printJsonFiles();
 
-	addHistory(clockTime.timeNow(),Action::initA);
+	addHistory(clockTime.local(),Action::initA);
 	saveHistory();
 
 	startWebServer();
@@ -92,8 +92,6 @@ void Model::begin()
 //		loop
 void Model::update()
 {
-	//static uint32_t lastFreeHeap = 0;
-
 	uint32_t c = millis();
 	
 	if (conectedWifi) {
@@ -105,7 +103,7 @@ void Model::update()
 	static uint32_t delayfree = 0;
 	if (millis() - delayfree > 1000) {
 		delayfree = millis();
-		ws.cleanupClients();
+		//ws.cleanupClients();
 	}
 
 	dnsServer.processNextRequest();
@@ -551,14 +549,25 @@ void Model::printAlarms(uint8_t z)
 //		webclient
 void Model::sendAll(const String & str)
 {
-	ws.textAll(str.c_str());
-	//Serial.println(str);
+	if (str == String("")) {
+		Serial.println("sendAll empty!!");
+	}else ws.textAll(str);
+	Serial.printf("sendAll %d \n",str.length(),str.c_str());
+}
+
+
+void Model::send(const String& str, AsyncWebSocketClient* client)
+{
+	if (str == String("")) {
+		Serial.println("send empty!!");
+	}else client->text(str);
+	Serial.printf("send %d \n",str.length(),str.c_str());
 }
 
 void Model::sendAllAuth(const String & str)
 {
 	for(AsyncWebSocketClient * client : clientsAuth)
-		client->text(str);
+		send(str,client);
 }
 
 String Model::printJson(const char * name, Item * item)
@@ -801,8 +810,8 @@ void Model::sendMessage(uint8_t type, const String & msg, AsyncWebSocketClient *
 	String json;
 	serializeJson(root, json);
 
-	if(client != nullptr) client->text(json);
-	else ws.textAll(json);
+	if(client != nullptr) send(json,client);
+	else sendAll(json);
 
 	Serial.println(json);
 }
@@ -815,9 +824,10 @@ void Model::sendMessage(uint8_t type, Str str, const String& msg, AsyncWebSocket
 void Model::sendClient(const char* tag,const char* msg, AsyncWebSocketClient * client)
 {
 	String json = String("{\"")+tag+"\":\"" + msg + "\"}";
-	if(client != nullptr) client->text(json);
-	else ws.textAll(json);
+	if(client != nullptr) send(json,client);
+	else sendAll(json);
 }
+
 
 void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 {
@@ -872,8 +882,8 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		bool log = cmd["auth"];
 		if (log) {
 			saveClientAuth(client);
-			client->text(printJsonOption());
-			client->text(jsonFiles);
+			send(printJsonOption(),client);
+			send(jsonFiles, client);
 		}
 		else removeClientAuth(client);
 	}
@@ -1954,7 +1964,6 @@ bool Model::parseForescast()
 
 	day->icon = Forecasts_Day["Icon"]; // 4
 
-
 	day->precipitationProbability = Forecasts_Day["PrecipitationProbability"]; // 25
 
 	day->win[0] = Forecasts_Day["Wind"]["Speed"]["Value"]; // 9.3// "km/h"
@@ -1983,6 +1992,8 @@ bool Model::parseForescast()
 	night->hoursOfPrecipitation = Forecasts_Night["HoursOfPrecipitation"]; // 0
 	night->cloudCover = Forecasts_Night["CloudCover"]; // 67
 
+
+	client.stop();
 	return true;
 
 }
@@ -1995,8 +2006,8 @@ void Model::updateSunTask()
 
 	uint32_t now = clockTime.local();
 
-	if (isDay()) s = weather.sun[1] - clockTime.local();
-	else s = clockTime.local() - weather.sun[0];
+	if (isDay()) s = weather.sun[1];
+	else s = weather.sun[0];
 
 	char buff[9], buff1[9];
 	Tasker::formatTime(buff, weather.sun[0]);
@@ -2008,7 +2019,7 @@ void Model::updateSunTask()
 		weather.sun[1], weather.sun[0],Tasker::formatTime(now).c_str());
 
 	using namespace std::placeholders;
-	Task * t = tasker.setTimeout(std::bind(&Model::onSunChanged, this, _1), s );
+	Task * t = tasker.setDateout(std::bind(&Model::onSunChanged, this, _1), s );
 	Tasker::printTask(t);
 	Serial.println("teta");
 	
@@ -2193,8 +2204,8 @@ void Model::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client,
 
 		const String & json = printJsonFirstRun();
 
-		client->printf(json.c_str());
-		client->ping();
+		send(json,client);
+		//client->ping();
 		Serial.printf("ws[%s][%u] ip%d connect and send :\n", server->url(), client->id());
 	}
 	else if (type == WS_EVT_DISCONNECT) {

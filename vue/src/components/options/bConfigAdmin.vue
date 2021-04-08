@@ -1,27 +1,25 @@
 <template>
-    <b-container :title="$t('config.admin')">
-        <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-sm" >
-          <p>Cambiar login</p>
-          <q-input filled v-model="name" :label="$t('name')" dense
-            lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']">
-          </q-input>
-          
-          <q-input v-model="pass" filled dense
-            lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']"
-            :type="isPwd ? 'password' : 'text'" :label="$t('pass')">
-            <template v-slot:append>
-              <q-icon
-                :name="isPwd ? 'icon-eye-off' : 'icon-eye'"
-                class="cursor-pointer"
-                @click="isPwd = !isPwd"
-              />
-            </template>
-          </q-input>
-  
-          <b-btn-send/>
-          
-        </q-form>   
-      </b-container>
+  <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-sm" >
+    <p>Cambiar login</p>
+    <q-input filled v-model="name" :label="$t('name')" dense
+      lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']">
+    </q-input>
+         
+    <q-input v-model="pass" filled dense
+      lazy-rules :rules="[ val => val && val.length > 0 || 'Please type something']"
+      :type="isPwd ? 'password' : 'text'" :label="$t('pass')">
+      
+      <template v-slot:append>
+        <q-icon
+          :name="isPwd ? 'icon-eye-off' : 'icon-eye'"
+          class="cursor-pointer"
+          @click="isPwd = !isPwd"
+        />
+      </template>
+    </q-input>
+
+    <b-btn-send/>   
+  </q-form>
 </template>
 <script>
 

@@ -1,5 +1,4 @@
 <template>
-  <b-container :title="$t('config.time')">
     <q-form class="q-gutter-sm row" @submit="onSubmit" @reset="onReset">
       <q-input 
         type="number" filled label="Time zone" style="max-width: 110px;"
@@ -28,7 +27,6 @@
       <b-btn-send />
 
     </q-form>
-  </b-container>
 </template>
 
 <script>
@@ -36,9 +34,11 @@
 import { mapState, mapActions } from "vuex";
 import BBtnSend from "../bBtnSend.vue";
 import bContainer from "../bContainer.vue";
+import mixinOption from '../mixin/mixinOption';
 
 export default {
   components: { bContainer, BBtnSend },
+  mixins: [mixinOption],
   name: "b-tz",
   data() {
     return {
@@ -49,14 +49,6 @@ export default {
   computed: {
     //importamos datos
     ...mapState(["config"])
-  },
-  watch: {
-    // los datos cambiaron
-    config: function(newValue, oldValue) {
-      //volver a seleccionar los selects con los index
-      this.tz = newValue.tz;
-      this.dst = newValue.dst;
-    }
   },
   methods: {
     ...mapActions(["editConfig"]),
@@ -71,7 +63,13 @@ export default {
       let t = this.config.tz;
       console.log(t);
       return t;
+    },
+    update(){
+    // los datos cambiaron
+      this.tz = this.config.tz;
+      this.dst = this.config.dst;
     }
+
   }
 };
 </script>

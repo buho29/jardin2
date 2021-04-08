@@ -27,7 +27,8 @@ export function updateWeather(state, obj) {
 
 export function updateTaps(state, array) { state.taps = array; }
 
-export function updateZones(state, array) { state.zones = array;}
+export function updateZones(state, array) { 
+  state.zones = array;}
 //para actualizar solo una zona
 //cuando se rega una zona y tal
 export function updateZone(state, obj) { 
