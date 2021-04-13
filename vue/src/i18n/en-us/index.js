@@ -5,12 +5,13 @@ export default {
     zones:'Zones',
     zone:'Zone',
     taps:'Taps',
-    history:'History',
     login:'Login',
     options:'Options'
   },
   config:{
+    general: 'General',
     browser:'Browser',
+    history:'History',
     helpRouting:
       `Allows the server to redirect you to a page<br/> 
       for example when watering a zone`,
@@ -22,7 +23,9 @@ export default {
     up: 'Upload file',
     info: 'Info',
     resetEsp: 'Reset esp32',
-    weather: 'Weather'
+    weather: 'Weather',
+    system: "System"
+
   },
   weather: {
     name:'Weather',
@@ -77,6 +80,12 @@ export default {
     16: 'Error editing {0}',
     17: 'Error creating {0}',
     18: 'I am watering',
+    
+    19: 'Deleted successfully {0}',
+    20: 'Uploaded successfully {0}',
+    21: 'Error deleting {0}',
+    22: 'Error uploading {0}',
+    23: 'Download error {0}', 
   },
   date: {
     days: 'Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday'.split('_'),

@@ -1,26 +1,19 @@
 <template>
-  <q-card class="q-ma-md q-mx-auto"
-    style="width: 90%; min-width: 200px; max-width: 600px;">
-    <q-card-section class="q-pa-none q-ma-none">
-      <div class="bg-primary text-white shadow-3">
-        <div class="text-h6 q-pa-sm">{{ title }}</div>
-      </div>
-    </q-card-section>
-    <q-card-section>
-      <b-line-chart style="height: 300px;"
-        :data="data"
-        :title="title"
-        :tag="tag"
-      ></b-line-chart>
-    </q-card-section>
-  </q-card>
+  <b-card :title="title">
+    <b-line-chart style="height: 300px;"
+      :data="data" :title="title"
+      :tags="tags" :labels="labels"
+      :format="format"
+    />
+  </b-card>
 </template>
 
 <script>
+import BCard from 'src/components/bCard.vue';
 import bLineChart from "./bLineChart.vue";
 export default {
-  components: { bLineChart },
+  components: { bLineChart, BCard },
   name: "b-chart",
-  props: ["data", "tag", "title"],
+  props: ["data", "tags", "title","labels","format"],
 };
 </script>

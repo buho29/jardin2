@@ -122,7 +122,7 @@ private:
 	int16_t elapsedPausedTask = 0;
 	int32_t pausedTime = 0;
 
-	String jsonFiles;
+	String jsonFilesCached;
 
 	//default
 	void loadDefaultTaps();

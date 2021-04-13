@@ -1,31 +1,24 @@
 <template>
-  <q-page>
-<!--     
-    <b-container :title="$t('titles.history')" class="text-left" >
-      <b-time-line :data="history"></b-time-line>
-    </b-container> -->
-    <b-container :title="$t('titles.history')" class="text-left" >
-      <p class="bg-white"
-        v-for="(item, index) in history" :key="index">
-        {{ formatDate(item.t) +' '+ formatTime(item.t) }} - 
-        <span :class="getClass(item.v)"> {{getStringAction(item)}}</span>
-      </p>
-    </b-container>
-  </q-page>
+  <div :title="$t('config.history')" class="text-left" >
+    <p class="bg-white"
+      v-for="(item, index) in history" :key="index">
+      {{ formatDate(item.t) +' '+ formatTime(item.t) }} - 
+      <span :class="getClass(item.v)"> {{getStringAction(item)}}</span>
+    </p>
+  </div>
 </template>
 
 <script>
 //{"t":1615040722,"v":1,"a":0,"idi":0}
 import {mapState,mapGetters} from 'vuex';
 import mixinFormat from 'src/components/mixin/mixinFormat';
-import bContainer from 'src/components/bContainer.vue';
-//import BTimeLine from 'src/components/history/bTimeLine.vue';
+import BCard from '../bCard.vue';
 export default {
-  components: { bContainer },//, BTimeLine
-  name :"History",
+  components: { BCard },
+  name :"b-log",
   mixins: [mixinFormat],
   computed: {
-    ...mapState(["history"]), //importamos de vuex el array taps
+    ...mapState(["history"]), //importamos de vuex
     ...mapGetters(["getZoneByAlarmId","getTapById"]),
   },
   watch: {

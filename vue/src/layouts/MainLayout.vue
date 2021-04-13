@@ -55,7 +55,6 @@ const menu = [
   { title: "charts", icon: "icon-stats-dots", path: "/chart" },
   { title: "zones", icon: "icon-watering-can", path: "/zones/0" },
   { title: "taps", icon: "icon-water-pump", path: "/taps" },
-  { title: "history", icon: "icon-cloud-check", path: "/history" },
   { title: "options", icon: "icon-cog", path: "/options" }
 ];
 

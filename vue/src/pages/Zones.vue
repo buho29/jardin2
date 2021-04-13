@@ -39,10 +39,10 @@
       </template>
     </q-carousel>  
       <q-page-sticky position="bottom-right" :offset="[18, 18]">
-        <q-btn fab icon="icon-plus" color="accent" class="text-primary" 
+        <q-btn round icon="icon-plus" color="accent" class="text-primary" 
             :to="{name:'zone',params:{id:-1}}"
             ></q-btn>
-          </q-page-sticky>
+      </q-page-sticky>
   </q-page>
 </template>
 

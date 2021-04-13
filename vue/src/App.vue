@@ -70,7 +70,7 @@ export default {
     this.$q.iconSet.tabs.left = 'icon-chevron-left';
     
     this.$q.iconSet.datetime.now = 'icon-alarm';
-    console.log(this.$q.iconSet);
+    //console.log(this.$q.iconSet);
   },
   created() {
     

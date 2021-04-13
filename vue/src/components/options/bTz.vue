@@ -61,7 +61,6 @@ export default {
     },
     getTz() {
       let t = this.config.tz;
-      console.log(t);
       return t;
     },
     update(){

@@ -98,7 +98,7 @@ export function send({ commit, dispatch ,state}, obj) {
   // si no estamos identificado
   if(!state.authenticate){
     //dispatch("goTo","/login");
-    dispatch("message",{type:2,content:"Requiere login!"});
+    dispatch("message",{type:2,content:"2"});
     return;
   }
 
@@ -127,10 +127,7 @@ export function downloadItem ({commit, dispatch,state },name) {
       link.click()
       URL.revokeObjectURL(link.href)
     }).catch((error) => {
-      console.error(error);
-      dispatch("message",{type:1,content:`Error descarga
-      ${name} 
-      ${error.message}`});
+      dispatch("message",{type:1,content:`23|${name} ${error.message}`});
   });
 }
 export function deleteItem ({commit, dispatch,state },name) {
@@ -139,18 +136,17 @@ export function deleteItem ({commit, dispatch,state },name) {
     headers: { 'Authorization': `Basic ${state.token}`},
     params: {delete:name},
   }).then(response => {
-      dispatch("message",{type:0,content:"Borrado con exito"});
+      dispatch("message",{type:0,content:`19|${name.split("/").pop()}`});
     }).catch((error) => {
       console.error(error);
-      dispatch("message",{type:1,content:`Error borrando 
-      ${name} ${error.message}`});
+      dispatch("message",{type:1,content:`21|${name} ${error.message}`});
   });
 }
 export function uploadItem({commit, dispatch,state },{file,params}){
   let formData = new FormData();
   formData.append('file', file);
   let filename = file;
-  axios.post( `http://${this.host}/file`,
+  this.$axios.post( `http://${this.host}/file`,
     formData,{
       headers: {
         'Authorization': `Basic ${state.token}`,
@@ -159,13 +155,13 @@ export function uploadItem({commit, dispatch,state },{file,params}){
       params: params,
     }
     ).then((res) => {
-      dispatch("message",{type:0,content:"Subido con exito"});
+      dispatch("message",{type:0,
+        content:`20|${file?file.name.split("/").pop():''}`});
     })
     .catch((error) => {
       console.log(error);
-      dispatch("message",{type:1,content:`Error subiendo 
-      ${file?file.name:'no difinido'} 
-      ${error.message}`});
+      dispatch("message",{type:1,
+        content:`22|${file?file.name:'no difinido'}  ${error.message}`});
     });
 }
 

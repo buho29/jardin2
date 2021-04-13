@@ -5,12 +5,13 @@ export default {
     zones:'Zonas',
     zone:'Zona',
     taps:'Grifos',
-    history:'Historial',
     login:'Login',
     options:'Opciones'
   },
   config:{
+    general: 'General',
     browser:'Navegador',
+    history:'Historial',
     helpRouting:
       `Permite al servidor redireccionarte a una pagina <br/> 
       por ejemplo cuando se riega una zona`,
@@ -22,7 +23,9 @@ export default {
     up: 'Subir fichero',
     info: 'Info',
     resetEsp: 'Restar esp32',
-    weather: 'Meteo'
+    weather: 'Meteo',
+    system: "Sistema",
+    
   },
   weather: {
     name:'Tiempo',
@@ -77,6 +80,12 @@ export default {
     16: 'Error editando {0}',
     17: 'Error creando {0}',
     18: 'Estoy regando',
+
+    19: 'Borrado con exito {0}',
+    20: 'Subido con exito {0}',
+    21: 'Error borrando {0}',
+    22: 'Error subiendo {0}',
+    23: 'Error descarga {0}',
   },
   //Action { tapA,tapManualA,zoneA,zoneManualA,pausedA,InitA};
   actions:{

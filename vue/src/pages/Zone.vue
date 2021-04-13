@@ -48,8 +48,7 @@
           v-model="fab" v-if="zoneId > -1"
         >
           <q-fab-action
-            padding="5px"
-            color="warning"
+            padding="5px" color="warning"
             icon="icon-delete"
             external-label
             label-position="bottom"
@@ -60,8 +59,7 @@
 
           <q-fab-action
             v-if="selectedAlarmId > -1"
-            padding="5px"
-            color="accent"
+            padding="5px" color="accent"
             label-position="bottom"
             external-label
             @click="showDialogAlarm(selectedAlarmId)"
@@ -83,8 +81,7 @@
 
       <q-list bordered>
         <q-item
-          clickable
-          v-ripple
+          clickable v-ripple
           v-for="alarm in alarmsZone"
           :key="alarm.id"
           :active="selectedAlarmId === alarm.id"
@@ -119,8 +116,7 @@
 
               <template v-slot:append>
                 <q-icon name="icon-alarm" class="cursor-pointer">
-                  <q-popup-proxy
-                    transition-show="scale"
+                  <q-popup-proxy transition-show="scale"
                     transition-hide="scale" >
                     <q-time v-model="time" format24h now-btn with-seconds>
                       <div class="row items-center justify-end">
@@ -162,9 +158,7 @@
                 v-close-popup
               ></q-btn>
               <q-btn class="bg-primary text-white"
-                :label="$t('save')"
-                type="submit"
-              ></q-btn>
+                :label="$t('save')" type="submit"/>
             </div>
           </q-form>
         </q-card-section>
@@ -261,16 +255,16 @@ export default {
         showDialogAlarm(id) {
             this.selectedAlarmId = id;
             if (id >= 0) {
-                const alarm = this.getAlarmById(id);
-                this.lastAlarm = false;
-                this.time = this.formatTime(alarm.time);
-                this.duration = alarm.duration;
-                this.tap = this.getTapById(alarm.tapId);
+              const alarm = this.getAlarmById(id);
+              this.lastAlarm = false;
+              this.time = this.formatTime(alarm.time);
+              this.duration = alarm.duration/60;
+              this.tap = this.getTapById(alarm.tapId);
             } else {
-                this.lastAlarm = true;
-                let alarm = this.getLastAlarm(this.zoneId);
-                if (alarm !== undefined)
-                    this.time = this.formatTime(alarm.time + alarm.duration);
+              this.lastAlarm = true;
+              let alarm = this.getLastAlarm(this.zoneId);
+              if (alarm !== undefined)
+                this.time = this.formatTime(alarm.time + alarm.duration);
             }
             //mostramos el dialog alarm
             this.showDialog = true;

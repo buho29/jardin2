@@ -78,7 +78,7 @@ void Model::begin()
 	//iniciamos las tareas
 	updateTasks();
 
-	jsonFiles = printJsonFiles();
+	jsonFilesCached = printJsonFiles();
 
 	addHistory(clockTime.local(),Action::initA);
 	saveHistory();
@@ -558,9 +558,7 @@ void Model::sendAll(const String & str)
 
 void Model::send(const String& str, AsyncWebSocketClient* client)
 {
-	if (str == String("")) {
-		Serial.println("send empty!!");
-	}else client->text(str);
+	client->text(str);
 	Serial.printf("send %d \n",str.length(),str.c_str());
 }
 
@@ -624,9 +622,6 @@ String Model::printJsonFirstRun()
 	a = root.createNestedArray("sensors24");
 	sensors24.serializeData(a, true);
 
-	a = root.createNestedArray("history");
-	history.serializeData(a, true);
-
 	if (loadedForescast) {
 		o = root.createNestedObject("weather");
 		printJsonForecast(o);
@@ -651,6 +646,9 @@ String Model::printJsonOption()
 
 	JsonObject o = root.createNestedObject("config");
 	config.serializeItem(o, true);
+
+	JsonArray a = root.createNestedArray("history");
+	history.serializeData(a, true);
 
 	String json;
 	serializeJson(root, json);
@@ -883,7 +881,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		if (log) {
 			saveClientAuth(client);
 			send(printJsonOption(),client);
-			send(jsonFiles, client);
+			send(jsonFilesCached, client);
 		}
 		else removeClientAuth(client);
 	}
@@ -966,7 +964,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 			writeJson("/data/config.json", &config);
 			sendMessage(0, String(Str::edit));
 			sendAllAuth(printJsonOption());
-			// dispach event
+			//TODO dispach event
 		}
 	}
 
@@ -1781,7 +1779,7 @@ void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idIt
 	a->set(time, action, value, idItem);
 
 	history.push(a);
-	sendAll(printJson("history", &history));
+	sendAllAuth(printJson("history", &history));
 }
 
 void Model::saveLoger(Task * t)
@@ -2130,8 +2128,8 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 
 			if (fs.exists(filename) && fs.remove(filename)) {
 				sendResponse(request, request->beginResponse(200));
-				jsonFiles = printJsonFiles();
-				sendAllAuth(jsonFiles);
+				jsonFilesCached = printJsonFiles();
+				sendAllAuth(jsonFilesCached);
 			}
 			else
 				sendResponse(request, request->beginResponse(404));
@@ -2147,8 +2145,8 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 			fs.exists(path +"/"+ request->getParam("file", true, true)->value())) {
 			
 			sendResponse(request, request->beginResponse(200));//ok
-			jsonFiles = printJsonFiles();
-			sendAllAuth(jsonFiles);
+			jsonFilesCached = printJsonFiles();
+			sendAllAuth(jsonFilesCached);
 		}	
 		else 
 			sendResponse(request, request->beginResponse(404));// error

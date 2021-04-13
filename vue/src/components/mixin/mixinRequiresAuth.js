@@ -15,7 +15,6 @@ export default{
           if (!vm.authenticate) {
               // ir a la pagina de login
               vm.$router.push("/login")
-              vm.notifyW("Requiere login!");
           }
       })
   }

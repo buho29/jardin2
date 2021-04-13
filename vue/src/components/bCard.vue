@@ -1,15 +1,14 @@
 <template>
   <q-card
-    class="q-ma-lg q-mx-auto text-center items-center bg-white"
-    style="min-width: 300px; max-width: 600px; width: 90%"
+    class="text-center items-center bg-white" flat bordered
   >
-    <q-item class="bg-primary ">
+    <q-item class="bg-primary">
       <q-item-section>
         <q-item-label class="text-white text-h6 ">{{ title }}</q-item-label>
       </q-item-section>
     </q-item>
 
-    <q-separator />
+    <q-separator/>
 
     <q-card-section >
       <slot></slot>
@@ -18,7 +17,7 @@
 </template>
 <script>
 export default {
-  name: "b-container",
-  props: ["title"],
+  name: "b-card",
+  props: ["title"]
 };
 </script>
