@@ -2,13 +2,11 @@
   <q-card
     class="text-center items-center bg-white" flat bordered
   >
-    <q-item class="bg-primary">
-      <q-item-section>
-        <q-item-label class="text-white text-h6 ">{{ title }}</q-item-label>
-      </q-item-section>
-    </q-item>
-
-    <q-separator/>
+    <q-card-section class="q-pa-none q-ma-none">
+      <div class="bg-primary text-white shadow-3 round-top">
+          <div class="q-pa-sm text-h6 ">{{ title }}</div>
+      </div>
+    </q-card-section>
 
     <q-card-section >
       <slot></slot>

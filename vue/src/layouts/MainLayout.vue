@@ -42,7 +42,7 @@
 
     <q-page-container>
       <transition :name="transitionName">
-        <router-view class="child-view"></router-view>
+        <router-view class="child-view"/>
       </transition>
     </q-page-container>
   </q-layout>
@@ -85,3 +85,27 @@ export default {
   }
 };
 </script>
+<style>
+
+/* router animation */
+.child-view {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  transition: all 0.75s cubic-bezier(0.55, 0, 0.1, 1); /**/
+}
+
+.slide-left-enter,
+.slide-right-leave-active {
+  opacity: 0;
+  -webkit-transform: translate(30%, 0);
+  transform: translate(30%, 0);
+}
+.slide-left-leave-active,
+.slide-right-enter {
+  opacity: 0;
+  -webkit-transform: translate(-30%, 0);
+  transform: translate(-30%, 0);
+}
+
+</style>

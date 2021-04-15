@@ -325,3 +325,9 @@ export default {
     },
 }
 </script>
+<style scoped>
+.my-menu-link {
+  color: white;
+  background: #ffbb33;
+}
+</style>

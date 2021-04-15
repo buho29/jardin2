@@ -1,7 +1,8 @@
 <template>
   <q-page>
-      <q-card class="q-ma-lg q-mx-auto text-center items-center bg-white"
-        style="min-width: 300px; max-width: 600px; width: 90%">
+      <q-card 
+        class="q-ma-lg q-mx-auto text-center items-center bg-white page"
+      >
         
         <q-tabs
           class="bg-primary text-white shadow-1" dense
@@ -19,16 +20,16 @@
           
           <q-tab-panel name="1H" class="q-gutter-y-md">
             <b-chart :data="sensors" :title="$t('temp')" 
-            :labels="[$t('temp')]" :tags="['te']" format="HH:mm:ss"/>
-            <b-chart :data="sensors" :title="$t('press')"  format="HH:mm:ss"
+            :labels="[$t('temp')]" :tags="['te']" format="HH:mm"/>
+            <b-chart :data="sensors" :title="$t('press')"  format="HH:mm"
             :labels="[$t('press')]" :tags="['pr']"/>
-            <b-chart :data="sensors" :title="$t('hum')"  format="HH:mm:ss" 
+            <b-chart :data="sensors" :title="$t('hum')"  format="HH:mm" 
             :labels="[$t('hum')]" :tags="['hu']"/>            
           </q-tab-panel>
           <q-tab-panel name="24H" class="q-gutter-y-md">
-            <b-chart :data="sensors24" :title="$t('temp')"  format="DD-MM"
+            <b-chart :data="sensors24" :title="$t('temp')"  format="DD/MM"
             :labels="['min','avg','max']" :tags="['mite', 'avte', 'mate']"/>
-            <b-chart :data="sensors24" :title="$t('hum')" format="DD-MM"
+            <b-chart :data="sensors24" :title="$t('hum')" format="DD/MM"
             :labels="['min','avg','max']"  :tags="['mihu','avhu','mahu']"/>         
           </q-tab-panel>
 

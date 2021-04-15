@@ -1,11 +1,12 @@
 <template>
     <q-page>
 
-      <q-card class="q-ma-lg q-mx-auto text-center items-center bg-white"
-        style="min-width: 300px; max-width: 600px; width: 90%" v-if="authenticate">
+      <q-card 
+        class="q-ma-lg q-mx-auto text-center items-center bg-white page"
+        v-if="authenticate">
         
         <q-tabs
-          class="bg-primary text-white shadow-1" dense
+          class="bg-primary text-white shadow-1"
           indicator-color="accent" align="justify" narrow-indicator
           v-model="tab"
         >
@@ -57,7 +58,7 @@
             
           </q-tab-panel>
 
-          <q-tab-panel name="system"  class="q-gutter-y-md">
+          <q-tab-panel name="system" class="q-gutter-y-md">
             
             <b-card :title="$t('config.info')">
               <div  v-for="(value,key) in system" class="row q-mx-auto " :key="key" style="width:60%;" >
@@ -81,7 +82,7 @@
             <b-log/>
           </q-tab-panel>
 
-          <q-tab-panel name="icons">
+          <q-tab-panel name="icons"  class="q-gutter-y-md">
             <b-card title="Icons">
               <div class="text-purple q-pa-md row items-start">
                 <div v-for="(item,id) in icons" :key="id"  style="width: 70px;">

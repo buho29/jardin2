@@ -23,7 +23,7 @@
         >
           <q-item-section>
             <q-item-label>{{ file.name }}</q-item-label>
-            <q-item-label caption>{{ file.size }} byte</q-item-label>
+            <q-item-label caption>{{ formatSize(file.size) }}</q-item-label>
           </q-item-section>
           <q-item-section side>
             <div class=" q-gutter-sm text-white" style="display:flex;">
@@ -56,8 +56,14 @@
     </q-form>
   </div>
 </template>
+
 <script>
 import { mapActions, mapState } from "vuex";
+// we import all of `format`
+import { format } from 'quasar'
+// destructuring to keep only what is needed
+const { humanStorageSize } = format
+
 export default {
   name: "b-files",
   data() {
@@ -101,6 +107,9 @@ export default {
       //volver a seleccionar los selects con los index
       this.root = this.rootFiles[this.indexRoot];
       this.folder = this.root.folders[this.indexFolder];      
+    },
+    formatSize(size){
+      return humanStorageSize(size);
     }
   },
   mounted() {
@@ -113,3 +122,18 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+
+.list-complete-item {
+  transition: all .5s;
+}
+.list-complete-enter,
+.list-complete-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+.list-complete-leave-active {
+   position: absolute; /**/
+}
+</style>

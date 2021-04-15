@@ -33,7 +33,18 @@
     <b-container :title="$t('weather.name')" v-if="loaded && !weather.cityName" >
       <div class="text-h6 text-primary"> Error loading data</div>
     </b-container>
-  </q-page>
+ 
+    <b-container title="Prevision" v-if="loaded && weather.cityName" >
+      <div class="flex">
+        <q-card class="q-mx-auto q-pa-sm" v-for="(item,i) in [1,16,6,4,11]" :key="item">
+          <b-icon :icon="item"  style='font-size:40px;'/>
+          <div>{{15+i}}/04</div>
+        </q-card>
+        
+      </div>
+    </b-container>
+    
+   </q-page>
 </template>
 
 <script>

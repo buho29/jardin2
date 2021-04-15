@@ -1,38 +1,25 @@
 <template>
-  <q-card class="text-center my-card">
+  <q-card class="text-center card">
     <q-card-section class="q-pa-none q-ma-none">
-      <div class="bg-primary row text-white shadow-3">
+      <div class="bg-primary row text-white shadow-3 round-top">
         <div class="col text-h6 q-pa-sm">{{ data.name }}</div>
 
-        <q-fab
-          v-model="fab"
+        <q-fab v-model="fab" flat dense class="col-auto"
+          icon="icon-cog" active-icon="icon-cog"
+          direction="down" padding="xs"
           v-if="authenticate"
-          flat
-          dense
-          class="col-auto"
-          icon="icon-cog"
-          active-icon="icon-cog"
-          direction="down"
-          padding="xs"
         >
           <q-fab-action
-            padding="5px"
-            external-label
-            label-position="left"
-            color="warning"
-            icon="icon-delete"
-            @click="onDelete"
-            :label="$t('delete')"
+            padding="5px" label-position="left" color="warning"
+            external-label icon="icon-delete"
+            @click="onDelete" :label="$t('delete')"
           />
 
           <q-fab-action
-            padding="5px"
-            icon="icon-pencil"
+            padding="5px" label-position="left" color="accent"
+            external-label icon="icon-pencil"
             :label="$t('edit')"
             :to="{ name: 'zone', params: { id: data.id } }"
-            external-label
-            label-position="left"
-            color="accent"
           />
         </q-fab>
       </div>
@@ -72,18 +59,17 @@
 
     <q-card-actions align="around">
       <b-toggle
-        :checked="data.paused"
-        @change="onPause"
+        :checked="data.paused" @change="onPause"
         :disable="!data.runing"
         :label-off="$t('zones.resume')"
         :label-on="$t('zones.pause')"
-      ></b-toggle>
+      />
       <b-toggle
         :checked="data.runing"
         @change="onWater"
         :label-off="$t('cancel')"
         :label-on="$t('zones.water')"
-      ></b-toggle>
+      />
     </q-card-actions>
   </q-card>
 </template>
@@ -122,3 +108,14 @@ export default {
   }
 };
 </script>
+<style scoped>
+.card {
+  width: 300px;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+</style>

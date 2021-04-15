@@ -20,7 +20,6 @@ export default {
   methods: {
     update(){
 
-      let datasets = [];
       let arrData = [];
       for (let j = 0; j < this.labels.length; j++) {
         arrData[j] = [];
@@ -35,6 +34,7 @@ export default {
         );
       }
 
+      let datasets = [];
       for (let j = 0; j < this.labels.length; j++) {
         datasets.push(
           this.makeDataSet(this.labels[j],arrData[j],j)

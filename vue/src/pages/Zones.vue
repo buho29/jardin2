@@ -2,13 +2,9 @@
   <q-page>
     <q-carousel swipeable animated infinite vertical
       v-model="slide" ref="carousel" @input="rewritePath"
-      
-     
       class="text-center bg-amber-1" style="position: relative"
       height="94vh"
-     
-      transition-prev="slide-up" transition-next="slide-down"
-     
+      transition-prev="slide-down" transition-next="slide-up"
     >
       <q-carousel-slide v-for="item in zones" :key="item.id" :name="item.id">
         <b-zone :data="item"></b-zone>
@@ -16,32 +12,24 @@
 
       <template v-slot:control v-if="zones.length > 0">
         <q-carousel-control position="bottom" :offset="[0, 30]">
-          <q-btn
-            flat
-            round
-            dense
-            icon="icon-chevron-down"
+          <q-btn flat round dense icon="icon-chevron-down"
             text-color="black"
-            @click="$refs.carousel.next()"
-          ></q-btn>
+            @click="$refs.carousel.previous()"
+          />
         </q-carousel-control>
 
         <q-carousel-control position="top" :offset="[0, 30]">
-          <q-btn
-            flat
-            round
-            dense
-            icon="icon-chevron-up"
+          <q-btn flat round dense icon="icon-chevron-up"
             text-color="black"
-            @click="$refs.carousel.previous()"
-          ></q-btn>
+            @click="$refs.carousel.next()"
+          />
         </q-carousel-control>
       </template>
     </q-carousel>  
       <q-page-sticky position="bottom-right" :offset="[18, 18]">
         <q-btn round icon="icon-plus" color="accent" class="text-primary" 
-            :to="{name:'zone',params:{id:-1}}"
-            ></q-btn>
+          :to="{name:'zone',params:{id:-1}}"
+        />
       </q-page-sticky>
   </q-page>
 </template>

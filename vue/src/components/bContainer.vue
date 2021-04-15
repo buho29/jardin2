@@ -1,16 +1,12 @@
 <template>
   <q-card
-    class="q-ma-lg q-mx-auto text-center items-center bg-white"
-    style="min-width: 300px; max-width: 600px; width: 90%"
+    class="q-ma-lg q-mx-auto text-center items-center bg-white page"
   >
-    <q-item class="bg-primary ">
-      <q-item-section>
-        <q-item-label class="text-white text-h6 ">{{ title }}</q-item-label>
-      </q-item-section>
-    </q-item>
-
-    <q-separator />
-
+    <q-card-section class="q-pa-none q-ma-none">
+      <div class="bg-primary text-white shadow-3 round-top">
+        <div class="q-pa-sm text-h6 ">{{ title }}</div>
+      </div>
+    </q-card-section>
     <q-card-section >
       <slot></slot>
     </q-card-section>
