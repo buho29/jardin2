@@ -10,8 +10,8 @@
 
     <b-container :title="$t('weather.name')" v-if="loaded && weather.cityName" >
     
-      <div class='row '>
-        <b-icon :icon="weather.icon1" style="font-size:120px;"/>
+      <div class='row'>
+        <b-icon :icon="weather.icon1" class="q-pa-md" style="font-size:120px;"/>
         <b-timer :diff="weather.diff" style="flex-grow: 1;"/>
       </div>
 

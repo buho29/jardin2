@@ -1,5 +1,5 @@
 <template>
-  <div class="text-center q-pa-sm">
+  <div class="q-pa-sm">
     <div class="text-primary text-h4">{{ currentDate }}</div>
     <div class="text-primary text-h6">{{ dataString }}</div>
     <div class="text-h5 q-ma-none">
