@@ -17,7 +17,7 @@
 
       <br/>
       <div class="text-h6 text-primary"> {{weather.cityName}} </div>
-      <div class="q-mx-auto" style="width:250px;">
+      <div class="q-mx-auto" style="width:300px;">
         <b-param :title="$t('weather.win')">
           {{weather.winSpeed}}km/h - {{weather.winDirection}}°
         </b-param>
@@ -48,6 +48,9 @@
 </template>
 
 <script>
+
+import moment from 'moment'
+
 import {mapState} from 'vuex'
 
 import bSensor from "src/components/home/bSensor.vue";
@@ -76,7 +79,7 @@ export default {
   },
   methods: {
     formatTime(time) {
-      return new Date(time * 1000).toLocaleTimeString(this.$t('localeTime'));
+      return moment(time * 1000).locale(this.$t('localeMoment')).format('LTS');
     },
   },
 };
