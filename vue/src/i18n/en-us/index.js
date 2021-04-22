@@ -24,8 +24,8 @@ export default {
     info: 'Info',
     resetEsp: 'Reset esp32',
     weather: 'Weather',
-    system: "System"
-
+    system: "System",
+    formatDate:'YYYY-MM-DD HH:mm:ss',
   },
   weather: {
     name:'Weather',
@@ -87,6 +87,22 @@ export default {
     22: 'Error uploading {0}',
     23: 'Download error {0}', 
   },
+  actions: {
+    0: '. . {0} ',
+    1: '{0} manual',
+    2: 'Zone {0} alarm',
+    3: 'Zone {0} manual',
+    4: '. . Zone {0} ',
+    5: 'System started {0}',
+  },
+  history: {
+    system: 'System',
+    paused: 'Paused',
+    open: '{0} open',
+    close: '{0} closed',
+    pause: '{0} paused',
+    unpause: '{0} resumed'
+  }, 
   date: {
     days: 'Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday'.split('_'),
     daysShort: 'Sun_Mon_Tue_Wed_Thu_Fri_Sat'.split('_'),
@@ -108,7 +124,6 @@ export default {
     8: '@:date.days.6',
     9: '@:date.days.0',
   },
-  localeTime: 'en-US',
   localeMoment: 'en',
   accept: 'Accept',
   send: 'Send',

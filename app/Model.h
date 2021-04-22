@@ -64,7 +64,7 @@ private:
 	// http://dataservice.accuweather.com/forecasts/v1/daily/1day/1451030?apikey=SoOCQzMkcUaK83HlGPMz3rxaxlUsEr1a%20&language=es-ES&details=true&metric=true
 	const char* host = "dataservice.accuweather.com";
 	///url
-	const char* url1 = "/forecasts/v1/daily/1day/";
+	const char* url1 = "/forecasts/v1/daily/5day/";
 	const char* url2 = "?apikey=";
 
 	// dicionary
@@ -145,6 +145,8 @@ private:
 
 	void connectWifi();
 	void enableSoftAP();
+
+	//weather
 	void loadForecast();
 	bool parseForescast();
 
@@ -211,6 +213,8 @@ private:
 
 	void printJsonSystem(const JsonObject& obj);
 	void printJsonForecast(const JsonObject& obj);
+	void printJsonDayForecast(const JsonObject& obj,bool current,
+		WeatherData& w);
 
 	//actions clients
 	void receivedJson(AsyncWebSocketClient* client, const String& json);
@@ -297,9 +301,8 @@ public:
 
 	SensorItem currentSensor;
 
-	WeatherData weather;
+	WeatherData weather[5];
 	bool loadedForescast = false;
-	bool isDay();
 
 	bool canWatering(uint flag);
 	Modes modes;

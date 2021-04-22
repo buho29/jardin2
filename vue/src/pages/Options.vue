@@ -11,7 +11,7 @@
           v-model="tab"
         >
           <q-tab name="general" :label="$t('config.general')"/>
-          <q-tab name="zones" label="Zonas"/>
+          <q-tab name="zones" :label="$t('titles.zones')"/>
           <q-tab name="user" :label="$t('config.user')"/>
           <q-tab name="system" :label="$t('config.system')"/>
           <q-tab name="log" :label="$t('config.history')"/>

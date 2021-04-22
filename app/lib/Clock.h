@@ -258,7 +258,7 @@ public:
 	};
 	uint32_t utc() { return _utc; };
 	uint32_t local(){ return _local; };
-	uint16_t tz() { return _offset * 3600; };
+	uint16_t tz() { return _local-_utc; };
 
 	bool updateNTP() {
 

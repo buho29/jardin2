@@ -25,7 +25,7 @@ export default {
     resetEsp: 'Restar esp32',
     weather: 'Meteo',
     system: "Sistema",
-    
+    formatDate:'DD/MM/YYYY HH:mm:ss',
   },
   weather: {
     name:'Tiempo',
@@ -125,7 +125,6 @@ export default {
     8: '@:date.days.6',
     9: '@:date.days.0',
   },
-  localeTime: 'es-ES',
   localeMoment: 'es',
   accept: 'Aceptar',
   send: 'Enviar',

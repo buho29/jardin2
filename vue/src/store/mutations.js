@@ -21,7 +21,6 @@ export function updateConfig(state, obj) {
 }
 
 export function updateWeather(state, obj) {
-  obj.diff = Date.now() - obj.time*1000;
   state.weather = obj;
 }
 

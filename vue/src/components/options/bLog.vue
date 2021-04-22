@@ -2,13 +2,15 @@
   <div :title="$t('config.history')" class="text-left" >
     <p class="bg-white"
       v-for="(item, index) in history" :key="index">
-      {{ formatDate(item.t) +' '+ formatTime(item.t) }} - 
+      {{ formatDate(item.t)}} - 
       <span :class="getClass(item.v)"> {{getStringAction(item)}}</span>
     </p>
   </div>
 </template>
 
 <script>
+
+import moment from 'moment'
 //{"t":1615040722,"v":1,"a":0,"idi":0}
 import {mapState,mapGetters} from 'vuex';
 import mixinFormat from 'src/components/mixin/mixinFormat';
@@ -72,8 +74,7 @@ export default {
       else return 'text-red';
     },
     formatDate(time){
-      let date = new Date(time*1000);
-      return date.toLocaleDateString(this.$t('localeTime'));
+      return moment.utc(time*1000).format(this.$t('config.formatDate'));
     }
   },
 };

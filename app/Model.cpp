@@ -713,12 +713,190 @@ void Model::printJsonSystem(const JsonObject & doc)
 	Serial.printf("printJsonSystem %d ms\n", millis() - c);
 }
 
+//		Meteo
+void Model::loadForecast()
+{
+	if (client.connect(host, 80)) {
+
+		// This will send the request to the server
+		client.print(String("GET ") +
+			url1 + config.cityID + url2 + config.accuURL +
+			" HTTP/1.1\r\n" + "Host: " + host + "\r\n" +
+			"Connection: close\r\n\r\n");
+
+		unsigned long timeout = millis();
+
+		while (client.available() == 0) {
+			if (millis() - timeout > 5000) {
+				Serial.println(">>> Client Timeout !");
+				client.stop();
+				break;
+			}
+		}
+
+		// HTTP headers end with an empty line
+		if (client.available() && client.find("\r\n\r\n")
+			&& parseForescast()) {
+
+			loadedForescast = true;
+
+			strcpy(msgStatus, lang.get(Str::updatedFore).c_str());
+
+			dispachEvent(EventType::loadedForescast);
+
+			sendAll(printJsonForecast());
+			sendAll(printJson("zones", &zones));
+
+			updateSunTask();
+
+			return;
+		}
+	}
+
+	strcpy(msgError, lang.get(Str::errorFore).c_str());
+
+	loadedForescast = false;
+	dispachEvent(EventType::error);
+
+	retryLater();
+}
+
+bool Model::parseForescast()
+{
+	DynamicJsonDocument doc(60000);
+
+	String json = client.readStringUntil('\r');
+
+	// Deserialize the JSON document
+	DeserializationError error = deserializeJson(doc, json);
+
+	// Test if parsing succeeds.
+	if (error) {
+		Serial.print("deserializeJson() failed: ");
+		Serial.println(error.c_str());
+
+		//DeserializationError  IncompleteInput
+		return false;
+	}
+
+	// Get the modes object in the document
+	JsonObject root = doc.as<JsonObject>();
+
+	// probamos el json q es correcto
+	if (!root.containsKey("DailyForecasts")) {
+		Serial.println("forecast error estructura json");
+		Serial.println(json);
+		return false;
+	}
+
+	for (uint8_t i = 0; i < 5; i++)
+	{
+		WeatherData& w = weather[i];
+
+		JsonObject DailyForecasts = root["DailyForecasts"][i];
+
+		w.time = DailyForecasts["EpochDate"]; // 1532149200
+		w.temp[0] = DailyForecasts["Temperature"]["Minimum"]["Value"];
+		w.temp[1] = DailyForecasts["Temperature"]["Maximum"]["Value"];
+
+		Serial.printf("Temperatura min %d° max %d°\n", w.temp[0], w.temp[1]);
+
+		JsonObject sun = DailyForecasts["Sun"];
+
+		w.sun[0] = (uint32_t)sun["EpochRise"] + clockTime.tz(); // 1536213600;
+		w.sun[1] = (uint32_t)sun["EpochSet"] + clockTime.tz();// 1536260160;
+
+		float hoursOfSun = DailyForecasts["HoursOfSun"]; // 5.9
+														 
+		//dia
+		JsonObject Forecasts_Day = DailyForecasts["Day"];
+		WeatherData::Forecast* day = &w.forecast[0];
+
+		strcpy(day->phrase, Forecasts_Day["LongPhrase"]);// "Intervalos de nubes y sol"
+
+		//Serial.printf("json len:%d sizeof:%d ",json.length(),sizeof(DailyForecasts0_Day["ShortPhrase"]));
+
+		day->icon = Forecasts_Day["Icon"]; // 4
+
+		day->precipitationProbability = Forecasts_Day["PrecipitationProbability"]; // 25
+
+		day->win[0] = Forecasts_Day["Wind"]["Speed"]["Value"]; // 9.3// "km/h"
+		day->win[1] = Forecasts_Day["Wind"]["Direction"]["Degrees"]; // 332
+
+		day->totalLiquid = Forecasts_Day["TotalLiquid"]["Value"];// 0// "mm"
+
+		day->hoursOfPrecipitation = Forecasts_Day["HoursOfPrecipitation"]; // 0
+		day->cloudCover = Forecasts_Day["CloudCover"]; // 67
+
+		// noche
+		JsonObject Forecasts_Night = DailyForecasts["Night"];
+		WeatherData::Forecast* night = &w.forecast[1];
+
+		strcpy(night->phrase, Forecasts_Night["LongPhrase"]);// "Intervalos de nubes y sol"
+		night->icon = Forecasts_Night["Icon"]; // 36
+		night->precipitationProbability = Forecasts_Night["PrecipitationProbability"]; // 25
+
+		//Serial.printf("icon dia %d icon noche %d", day->icon,night->icon);
+
+		night->win[0] = Forecasts_Night["Wind"]["Speed"]["Value"]; // 9.3// "km/h"
+		night->win[1] = Forecasts_Night["Wind"]["Direction"]["Degrees"]; // 332
+
+		night->totalLiquid = Forecasts_Night["TotalLiquid"]["Value"];// 0// "mm"
+
+		night->hoursOfPrecipitation = Forecasts_Night["HoursOfPrecipitation"]; // 0
+		night->cloudCover = Forecasts_Night["CloudCover"]; // 67
+	}
+	
+	client.stop();
+	return true;
+
+}
+
+//TODO : falla settimeout
+void Model::updateSunTask()
+{
+	uint32_t s;
+
+	WeatherData& w = weather[0];
+	if (w.isDay()) s = w.sun[1];
+	else s = weather[0].sun[0];
+
+	using namespace std::placeholders;
+	Task* t = tasker.setDateout(std::bind(&Model::onSunChanged, this, _1), s);
+	Serial.print("updateSunTask");
+	Tasker::printTask(t);
+}
+
+void Model::onSunChanged(Task* t)
+{
+	Serial.printf("onSunChanged, %s %s\n",
+		Tasker::formatTime(clockTime.local()).c_str(),
+		Tasker::formatTime(clockTime.local() % TASK_TICKS_24H).c_str()
+	);
+	Tasker::printTask(t);
+
+	loadForecast();
+}
+
 void Model::printJsonForecast(const JsonObject & doc)
 {
-	// dia = 0 noche = 1
-	uint8_t index = !weather.isDay();
 
-	WeatherData::Forecast * fore = weather.getCurrent();
+	doc["time"] = clockTime.local();
+	JsonArray a = doc.createNestedArray("days");
+	for (uint8_t i = 0; i < 5; i++)
+	{
+		JsonObject o = a.createNestedObject();
+		WeatherData & w = weather[i];
+		printJsonDayForecast(o, (i == 0), w);
+	}
+}
+
+void Model::printJsonDayForecast(const JsonObject& doc, bool current, WeatherData& w)
+{
+	WeatherData::Forecast* fore;
+	if (current)
+		fore = w.getCurrent();
+	else fore = &w.forecast[0];
 
 	doc["phrase"] = fore->phrase;
 	doc["winSpeed"] = fore->win[0];
@@ -727,15 +905,12 @@ void Model::printJsonForecast(const JsonObject & doc)
 	doc["precipitationProbability"] = fore->precipitationProbability;
 	doc["totalLiquid"] = fore->totalLiquid;
 	doc["cloudCover"] = fore->cloudCover;
-	doc["icon1"] = fore->icon;
-	
-	//clockTime.timeNow();
-	doc["time"] = clockTime.utc();
-	doc["minTemp"] = weather.minTemp();
-	doc["maxTemp"] = weather.maxTemp();
-	doc["sunStart"] = weather.sun[0]-clockTime.tz();
-	doc["sunEnd"] = weather.sun[1]-clockTime.tz();
-	doc["isDay"] = weather.isDay();
+	doc["icon"] = fore->icon;
+	doc["time"] = w.time;
+	doc["minTemp"] = w.minTemp();
+	doc["maxTemp"] = w.maxTemp();
+	doc["sunStart"] = w.sun[0];
+	doc["sunEnd"] = w.sun[1];
 	doc["cityName"] = config.cityName;
 }
 
@@ -825,7 +1000,6 @@ void Model::sendClient(const char* tag,const char* msg, AsyncWebSocketClient * c
 	if(client != nullptr) send(json,client);
 	else sendAll(json);
 }
-
 
 void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 {
@@ -1860,186 +2034,6 @@ void Model::saveLoger24(Task* t)
 	Serial.println(str);
 
 	dispachEvent(EventType::sensorLog24);
-}
-
-//		Meteo
-void Model::loadForecast()
-{
-	if (client.connect(host, 80)) {
-
-		// This will send the request to the server
-		client.print(String("GET ") +
-			url1 + config.cityID + url2 + config.accuURL +
-			" HTTP/1.1\r\n" + "Host: " + host + "\r\n" +
-			"Connection: close\r\n\r\n");
-
-		unsigned long timeout = millis();
-
-		while (client.available() == 0) {
-			if (millis() - timeout > 5000) {
-				Serial.println(">>> Client Timeout !");
-				client.stop();
-				break;
-			}
-		}
-
-		// HTTP headers end with an empty line
-		if (client.available() && client.find("\r\n\r\n")
-			&& parseForescast()) {
-
-			loadedForescast = true;
-
-			strcpy(msgStatus, lang.get(Str::updatedFore).c_str());
-
-			dispachEvent(EventType::loadedForescast);
-
-			sendAll(printJsonForecast());
-			sendAll(printJson("zones", &zones));
-
-			updateSunTask();
-
-			return;
-		}
-	}
-
-	strcpy(msgError, lang.get(Str::errorFore).c_str());
-
-	loadedForescast = false;
-	dispachEvent(EventType::error);
-
-	retryLater();
-}
-
-bool Model::parseForescast()
-{
-	DynamicJsonDocument doc(60000);
-
-	String json = client.readStringUntil('\r');
-
-	// Deserialize the JSON document
-	DeserializationError error = deserializeJson(doc, json);
-
-	// Test if parsing succeeds.
-	if (error) {
-		Serial.print("deserializeJson() failed: ");
-		Serial.println(error.c_str());
-
-		//DeserializationError  IncompleteInput
-		return false;
-	}
-
-	// Get the modes object in the document
-	JsonObject root = doc.as<JsonObject>();
-
-	// probamos el json q es correcto
-	if (!root.containsKey("DailyForecasts")) {
-		Serial.println("forecast error estructura json");
-		return false;
-	}
-
-	JsonObject DailyForecasts = root["DailyForecasts"][0];
-
-	weather.time = DailyForecasts["EpochDate"]; // 1532149200
-	weather.temp[0] = DailyForecasts["Temperature"]["Minimum"]["Value"];
-	weather.temp[1] = DailyForecasts["Temperature"]["Maximum"]["Value"];
-
-	Serial.printf("Temperatura min %d° max %d°\n", weather.temp[0], weather.temp[1]);
-
-	JsonObject sun = DailyForecasts["Sun"];
-
-	weather.sun[0] = (uint32_t)sun["EpochRise"] + clockTime.tz(); // 1536213600;
-	weather.sun[1] = (uint32_t)sun["EpochSet"] + clockTime.tz();// 1536260160;
-
-	float hoursOfSun = DailyForecasts["HoursOfSun"]; // 5.9
-
-//dia
-	JsonObject Forecasts_Day = DailyForecasts["Day"];
-	WeatherData::Forecast * day = &weather.forecast[0];
-
-	strcpy(day->phrase, Forecasts_Day["LongPhrase"]);// "Intervalos de nubes y sol"
-
-	//Serial.printf("json len:%d sizeof:%d ",json.length(),sizeof(DailyForecasts0_Day["ShortPhrase"]));
-
-	day->icon = Forecasts_Day["Icon"]; // 4
-
-	day->precipitationProbability = Forecasts_Day["PrecipitationProbability"]; // 25
-
-	day->win[0] = Forecasts_Day["Wind"]["Speed"]["Value"]; // 9.3// "km/h"
-	day->win[1] = Forecasts_Day["Wind"]["Direction"]["Degrees"]; // 332
-
-	day->totalLiquid = Forecasts_Day["TotalLiquid"]["Value"];// 0// "mm"
-
-	day->hoursOfPrecipitation = Forecasts_Day["HoursOfPrecipitation"]; // 0
-	day->cloudCover = Forecasts_Day["CloudCover"]; // 67
-
-	// noche
-	JsonObject Forecasts_Night = DailyForecasts["Night"];
-	WeatherData::Forecast * night = &weather.forecast[1];
-
-	strcpy(night->phrase, Forecasts_Night["LongPhrase"]);// "Intervalos de nubes y sol"
-	night->icon = Forecasts_Night["Icon"]; // 36
-	night->precipitationProbability = Forecasts_Night["PrecipitationProbability"]; // 25
-
-	//Serial.printf("icon dia %d icon noche %d", day->icon,night->icon);
-
-	night->win[0] = Forecasts_Night["Wind"]["Speed"]["Value"]; // 9.3// "km/h"
-	night->win[1] = Forecasts_Night["Wind"]["Direction"]["Degrees"]; // 332
-
-	night->totalLiquid = Forecasts_Night["TotalLiquid"]["Value"];// 0// "mm"
-
-	night->hoursOfPrecipitation = Forecasts_Night["HoursOfPrecipitation"]; // 0
-	night->cloudCover = Forecasts_Night["CloudCover"]; // 67
-
-
-	client.stop();
-	return true;
-
-}
-
-//TODO : falla settimeout
-void Model::updateSunTask()
-{
-
-	uint32_t s;
-
-	uint32_t now = clockTime.local();
-
-	if (isDay()) s = weather.sun[1];
-	else s = weather.sun[0];
-
-	char buff[9], buff1[9];
-	Tasker::formatTime(buff, weather.sun[0]);
-	Tasker::formatTime(buff1, weather.sun[1]);
-
-	Serial.printf("sol se levanta a %s se acuesta a %s\n", buff, buff1);
-	Serial.printf("proxima actualizacion sol a %s\n", isDay() ? buff1 : buff);
-	Serial.printf("faltan %d %s sun1 %d sun %d now %s\n", s, Tasker::formatTime(s).c_str(),
-		weather.sun[1], weather.sun[0],Tasker::formatTime(now).c_str());
-
-	using namespace std::placeholders;
-	Task * t = tasker.setDateout(std::bind(&Model::onSunChanged, this, _1), s );
-	Tasker::printTask(t);
-	Serial.println("teta");
-	
-}
-
-void Model::onSunChanged(Task * t)
-{
-	Serial.printf("onSunChanged, %s %s\n",
-		Tasker::formatTime(clockTime.local()).c_str(),
-		Tasker::formatTime(clockTime.local() % TASK_TICKS_24H).c_str()
-	);
-	Tasker::printTask(t);
-
-	loadForecast();
-}
-
-bool Model::isDay()
-{
-	if (loadedForescast) {
-		return weather.isDay();
-	}
-	return true;
 }
 
 //		Modes

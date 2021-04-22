@@ -1,5 +1,5 @@
 <template>
-  <q-card class="text-subtitle1">
+  <q-card class="text-subtitle1 q-mx-auto">
     <q-card-section class="q-pa-none text-primary" style="min-width:100px;">
       <div class="q-pa-sm">{{ prop }}</div>
       <q-separator />

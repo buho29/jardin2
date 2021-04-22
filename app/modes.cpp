@@ -27,7 +27,7 @@ int8_t WeaterExpression::evaluate()
 	  "hoursOfPrecipitation": 3,
 	}*/
 	if (this->model && this->model->loadedForescast) {
-		WeatherData::Forecast *fore = this->model->weather.getCurrent();
+		WeatherData::Forecast *fore = this->model->weather[0].getCurrent();
 		int16_t result = fore->cloudCover;
 		result += fore->precipitationProbability;
 		result += fore->hoursOfPrecipitation * 100;
@@ -44,7 +44,7 @@ bool WeaterExpression::skip()
 {
 	if (this->model && this->model->loadedForescast)
 		// cancelamos cuando el viento es mas de 8km/h
-		return this->model->weather.speedWin() > 8;
+		return this->model->weather[0].speedWin() > 8;
 	return false;
 }
 

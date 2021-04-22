@@ -23,7 +23,7 @@ export default {
       localTime: moment().locale(this.$t('localeMoment')).format('LTS'),
     };
   },
-  props: ["diff"],
+  props: ["time"],
   mounted() {
     this.id = setInterval(this.tick, 1000);
   },
@@ -43,7 +43,7 @@ export default {
   },
   methods: {
     tick() {
-      this.date = moment().locale(this.local).subtract(this.diff/1000, 'seconds');
+      this.date = moment().utc(this.time*1000).locale(this.local);
       this.localTime = moment().locale(this.local).format('LTS');
     },
   },
