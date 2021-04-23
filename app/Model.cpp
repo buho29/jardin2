@@ -882,6 +882,7 @@ void Model::printJsonForecast(const JsonObject & doc)
 {
 
 	doc["time"] = clockTime.local();
+	doc["cityName"] = config.cityName;
 	JsonArray a = doc.createNestedArray("days");
 	for (uint8_t i = 0; i < 5; i++)
 	{
@@ -911,7 +912,6 @@ void Model::printJsonDayForecast(const JsonObject& doc, bool current, WeatherDat
 	doc["maxTemp"] = w.maxTemp();
 	doc["sunStart"] = w.sun[0];
 	doc["sunEnd"] = w.sun[1];
-	doc["cityName"] = config.cityName;
 }
 
 String Model::printJsonForecast()

@@ -16,7 +16,7 @@
       </div>
 
       <br/>
-      <div class="text-h6 text-primary"> {{today.cityName}} </div>
+      <div class="text-h6 text-primary"> {{weather.cityName}} </div>
       <div class="q-mx-auto" style="width:300px;">
         <b-param :title="$t('weather.win')">
           {{today.winSpeed}}km/h - {{today.winDirection}}°
@@ -42,7 +42,9 @@
     <b-container title="Prevision" v-if="loaded && weather.days" >
       <div class="flex">
         <q-card class="q-mx-auto q-pa-sm" v-for="item in weather.days" :key="item.time">
-          <div class="text-primary">{{formatDate(item.time,"ddd")}}</div>
+          <div class="text-primary">
+            {{formatDate(item.time,"ddd")}}
+          </div>
           <b-icon :icon="item.icon"  style='font-size:40px;'/>
           <div> 
             <span class="text-blue">{{item.minTemp}}° </span> 
@@ -63,15 +65,12 @@ import {mapState} from 'vuex'
 
 import bSensor from "src/components/home/bSensor.vue";
 import BTimer from "src/components/home/bTimer.vue";
-import mixinNotify from "src/components/mixin/mixinNotify.js";
 import BIcon from "src/components/bIcon.vue";
 import BContainer from "src/components/bContainer.vue";
 import BParam from 'src/components/bParam.vue';
-import BCard from 'src/components/bCard.vue';
 
 export default {
-  components: { bSensor, BTimer, BIcon, BContainer, BParam, BCard },
-  mixins: [mixinNotify],
+  components: { bSensor, BTimer, BIcon, BContainer, BParam},
   name: "Home",
   computed: {
     ...mapState(["weather", "sensor", "loaded"]),
@@ -82,11 +81,6 @@ export default {
     today(){
       return this.weather.days[0];
     },
-  },
-  data: function () {
-    return {
-      icon: 1,
-    };
   },
   methods: {
     formatDate(date,format){
