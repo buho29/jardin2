@@ -262,7 +262,6 @@ public:
 	char msgStatus[100] = "";
 
 	ZoneItem* currentZone = nullptr;
-	AlarmItem* currentAlarm = nullptr;
 
 	// estamos regando manualmente una zona ?
 	bool isManualZoneWater = false;

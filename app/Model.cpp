@@ -202,11 +202,11 @@ String Model::sha1(const String & msg)
 //		data file
 bool Model::writeFile(const char * path, const char * message)
 {
-	Serial.printf("path : %s\n",path);
+	//Serial.printf("path : %s\n",path);
 	int tim = millis();
 	File file = fs.open(path, FILE_WRITE);
 	if (!file) {
-		Serial.println("- failed to open file for writing");
+		//Serial.printf("- failed to open file for writing path : %s\n",path);
 		return false;
 	}
 	if (file.print(message)) {
@@ -228,7 +228,7 @@ bool Model::writeFile(const char * path, const char * message)
 
 String Model::readFile(const char * path)
 {
-	Serial.printf("reading file: %s\r\n", path);
+	//Serial.printf("reading file: %s\r\n", path);
 
 	File file = fs.open(path);
 
@@ -318,7 +318,7 @@ void Model::readFiles()
 int Model::addZone(const char * name, uint32_t modes)
 {
 	ZoneItem * zone = zones.getEmpty();
-	Serial.println("addZone");
+	//Serial.println("addZone");
 	if (zone != nullptr) {
 		zone->set(-1, 0, 0, modes, name);
 		zone = zones.push(zone);
@@ -351,7 +351,10 @@ bool Model::removeZone(int id)
 {
 	if (zones.has(id)) {
 
-		Serial.println("removeZone");
+		if (currentZone && currentZone->id == id)
+			stopWaterZone(false);
+
+		//Serial.println("removeZone");
 		for (auto &it : alarms) {
 			AlarmItem * alarm = it.second;
 			if (id == alarm->zoneId) {
@@ -442,7 +445,7 @@ int Model::addAlarm(int zoneId, int tapId, uint32_t time, uint16_t duration)
 
 		AlarmItem* alarm1 = alarms.push(alarm);
 
-		Serial.printf("addAlarm %d\n",alarm1->id);
+		//Serial.printf("addAlarm %d\n",alarm1->id);
 		calcZone(zoneId);
 		updateTasks(zoneId);
 
@@ -471,7 +474,7 @@ bool Model::editAlarm(int id, int tapId, uint32_t time, uint16_t duration)
 	time = time % TASK_TICKS_24H;
 
 	if (alarms.has(id)) {
-		Serial.println("editAlarm");
+		//Serial.println("editAlarm");
 		AlarmItem * a = alarms[id];
 		//cuando cambiamos el alarm.time debemos borrar el actual y crear otro
 		//el alarm.time se usa como Id
@@ -540,8 +543,8 @@ void Model::printAlarms(uint8_t z)
 	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 		if (z == alarm->zoneId) {
-			Serial.printf("\t alarm Id: %d time: %s duration: %d tap: %s\n",
-				alarm->id, Tasker::formatTime(alarm->time), alarm->duration, taps[alarm->tapId]->name);
+			Serial.printf("\t alarm Id: %d time: %s duration: %d tap: %d\n",
+				alarm->id, Tasker::formatTime(alarm->time), alarm->duration, alarm->tapId);
 		}
 	}
 }
@@ -552,14 +555,14 @@ void Model::sendAll(const String & str)
 	if (str == String("")) {
 		Serial.println("sendAll empty!!");
 	}else ws.textAll(str);
-	Serial.printf("sendAll %d \n",str.length(),str.c_str());
+	//Serial.printf("sendAll %d \n",str.length(),str.c_str());
 }
 
 
 void Model::send(const String& str, AsyncWebSocketClient* client)
 {
 	client->text(str);
-	Serial.printf("send %d \n",str.length(),str.c_str());
+	//Serial.printf("send %d \n",str.length(),str.c_str());
 }
 
 void Model::sendAllAuth(const String & str)
@@ -1350,12 +1353,15 @@ bool Model::isAuthenticate(AsyncWebServerRequest * request)
 // pausa el riego de la zona en curso
 bool Model::pauseWaterZone(bool pause)
 {
-	if (currentZone == nullptr || 
-		 (currentZone != nullptr && currentZone->paused == pause)
-		) return false;
+	if (currentZone == nullptr ||
+		(currentZone != nullptr && currentZone->paused == pause) ||
+		(currentZone != nullptr && !alarms.has(currentZone->alarmId))
+
+	) return false;
 
 	//Serial.printf("\n--pauseWaterZone %d\n", currentZone->id);
 
+	AlarmItem* currentAlarm = alarms[currentZone->alarmId];
 	Task * t = currentAlarm->task;
 
 	bool r = false;
@@ -1419,35 +1425,31 @@ bool Model::pauseWaterZone(bool pause)
 		//Serial.printf("alarm id %d ", currentAlarm->id);
 		//Serial.print("current task :"); printTask(t);
 
+		bool found = false;
+		int index = 0;
+		uint32_t start = t->stop;
 
-		//if (isManualZoneWater) {
+		// iniciamos desde currentalarm index
+		for (auto &it : alarms) {
+			AlarmItem * alarm = it.second;
+			if (alarm->zoneId == currentZone->id)
+			{
+				if (alarm == currentAlarm) found = true;
+				else if (found) {
+					index++;
 
-			bool found = false;
-			int index = 0;
-			uint32_t start = t->stop;
+					Task * ct = alarm->task;
+					ct->enabled = true;//por si fue cancelado
+					ct->runing = false;
 
-			// iniciamos desde currentalarm index
-			for (auto &it : alarms) {
-				AlarmItem * alarm = it.second;
-				if (alarm->zoneId == currentZone->id)
-				{
-					if (alarm == currentAlarm) found = true;
-					else if (found) {
-						index++;
-
-						Task * ct = alarm->task;
-						ct->enabled = true;//por si fue cancelado
-						ct->runing = false;
-
-						//sumamos la pausa
-						ct->start = (ct->start + elapsed) % TASK_TICKS_24H;
-						ct->stop = (ct->stop + elapsed) % TASK_TICKS_24H;
-					}
-
-					//Serial.printf("for reanuda found %d %d\n", found, index);
+					//sumamos la pausa
+					ct->start = (ct->start + elapsed) % TASK_TICKS_24H;
+					ct->stop = (ct->stop + elapsed) % TASK_TICKS_24H;
 				}
+
+				//Serial.printf("for reanuda found %d %d\n", found, index);
 			}
-		//}
+		}
 
 		elapsedPausedTask = 0;
 		pausedTime = 0;
@@ -1470,12 +1472,13 @@ bool Model::pauseWaterZone(bool pause)
 //llamado de evento para tasker x tiempo (alarmas)
 void Model::onWater(Task * t)
 {
+
 	// si se abre los grifos manualment
 	// o esta pausado
 	if (isManualWater || isPaused()) {
-		Serial.printf("exit onWater manualwater %s || paused %s \n",
+		/*Serial.printf("exit onWater manualwater %s || paused %s \n",
 			isManualWater ? "true" : "false",
-			isPaused() ? "true" : "false");
+			isPaused() ? "true" : "false");*/
 		// nos salimos
 		return;
 	}
@@ -1487,6 +1490,7 @@ void Model::onWater(Task * t)
 		return;
 	}
 
+	AlarmItem* currentAlarm = nullptr;
 	//buscamos la correspondencia con la alarma
 	bool found = false;
 	for (auto &it : alarms) {
@@ -1515,7 +1519,7 @@ void Model::onWater(Task * t)
 			//actualizamos clientes
 			const String & str = printJson("zone", currentZone);
 			sendAll(str);
-			Serial.println(str);
+			//Serial.println(str);
 
 			
 			//mostrar a todos los clientes q sa iniciado
@@ -1586,7 +1590,7 @@ void Model::onWater(Task * t)
 // detiene el riego de la zona en curso
 bool Model::stopWaterZone(bool save)
 {
-	Serial.println("stopWaterZone");
+	//Serial.println("stopWaterZone");
 
 	if (currentZone == nullptr) return false;
 
@@ -1618,6 +1622,7 @@ bool Model::stopWaterZone(bool save)
 
 	sendAll(printJson("zone", currentZone));
 
+	AlarmItem* currentAlarm = alarms[currentZone->alarmId];
 
 	// cancelamos el q esta activo 
 	bool r = openTap(currentAlarm->tapId, false); // apaga el pin
@@ -1626,10 +1631,8 @@ bool Model::stopWaterZone(bool save)
 		addHistory(clockTime.local(),Action::zoneManualA, 0, currentAlarm->id);
 		saveHistory();
 	}
-		
-
+	
 	currentZone = nullptr;
-	currentAlarm = nullptr;
 	elapsedPausedTask = 0;
 	pausedTime = 0;
 
@@ -1669,7 +1672,8 @@ bool Model::waterZone(uint8_t zoneId)
 bool Model::openTap(uint8_t tapId, bool val, bool save)
 {
 	// no existe nos salimos
-	if (!taps.has(tapId) || taps[tapId]->open == val) return false;
+	if (!taps.has(tapId) || taps[tapId]->open == val)
+		return false;
 
 	TapItem * tap = taps[tapId];
 
@@ -1940,7 +1944,7 @@ void Model::saveHistory()
 {
 	uint t = millis();
 	writeJson("/data/history.json", &history);
-	Serial.printf("saveHistory elapsed:%dms size: %d\n",(millis()-t), history.size());
+	//Serial.printf("saveHistory elapsed:%dms size: %d\n",(millis()-t), history.size());
 }
 
 void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idItem)
@@ -2043,9 +2047,9 @@ bool Model::canWatering(uint flag)
 	int8_t evaluate = modes.evaluate();
 	bool skip = modes.skip();
 	
-	Serial.printf("skip %d evaluate %d result %d\n", 
-		skip, evaluate, (!skip && (evaluate < 50 || evaluate < 0)));
-	// 
+	//Serial.printf("skip %d evaluate %d result %d\n", 
+	// 	skip, evaluate, (!skip && (evaluate < 50 || evaluate < 0)));
+	
 	return !skip && (evaluate < 50 || evaluate < 0);
 
 }
@@ -2391,20 +2395,24 @@ uint16_t Model::getElapsedAlarm()
 	if (isPaused()) {
 		elapsed = elapsedPausedTask;
 	}
-	else if(currentAlarm && currentAlarm->task){
+	else if(currentZone){
 
-		Task * t = currentAlarm->task;
-		uint16_t da = currentAlarm->duration;
-		uint16_t dt = Tasker::getDuration(t->start, t->stop);
+		AlarmItem* currentAlarm = alarms[currentZone->alarmId];
 
-		// tiempo trancurrido de la tarea actual
-		elapsed = Tasker::getDuration(t->start, tasker.timeNow());
+		if (currentAlarm && currentAlarm->task) {
+			Task* t = currentAlarm->task;
+			uint16_t da = currentAlarm->duration;
+			uint16_t dt = Tasker::getDuration(t->start, t->stop);
 
-		// cuando la duracion de la alarma es mas grande 
-		// que la duracion de la tarea (porq fue pausado)
-		if (da > dt) {
-			//sumamos esa dife
-			elapsed += (da - dt);
+			// tiempo trancurrido de la tarea actual
+			elapsed = Tasker::getDuration(t->start, tasker.timeNow());
+
+			// cuando la duracion de la alarma es mas grande 
+			// que la duracion de la tarea (porq fue pausado)
+			if (da > dt) {
+				//sumamos esa dife
+				elapsed += (da - dt);
+			}
 		}
 	}
 	return elapsed;
