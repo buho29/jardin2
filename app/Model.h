@@ -110,7 +110,7 @@ private:
 	// 24h x year
 	DataList<365, SensorAvgItem> sensors24;
 
-	//history action (water log)
+	//history action (log)
 	DataList<100, ActionItem> history;
 	void saveHistory();
 	void addHistory(
@@ -268,6 +268,7 @@ public:
 	// estamos regando manualmente ?
 	bool isManualWater = false;
 	// grifos
+	bool isAlarmRunning = false;
 
 	// esta abierto algun grifo ?
 	bool isWatering();
@@ -290,7 +291,7 @@ public:
 
 	bool editAlarm(int id, int tapId, uint32_t time, uint16_t duration);
 	bool removeAlarm(int index);
-	AlarmItem * isAlarmUsingTime(uint32_t time, uint16_t duration, int ignoreId = -1);
+	AlarmItem * findAlarm(uint32_t time, uint16_t duration, int ignoreId = -1);
 
 	//riego zona manual
 	bool waterZone(uint8_t zone);

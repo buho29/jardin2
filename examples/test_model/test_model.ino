@@ -15,9 +15,11 @@ Model * model = Model::instance();
 ***********************************************/
 
 // creamos zona con 3 alarmas 
-void createZone(uint32_t time) {
-	int id = model->addZone("Cesped D", 0);
+void createZone(uint32_t time) 
+{
 	uint8_t duration = 5;
+	
+	int id = model->addZone("Cesped D", 0);
 
 	model->addAlarm(id, 0, time, duration);
 	model->addAlarm(id, 1, duration + time, duration);
@@ -38,7 +40,7 @@ void printZone()
 	);
 }
 
-void checkTime(int &tsecs, int secs, bool print) {
+void checkZone(int &tsecs, int secs, bool print = false) {
 	for (int i = 0; i < secs; i++)
 	{
 		delay(1000);
@@ -54,7 +56,7 @@ void checkTime(int &tsecs, int secs, bool print) {
 	Serial.println();
 }
 
-bool checkWatering(int secs, bool print) {
+bool checkWatering(int secs, bool print = false) {
 	for (int i = 0; i < secs; i++)
 	{
 		delay(1000);
@@ -74,22 +76,65 @@ bool checkWatering(int secs, bool print) {
 *					tests
 ***********************************************/
 
-test(_RemoveZone) 
+test(_Zone) 
 {
 	int errors = 0;
 
-	createZone(clockTime.timeNow() - 3600);
+	uint time = clockTime.timeNow() - 3600;
 
-	if (!model->removeZone(0)) errors++;
-	if (model->alarms.size()) errors++;
-	if (model->zones.size()) errors++;
 
+	int id = model->addZone("Cesped D", 0);
+	//si es 0 o mas 
+	assertMore(id, -1);
+
+	uint8_t duration = 5;
+
+	assertMore(model->addAlarm(id, 0, time, duration), -1);
+	assertMore(model->addAlarm(id, 1, duration + time, duration), -1);
+	assertMore(model->addAlarm(id, 2, duration * 2 + time, duration), -1);
+	//model->printAlarms(id);
+
+	//borramos
+	assertTrue(model->removeZone(0));
+	
+	assertFalse(model->alarms.size());
+	assertFalse(model->zones.size());
+
+	//check tasks is empty
 	for (int i = 0; i < tasker.taskCount; i++)
 	{
-		if (tasker.tasks[i].mode > -1) errors++;
+		assertEqual(tasker.tasks[i].mode , -1);
 	}
+}
 
-	assertEqual(errors, 0);
+test(FindAlarm) {
+
+	int32_t time = tasker.timeNow() + 1;
+	createZone(time);
+
+	int pa = (int)model->findAlarm(time, 5);
+	assertNotEqual(pa, 0);
+
+	pa = (int)model->findAlarm(time, 7);
+	assertNotEqual(pa, 0);
+
+	pa = (int)model->findAlarm(time+6, 5);
+	assertNotEqual(pa, 0);
+
+	pa = (int)model->findAlarm(time, 100);
+	assertNotEqual(pa, 0);
+
+	pa = (int)model->findAlarm(time-100, 105);
+	assertNotEqual(pa, 0);
+
+	pa = (int)model->findAlarm(time - 15, 10);
+	assertEqual(pa, 0);
+
+	pa = (int)model->findAlarm(time + 16, 10);
+	assertEqual(pa, 0);
+
+	//model->printAlarms(0);
+	assertTrue(model->removeZone(0));
 }
 
 test(_EditAlarm) 
@@ -125,14 +170,14 @@ test(_EditAlarm)
 	//assertTrue(model->waterZone(0));
 
 	int tSecs = 0;
-	checkTime(tSecs, 15, false);
+	checkZone(tSecs, 15);
 	assertEqual(tSecs, 15);
 
 	//model->printAlarms(0);
 	assertTrue(model->removeZone(0));
 }
 
-test(checkTimeAlarm) {
+test(_onlyOneAlarmRunning) {
 
 	int id = model->addZone("popo", 0);
 	uint32_t time = clockTime.timeNow() + 2;
@@ -160,28 +205,31 @@ test(checkTimeAlarm) {
 
 		if (openCount > 1) error = true;
 
-		//Serial.printf(" --------- %d taps %d---------\n", i, openCount);
+		Serial.print(".");
 	}
+	Serial.println();
 
 	assertFalse(error);
 	assertTrue(model->removeZone(0));
 }
 
-
-test(Pause) {
+test(_Pause) {
 
 	createZone(clockTime.timeNow() + 1);
 
 	delay(1000);
 	tasker.check();
+
+	assertTrue(model->isAlarmRunning);
+	assertTrue(model->isWatering());
+
 	//pausamos
 	assertTrue(model->pauseWaterZone(true));
 
 	// probamos q no se abra ningun grifo en 6sg
-	if (!checkWatering(6, false)) {
+	if (!checkWatering(6)) {
 		assertTrue(model->removeZone(0));
-		assertFalse(true);
-		//fail();
+		assertFalse(true);//fail();
 	}
 
 	delay(1000);
@@ -189,22 +237,22 @@ test(Pause) {
 	//reanudamos 
 	assertTrue(model->pauseWaterZone(false));
 
-	int tSecs = 1;
-	checkTime(tSecs, 15, false);
+	int tSecs = 0;
+	checkZone(tSecs, 15);
 	assertEqual(tSecs, 15);
 
-	//riego manual zone start
-	assertTrue(model->waterZone(0));
+	//intento riego manual zone start
+	assertFalse(model->waterZone(0));
 
 	tSecs = 0;
-	checkTime(tSecs, 3, false);
+	checkZone(tSecs, 3);
 	assertEqual(tSecs, 3);
 
 	// volvemos a pausar
 	assertTrue(model->pauseWaterZone(true));
 
 	// probamos q no se abra ningun grifo
-	if (!checkWatering(6, false)) {
+	if (!checkWatering(6)) {
 		assertTrue(model->removeZone(0));
 		assertFalse(true);
 		//fail();
@@ -217,12 +265,11 @@ test(Pause) {
 	//reanudamos
 	assertTrue(model->pauseWaterZone(false));
 
-	checkTime(tSecs, 11, false);
+	checkZone(tSecs, 11);
 	assertEqual(tSecs, 15);
 	//borramos
 	assertTrue(model->removeZone(0));
 }
-
 
 /**********************************************
 *				setup/loop
@@ -237,10 +284,11 @@ void setup() {
 	clockTime.begin();
 
 	//fills taps
+	uint8_t pins[] = {23,25,26,27};
 	for (size_t i = 0; i < 4; i++)
 	{
 		TapItem * tap = model->taps.getEmpty();
-		tap->set(i, i, (String("tap ") + i).c_str());
+		tap->set(i, pins[i], (String("tap ") + i).c_str());
 		model->taps.push(tap);
 	}
 

@@ -315,6 +315,7 @@ void Model::readFiles()
 
 //		data
 
+//return zone.id
 int Model::addZone(const char * name, uint32_t modes)
 {
 	ZoneItem * zone = zones.getEmpty();
@@ -433,6 +434,7 @@ void Model::beginOTA()
 }
 
 //		alarm
+// return zone.id
 int Model::addAlarm(int zoneId, int tapId, uint32_t time, uint16_t duration)
 {
 	if (zones.has(zoneId)) 
@@ -1249,7 +1251,7 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 
 		AlarmItem* ocuped = nullptr;
 		
-		isAlarmUsingTime(time, duration, id);
+		findAlarm(time, duration, id);
 
 		if (alarms.has(id)) {
 			AlarmItem* a = alarms[id];
@@ -1275,11 +1277,10 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 
 		String msg = lang.get(Str::notFound);
 
-		isAlarmUsingTime(time, duration);
+		findAlarm(time, duration);
 
 		AlarmItem* ocuped = nullptr;
 		
-
 		if (zones.has(zoneId))
 			msg = String(zones[zoneId]->name) + " : " + Tasker::formatTime(time);
 
@@ -1353,10 +1354,10 @@ bool Model::isAuthenticate(AsyncWebServerRequest * request)
 // pausa el riego de la zona en curso
 bool Model::pauseWaterZone(bool pause)
 {
-	if (currentZone == nullptr ||
+	if (
+		currentZone == nullptr ||
 		(currentZone != nullptr && currentZone->paused == pause) ||
 		(currentZone != nullptr && !alarms.has(currentZone->alarmId))
-
 	) return false;
 
 	//Serial.printf("\n--pauseWaterZone %d\n", currentZone->id);
@@ -1474,13 +1475,14 @@ void Model::onWater(Task * t)
 {
 
 	// si se abre los grifos manualment
-	// o esta pausado
-	if (isManualWater || isPaused()) {
+	// o esta pausado 
+	// o ya hay una alarma activa(no deberia pasar)
+	if (isManualWater || isPaused() || isAlarmRunning) {
 		/*Serial.printf("exit onWater manualwater %s || paused %s \n",
 			isManualWater ? "true" : "false",
 			isPaused() ? "true" : "false");*/
-		// nos salimos
-		return;
+		
+		return;// nos salimos
 	}
 
 	//reseteamos uno que fue cancelado 
@@ -1492,7 +1494,6 @@ void Model::onWater(Task * t)
 
 	AlarmItem* currentAlarm = nullptr;
 	//buscamos la correspondencia con la alarma
-	bool found = false;
 	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 		if (alarm->task == t) {
@@ -1500,12 +1501,11 @@ void Model::onWater(Task * t)
 			currentZone = zones[alarm->zoneId];
 			currentZone->alarmId = alarm->id;
 			currentZone->runing = t->runing;
-			found = true;
 			break;
 		}
 	}
 
-	if (found)
+	if (currentAlarm)
 	{
 		// si no se puede regar cancelamos
 		if (t->runing && !isManualZoneWater 
@@ -1516,6 +1516,9 @@ void Model::onWater(Task * t)
 		}
 
 		if (t->runing) {
+
+			isAlarmRunning = true;
+
 			//actualizamos clientes
 			const String & str = printJson("zone", currentZone);
 			sendAll(str);
@@ -1572,8 +1575,8 @@ void Model::onWater(Task * t)
 
 			//borramos
 			currentZone = nullptr;
-			currentAlarm = nullptr;
 			elapsedPausedTask = 0;
+			isAlarmRunning = false;
 
 			//disparamos evento
 			status = Status::standby;
@@ -1582,8 +1585,8 @@ void Model::onWater(Task * t)
 
 	}
 	else
-		Serial.printf("Meeec! onWater task not found:%d isWatering:%d zoneId:%d iindex:%d\n",
-			found, t->runing, currentZone, currentAlarm);
+		Serial.printf("Meeec! onWater task not found isWatering:%d zoneId:%d iindex:%d\n",
+			t->runing, currentZone, currentAlarm);
 }
 
 
@@ -1635,6 +1638,7 @@ bool Model::stopWaterZone(bool save)
 	currentZone = nullptr;
 	elapsedPausedTask = 0;
 	pausedTime = 0;
+	isAlarmRunning = false;
 
 	status = Status::standby;
 	dispachEvent(EventType::status);
@@ -2342,7 +2346,7 @@ void Model::calcZone(int32_t zoneId)
 }
 
 //TODO por terminar
-AlarmItem * Model::isAlarmUsingTime(uint32_t time, uint16_t duration, int ignoreId)
+AlarmItem * Model::findAlarm(uint32_t time, uint16_t duration, int ignoreId)
 {
 	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
@@ -2355,8 +2359,8 @@ AlarmItem * Model::isAlarmUsingTime(uint32_t time, uint16_t duration, int ignore
 			(time >= tStart && time <= tEnd) || 
 			(timeEnd >= tStart && timeEnd <= tEnd)
 		){
-			Serial.printf("ckeckAlarm ign%d id%d tStart%d tEnd%d time%d timeEnd%d\n ",
-				ignoreId, alarm->id, tStart, tEnd,time,timeEnd);
+			/*Serial.printf("ckeckAlarm ignId:%d id:%d tStart:%d tEnd:%d time:%d timeEnd:%d\n",
+				ignoreId, alarm->id, tStart, tEnd,time,timeEnd);*/
 			return alarm;
 		}
 	}
