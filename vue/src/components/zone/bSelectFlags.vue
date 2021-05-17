@@ -15,14 +15,14 @@
 </template>
 <script>
 export default {
-    name: 'b-select-flags',
-    data() {
-        return {
-            //seleccion en bin ej: 2|16 (18)
-            mFlags: 0,
-            //modelo se llena segun el select ej :[2,16]
-            model: []
-        };
+  name: 'b-select-flags',
+  data() {
+    return {
+        //seleccion en bin ej: 2|16 (18)
+        mFlags: 0,
+        //modelo se llena segun el select ej :[2,16]
+        model: []
+    };
   },
   props: ["options", "flags", "label"],
   watch: {

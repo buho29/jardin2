@@ -66,11 +66,14 @@ export default {
   mounted() {
     this.$q.iconSet.field.error = 'icon-alert-circle';
     this.$q.iconSet.arrow.dropdown = 'icon-menu-down';
+    
     this.$q.iconSet.tabs.right = 'icon-chevron-right';
     this.$q.iconSet.tabs.left = 'icon-chevron-left';
     
+    this.$q.iconSet.datetime.arrowRight = 'icon-chevron-right';
+    this.$q.iconSet.datetime.arrowLeft = 'icon-chevron-left';
     this.$q.iconSet.datetime.now = 'icon-alarm';
-    //console.log(this.$q.iconSet);
+    //console.log(this.$q.iconSet.datetime);
   },
   created() {
     

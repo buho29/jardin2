@@ -7,9 +7,9 @@
         
         <q-tabs
           class="bg-primary text-white shadow-1"
-          indicator-color="accent" align="justify" narrow-indicator
+          indicator-color="accent" align="justify"
           v-model="tab"
-        >
+          >
           <q-tab name="general" :label="$t('config.general')"/>
           <q-tab name="zones" :label="$t('titles.zones')"/>
           <q-tab name="user" :label="$t('config.user')"/>
@@ -22,8 +22,10 @@
 
         <q-tab-panels v-model="tab" animated keep-alive>
 
-          <q-tab-panel name="general"  class="q-gutter-y-md">
-            <b-card :title="$t('config.browser')">
+          <q-tab-panel name="general"  class="q-gutter-y-md"
+            >
+            <b-card :title="$t('config.browser')"
+              >
               <p v-html="$t('config.helpRouting')"/>
               <q-toggle label= "routing server" :value="routingServer" 
                 @input="setRoutingServer(!routingServer)">
@@ -85,7 +87,7 @@
           <q-tab-panel name="icons"  class="q-gutter-y-md">
             <b-card title="Icons">
               <div class="text-purple q-pa-md row items-start">
-                <div v-for="(item,id) in icons" :key="id"  style="width: 70px;">
+                <div v-for="item in icons" :key="item"  style="width: 70px;">
                   <q-icon :name="item" style="font-size: 2em;"></q-icon>  
                   <p>{{item}}</p>    
                 </div>
@@ -93,7 +95,7 @@
             </b-card>
             <b-card title="Meteo">
               <div class="q-pa-md row items-start">
-                <b-icon  v-for="(item) in meteo" :key="item"
+                <b-icon  v-for="item in meteo" :key="item"
                   :icon="item"  style="font-size:70px;"/>
               </div>
             </b-card>
@@ -139,7 +141,7 @@ export default {
         "icon-watering-can" , "icon-water-pump","icon-eye-off", "icon-eye",
         "icon-cloud-upload", "icon-cloud-download" , "icon-file-outline",
         "icon-folder", "icon-folder-multiple","icon-help","icon-magnify",
-        "icon-chevron-right","icon-chevron-right"
+        "icon-chevron-right","icon-chevron-left","icon-calendar-clock"
       ],
       meteo:[1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,
         18,19,20,21,22,23,24,25, 26,29,30,31,32,33,34,35,
@@ -162,7 +164,7 @@ export default {
       this.registerAuth(true);
   },
   beforeDestroy() {
-    this.registerAuth(false);
+    //this.registerAuth(false);
   },
   watch: {
     //si abren directamente la pagina opciones

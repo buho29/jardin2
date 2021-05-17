@@ -2,14 +2,10 @@
   <q-layout view="hHh LpR ffr">
     <q-header elevated>
       <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
+        <q-btn flat dense round
           @click="leftDrawerOpen = !leftDrawerOpen"
-          aria-label="Menu"
-          icon="icon-menu"
-        ></q-btn>
+          aria-label="Menu"  icon="icon-menu"
+        />
         <q-toolbar-title>{{ $t(`titles.${$route.name}`) }}</q-toolbar-title>
         <q-btn v-if="authenticate" flat round @click="logout()">logout</q-btn>
         <q-btn v-else flat round to="/login">login</q-btn>
@@ -24,14 +20,11 @@
     >
       <q-list>
         <q-item-label header>Navegacion</q-item-label>
-        <q-item
-          v-for="(item, index) in menu"
-          :key="index"
-          :to="item.path"
-          exact
-        >
+        <q-item exact
+          v-for="(item, index) in menu" :key="index" :to="item.path"
+          >
           <q-item-section avatar>
-            <q-icon :name="item.icon"></q-icon>
+            <q-icon :name="item.icon"/>
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ $t(`titles.${item.title}`) }}</q-item-label>

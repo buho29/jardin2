@@ -174,10 +174,10 @@ export function onMessage({ commit, dispatch }, event) {
 
   // TODO mutations
   let mutations ={
-    sensor:"updateSensor",sensors:"updateSensors",sensors24:"updateSensors24",taps:"updateTaps",
-    zones:"updateZones",zone:"updateZone",alarms:"updateAlarms",token:"authenticated",
-    system:'updateSystem',root:'updateRootFiles',weather:'updateWeather',
-    config:'updateConfig',history: 'updatehHistory'
+    sensor:"updateSensor",sensors:"updateSensors",sensors24:"updateSensors24",
+    taps:"updateTaps",zones:"updateZones",zone:"updateZone",alarms:"updateAlarms",
+    token:"authenticated", system:'updateSystem',root:'updateRootFiles',
+    weather:'updateWeather', config:'updateConfig',history: 'updatehHistory'
   }
   //actualizamos los datos por commit("mutation")
   for (const key in mutations) {

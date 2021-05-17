@@ -24,6 +24,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
+#include "modes.h"
 #include "data.h"
 #include "observer.h"
 
@@ -98,10 +99,16 @@ private:
 	IPAddress apIP;
 	DNSServer dnsServer;
 
+	//debug
+	bool writeFileEnabled = true;
+
 	// el tiempo para volver a intentarlo
 	const uint8_t retryTime = 60;
 	//app
 	DataTable<10, ZoneItem> zones;
+	DataTable<10, ModesItem> modesItems;
+	Modes modes;
+
 	DataTable<20, TapItem> taps;
 	DataTable<200, AlarmItem> alarms;
 	//log
@@ -262,6 +269,7 @@ public:
 	char msgStatus[100] = "";
 
 	ZoneItem* currentZone = nullptr;
+	ModesItem* getModesItem(int id);
 
 	// estamos regando manualmente una zona ?
 	bool isManualZoneWater = false;
@@ -280,8 +288,8 @@ public:
 	}
 
 	//data Zone
-	bool editZone(int zone, const char * name, uint32_t modes);
-	int addZone(const char * name, uint32_t modes);
+	bool editZone(int zone, const char * name, uint32_t fmodes, const char* rangs);
+	int addZone(const char * name, uint32_t fmodes, const char* rangs);
 	bool removeZone(int zone);
 
 	//alarmas
@@ -304,8 +312,7 @@ public:
 	WeatherData weather[5];
 	bool loadedForescast = false;
 
-	bool canWatering(uint flag);
-	Modes modes;
+	bool canWatering(uint zoneId);
 
 	uint16_t getElapsedAlarm();
 

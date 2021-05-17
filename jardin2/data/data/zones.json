@@ -3,28 +3,18 @@
     "id": 0,
     "time": 25200,
     "name": "Cesped D",
-    "duration": 2700,
-    "modes": 6
+    "duration": 180
   },
   {
     "id": 1,
     "time": 75600,
     "name": "Cesped N",
-    "duration": 3600,
-    "modes": 2
+    "duration": 60
   },
   {
     "id": 2,
     "time": 50400,
     "name": "Huerta",
-    "duration": 1200,
-    "modes": 770
-  },
-  {
-    "id": 3,
-    "time": 72000,
-    "name": "maria",
-    "duration": 1200,
-    "modes": 0
+    "duration": 40
   }
 ]

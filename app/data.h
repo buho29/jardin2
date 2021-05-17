@@ -5,7 +5,6 @@
 
 #include "lib/dataTable.h"
 #include "lib/Task.h"
-#include "modes.h"
 
 /********************
 	diccio lang
@@ -111,6 +110,7 @@ struct Config :public Item
 
 	void setDst(const char * dst) {
 		Serial.println(dst);
+		//TODO probar setDst
 		return;
 		char str[30];
 		strcpy(str, dst);
@@ -198,22 +198,19 @@ struct ZoneItem : public Item
 	int32_t alarmId=-1;
 	uint32_t elapsed;
 	uint16_t duration;
-	uint32_t modes;
 	char name[20] = "";
 	bool can_watering = true;
 	bool runing = false; bool paused = false;
 
-	void set(int id, uint32_t time, uint16_t duration,
-		uint32_t modes, const char * name) 
+	void set(int id, uint32_t time, uint16_t duration, const char * name) 
 	{
-		this->id = id; this->time = time; this->duration = duration; this->modes = modes;
+		this->id = id; this->time = time; this->duration = duration;
 		strcpy(this->name, name); this->runing = false; this->paused = false;
 	};
 	void serializeItem(JsonObject & obj, bool extra) 
 	{
 		obj["id"] = this->id; obj["time"] = time,
 		obj["name"] = name; obj["duration"] = duration;
-		obj["modes"] = modes;
 		if (extra) {
 			obj["paused"] = paused;
 			obj["runing"] = runing;
@@ -224,16 +221,14 @@ struct ZoneItem : public Item
 	};
 	void deserializeItem(JsonObject & obj) {
 		if (!obj.containsKey("id") || !obj.containsKey("time") ||
-			!obj.containsKey("duration") || !obj.containsKey("modes") ||
-			!obj.containsKey("name"))
+			!obj.containsKey("duration") || !obj.containsKey("name"))
 		{
 			Serial.println("faill deserializeItem ZoneItem");
 			return;
 		}
 		set(
 			obj["id"].as<int>(), obj["time"].as<uint32_t>(),
-			obj["duration"].as<int>(), obj["modes"].as<int>(),
-			obj["name"].as<char*>()
+			obj["duration"].as<int>(), obj["name"].as<char*>()
 		);
 	};
 };
@@ -271,6 +266,7 @@ struct TapItem : public Item
 	};
 };
 
+
 struct AlarmItem :public Item
 {
 	uint8_t tapId;
@@ -307,6 +303,41 @@ struct AlarmItem :public Item
 			obj["id"].as<int>(), obj["time"].as<int>(),
 			obj["duration"].as<int>(), obj["tapId"].as<int>(),
 			obj["zoneId"].as<int>()
+		);
+	};
+};
+
+
+struct ModesItem :public Item
+{
+	uint flags = 0;
+	// 10 rang
+	char rangs[120] ="01/01-12/31";
+
+	void set(int id, uint flags, const char* rangs)
+	{
+		this->id = id; this->flags = flags;
+		strcpy(this->rangs, rangs);
+	};
+
+	void serializeItem(JsonObject& obj, bool extra)
+	{
+		obj["id"] = this->id;
+		obj["rangs"] = this->rangs;
+		obj["flags"] = this->flags;
+	};
+
+	void deserializeItem(JsonObject& obj) {
+		if (!obj.containsKey("id") || !obj.containsKey("rangs") ||
+			!obj.containsKey("flags"))
+		{
+			Serial.println("faill deserializeItem ZoneItem");
+			return;
+		}
+		set(
+
+			obj["id"].as<int>(), obj["flags"].as<uint>(),
+			obj["rangs"].as<char*>()
 		);
 	};
 };

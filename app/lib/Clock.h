@@ -4,8 +4,8 @@
 #include "RTClib.h"
 
 // TODO : not full tested using timelib.h
-#define __RTC__
-#ifndef __RTC__
+#define __RTC__ 1
+#if !__RTC__
 #include <TimeLib.h>
 #endif
 
@@ -147,7 +147,7 @@ public:
 	bool begin() {
 		// initializing the rtc
 
-#ifdef __RTC__
+#if __RTC__
 		if (!rtc.begin()) {
 			Serial.println("Couldn't find RTC!");
 			return false;
@@ -176,7 +176,7 @@ public:
 		if (millis() - time > 50) {
 			time = millis();
 
-#ifndef __RTC__
+#if !__RTC__
 			DateTime st = now();	
 #else 
 			DateTime st = rtc.now();		
@@ -202,7 +202,7 @@ public:
 		DateTime dt = DateTime(year, mon, day, hours, min, sec);
 		if (dt.unixtime() != _utc) {
 
-#ifndef __RTC__
+#if !__RTC__
 			setTime(hours, min, sec, day, mon, year);
 #else 
 			rtc.adjust(dt);
@@ -223,7 +223,7 @@ public:
 	void setTimeNow(int32_t utc) {
 		if (utc != _utc) {
 
-#ifdef __RTC__
+#if __RTC__
 			rtc.adjust(DateTime(utc));
 #else 
 			setTime(utc);
@@ -249,7 +249,7 @@ public:
 	int8_t dayWeek(){ return _dayWeek; };
 	float temp(){
 
-#ifdef __RTC__
+#if __RTC__
 		return rtc.getTemperature();
 #else 
 		return 0;
@@ -306,7 +306,7 @@ private:
 
 	DST dst;
 
-#ifdef __RTC__
+#if __RTC__
 	RTC_DS3231 rtc; // clock object
 #endif
 	

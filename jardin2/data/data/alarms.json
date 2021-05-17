@@ -1,65 +1,58 @@
 [
   {
     "id": 25200,
-    "duration": 900,
+    "duration": 60,
     "time": 25200,
     "tapId": 0,
     "zoneId": 0
   },
   {
-    "id": 26100,
-    "duration": 900,
-    "time": 26100,
+    "id": 25260,
+    "duration": 60,
+    "time": 25260,
+    "tapId": 1,
+    "zoneId": 0
+  },
+  {
+    "id": 25320,
+    "duration": 60,
+    "time": 25320,
     "tapId": 2,
     "zoneId": 0
   },
   {
-    "id": 27000,
-    "duration": 900,
-    "time": 27000,
-    "tapId": 3,
-    "zoneId": 0
-  },
-  {
     "id": 50400,
-    "duration": 1200,
+    "duration": 20,
     "time": 50400,
     "tapId": 3,
     "zoneId": 2
   },
   {
-    "id": 72000,
-    "duration": 600,
-    "time": 72000,
-    "tapId": 0,
-    "zoneId": 3
-  },
-  {
-    "id": 72600,
-    "duration": 600,
-    "time": 72600,
-    "tapId": 1,
-    "zoneId": 3
+    "id": 50420,
+    "duration": 20,
+    "time": 50420,
+    "tapId": 3,
+    "zoneId": 2
   },
   {
     "id": 75600,
-    "duration": 1200,
+    "duration": 20,
     "time": 75600,
-    "tapId": 2,
+    "tapId": 0,
     "zoneId": 1
   },
   {
-    "id": 76800,
-    "duration": 1200,
-    "time": 76800,
-    "tapId": 3,
-    "zoneId": 1
-  },
-  {
-    "id": 78000,
-    "duration": 1200,
-    "time": 78000,
+    "id": 75620,
+    "duration": 20,
+    "time": 75620,
     "tapId": 1,
+    "zoneId": 1
+  },
+  {
+    "id": 75640,
+    "duration": 20,
+    "time": 75640,
+    "tapId": 3,
     "zoneId": 1
   }
 ]

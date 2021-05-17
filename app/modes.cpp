@@ -1,22 +1,26 @@
-#include "modes.h"
 #include "Model.h"
+#include "modes.h"
 
 
 /*			Expression			*/
 
-Expression::Expression() { }
 
-void Expression::begin()
+void Interpreter::begin()
 {
 	model = Model::instance(); 
 }
 
-void Expression::setEnabled(bool value){enabled = value;}
+void Interpreter::setEnabled(bool value){enabled = value;}
 
-bool Expression::getEnabled(){return enabled;}
+bool Interpreter::getEnabled(){return enabled;}
+
+void Interpreter::target(int id)
+{
+	targetId = id;
+}
 
 
-int8_t WeaterExpression::evaluate()
+int8_t WeatherInterp::evaluate()
 {
 	/*{
 	  "minTemp": 5,
@@ -40,7 +44,7 @@ int8_t WeaterExpression::evaluate()
 	return -1;
 }
 
-bool WeaterExpression::skip()
+bool WeatherInterp::skip()
 {
 	if (this->model && this->model->loadedForescast)
 		// cancelamos cuando el viento es mas de 8km/h
@@ -48,9 +52,9 @@ bool WeaterExpression::skip()
 	return false;
 }
 
-const char * WeaterExpression::getName(){return "Weater";}
+const char * WeatherInterp::getName(){return "Weater";}
 
-int8_t SensorExpression::evaluate()
+int8_t SensorInterp::evaluate()
 {
 	float averageTmp = 0, averageHum = 0;
 
@@ -82,33 +86,34 @@ int8_t SensorExpression::evaluate()
 }
 
 
-bool SensorExpression::skip()
+bool SensorInterp::skip()
 {
 	// cancelamos cuando la temp es menos 5°
 	return this->model->currentSensor.temperature < 5;
 }
 
-const char * SensorExpression::getName(){return "sensors";}
+const char * SensorInterp::getName(){return "sensors";}
 
 
-ListExpression::ListExpression(){enabled = true;}
+ListInterpreter::ListInterpreter(){enabled = true;}
 
-void ListExpression::begin()
+void ListInterpreter::begin()
 {
-	uint i = -1;
+	Interpreter::begin();
+	int i = -1;
 	while (has(++i))
 	{
 		get(i)->begin();
 	}
 }
 
-int8_t ListExpression::evaluate()
+int8_t ListInterpreter::evaluate()
 {
 	uint16_t result = 0;
 	uint8_t c = 0;
 	for (uint8_t i = 0; i < count; i++)
 	{
-		Expression * exp = expressionList[i];
+		Interpreter * exp = expressionList[i];
 		if (exp->getEnabled()) {
 			int8_t ev = exp->evaluate();
 			if (ev > -1) {
@@ -121,18 +126,18 @@ int8_t ListExpression::evaluate()
 	return (int8_t)(result / c);
 }
 
-bool ListExpression::skip()
+bool ListInterpreter::skip()
 {
 	for (uint8_t i = 0; i < count; i++)
 	{
-		Expression * exp = expressionList[i];
+		Interpreter * exp = expressionList[i];
 		if (exp->getEnabled() && exp->skip())
 			return true;
 	}
 	return false;
 }
 
-bool ListExpression::add(Expression * exp)
+bool ListInterpreter::add(Interpreter * exp)
 {
 	if (count < 20) {
 		expressionList[count++] = exp;
@@ -141,7 +146,7 @@ bool ListExpression::add(Expression * exp)
 	return false;
 }
 
-Expression * ListExpression::get(uint8_t index)
+Interpreter * ListInterpreter::get(uint8_t index)
 {
 	if (index < count) {
 		return expressionList[index];
@@ -149,19 +154,30 @@ Expression * ListExpression::get(uint8_t index)
 	return nullptr;
 }
 
-bool ListExpression::has(uint8_t index){return get(index) != nullptr;}
+bool ListInterpreter::has(uint8_t index){return get(index) != nullptr;}
 
-const char * ListExpression::getName(){return "List";}
+void ListInterpreter::target(int id)
+{
+	targetId = id;
 
-int8_t Disable24Expression::evaluate(){ return -1; }
+	int i = -1;
+	while (has(++i))
+	{
+		get(i)->target(id);
+	}
+}
 
-bool Disable24Expression::skip() { return true; }
+const char * ListInterpreter::getName(){return "List";}
 
-void Disable24Expression::setEnabled(bool value)
+int8_t Disable24Interp::evaluate(){ return -1; }
+
+bool Disable24Interp::skip() { return true; }
+
+void Disable24Interp::setEnabled(bool value)
 {
 	if (value == enabled) return;
 
-	Tasker & tasker = Tasker::instance();
+	Tasker& tasker = Tasker::instance();
 
 	this->enabled = value;
 	if (value) {
@@ -169,7 +185,7 @@ void Disable24Expression::setEnabled(bool value)
 			tasker.remove(task);
 
 		using namespace std::placeholders;
-		task = tasker.setTimeout(std::bind(&Disable24Expression::onTimeOut, this, _1), 24 * 60 * 60);
+		task = tasker.setTimeout(std::bind(&Disable24Interp::onTimeOut, this, _1), 24 * 60 * 60);
 	}
 	else {
 		if (task != nullptr)
@@ -178,27 +194,29 @@ void Disable24Expression::setEnabled(bool value)
 	}
 }
 
-void Disable24Expression::onTimeOut(Task * current) { setEnabled(false); }
+void Disable24Interp::onTimeOut(Task * current) { setEnabled(false); }
 
-const char * Disable24Expression::getName() { return "Disable24"; }
+const char * Disable24Interp::getName() { return "Disable24"; }
 
-int8_t dayExpression::evaluate() { return -1; }
+int8_t DayInterp::evaluate() { return -1; }
 
-bool dayExpression::skip()
+bool DayInterp::skip()
 {
 	return ClockTime::instance().dayWeek() == day;
 }
 
-const char * dayExpression::getName() { return "day"; }
+const char * DayInterp::getName() { return "day"; }
 
 Modes::Modes()
 {
 	add(&disable24);
 	add(&weater);
 	add(&sensor);
+	add(&rangs);
+
 	for (uint8_t i = 0; i < 7; i++)
 	{
-		dayExpression * day = &week[i];
+		DayInterp * day = &week[i];
 		day->day = i + 1;
 		add(day);
 	}
@@ -210,7 +228,7 @@ uint Modes::getFlags()
 	int i = -1;
 	while (has(++i))
 	{
-		Expression * exp = get(i);
+		Interpreter * exp = get(i);
 		if (exp->getEnabled()) {
 			fr.add(modesArr[i]);
 		}
@@ -218,13 +236,14 @@ uint Modes::getFlags()
 	return fr;
 }
 
+
 void Modes::setFlags(uint f)
 {
 	Flags fl = Flags(f);
 	int i = -1;
 	while (has(++i))
 	{
-		Expression * exp = get(i);
+		Interpreter * exp = get(i);
 		bool enabled = fl.contain(modesArr[i]);
 
 		exp->setEnabled(enabled);
@@ -232,7 +251,129 @@ void Modes::setFlags(uint f)
 	}
 }
 
+void Modes::target(int id)
+{
+	ModesItem* cur = model->getModesItem(id);
+	if (cur) setFlags(cur->flags);
+	ListInterpreter::target(id);
+}
+
 const uint Modes::modesArr[countModes] = {
-		disable24F ,weatherF,sensorsF ,mondayF, tuesdayF ,
-		WednesdayF ,ThursdayF,fridayF, saturdayF,sundayF
+		disable24F, weatherF, sensorsF, rangsF, mondayF, tuesdayF,
+		WednesdayF, ThursdayF, fridayF, saturdayF, sundayF
 };
+
+bool DatesInterp::isValide(const char* rangs)
+{
+	char rangsArray[10][12];
+
+	char str[120];
+	strcpy(str, rangs);
+
+	char* pch;
+	int i = 0;
+	pch = strtok(str, "|");
+	while (pch != NULL)
+	{
+		strcpy(rangsArray[i++], pch);
+		//printf("%s %d\n", pch, i);
+		pch = strtok(NULL, "|");
+	}
+	int count = i;
+
+	for (i = 0;i < count;i++) {
+
+		char buffSt[6];
+		char* st = strtok(rangsArray[i], "-");
+		strcpy(buffSt, st);
+
+		char buffEnd[6];
+		st = strtok(NULL, "-");
+		if (st == NULL) return false;
+		strcpy(buffEnd, st);
+
+		char* mSt = strtok(buffSt, "/");
+		char* dSt = strtok(NULL, "/");
+
+		char* mEn = strtok(buffEnd, "/");
+		char* dEn = strtok(NULL, "/");
+
+		// TODO no comprueba q sean numeros validos
+		if(dSt == NULL || dEn == NULL) 
+			return false;
+	}
+	return true;
+}
+
+int8_t DatesInterp::evaluate()
+{
+	return -1;
+}
+
+bool DatesInterp::skip()
+{
+
+	ClockTime& clockTime = ClockTime::instance();
+
+	uint32_t date = clockTime.utc();
+	uint16_t year = clockTime.year();
+
+	ModesItem* cur = model->getModesItem(targetId);
+
+	if (!cur) return true;
+
+	char rangsStr[120];
+	strcpy(rangsStr, cur->rangs);
+
+	char rangsArray[10][12];
+	//uint32_t rangs[10][2];
+
+	char str[120];
+	strcpy(str, rangsStr);
+
+	char* pch;
+
+	int i = 0;
+	pch = strtok(str, "|");
+	while (pch != NULL)
+	{
+		strcpy(rangsArray[i++], pch);
+		//printf("%s %d\n", pch, i);
+		pch = strtok(NULL, "|");
+	}
+	int count = i;
+	//atoi(pch)
+
+	for (i = 0;i < count;i++) {
+
+		char buff[12];
+		strcpy(buff, rangsArray[i]);
+
+		char buffSt[6];
+		char* st = strtok(buff, "-");
+		strcpy(buffSt, st);
+
+		char buffEnd[6];
+		st = strtok(NULL, "-");
+		strcpy(buffEnd, st);
+
+		char* mSt = strtok(buffSt, "/");
+		char* dSt = strtok(NULL, "/");
+
+		char* mEn = strtok(buffEnd, "/");
+		char* dEn = strtok(NULL, "/");
+
+		DateTime stDt = DateTime(year, atoi(mSt), atoi(dSt));
+		DateTime enDt = DateTime(year, atoi(mEn), atoi(dEn));
+
+		uint32_t ust = stDt.unixtime();
+		uint32_t uen = enDt.unixtime();
+
+		if (date >= ust && date <= uen) return false;
+	}
+	return true;
+}
+
+const char* DatesInterp::getName(){
+	return "RangsDate";
+}

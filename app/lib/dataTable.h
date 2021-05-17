@@ -44,7 +44,7 @@ public:
 	T* create(JsonObject &obj) {
 		T* t = getEmpty();
 
-		if (t != nullptr) {
+		if (t) {
 			t->deserializeItem(obj);
 			return t;
 		}
@@ -94,7 +94,9 @@ public:
 	T* operator[](K key) { return mapItems[key]; };
 	uint32_t size() { return mapItems.size(); };
 
-	bool has(K key) { return mapItems.find(key) != mapItems.end(); };
+	bool has(K key) { 
+		return this->mapItems.find(key) != this->mapItems.end(); 
+	};
 	void clear() { mapItems.clear(); };
 	virtual bool remove(K key) {
 		if (this->mapItems.find(key) != this->mapItems.end()) {
@@ -148,7 +150,7 @@ protected:
 	};
 public:
 	T* push(T * item) {
-		if (item != nullptr) {
+		if (item) {
 			int id = getUniqueId(item->id);
 			if (id >= 0) {
 				item->id = id;
@@ -175,7 +177,7 @@ public:
 
 	uint32_t size() { return  listItems.size(); };
 	T* push(T* item) {
-		if (item != nullptr) {
+		if (item) {
 			item->id = 1;
 			listItems.push_back(item);
 			return item;

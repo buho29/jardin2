@@ -25,11 +25,15 @@
           :label="$t('zone.modes')"
           :options="modesData"
           :flags="modesFlags"
-          @input="change"
+          @input="changedFlags"
         />
+
+        <b-select-dates 
+          @input="changedDates"/>
+
         <div class="col-12 text-right">
-          <q-btn flat class="text-primary"
-            :label="$t('cancel')"
+          <q-btn :label="$t('cancel')"
+            flat class="text-primary"
             @click="$router.go(-1)"
           ></q-btn>
           <q-btn
@@ -38,6 +42,7 @@
             class="bg-primary text-white"
           ></q-btn>
         </div>
+
       </q-form>
 
       <div class="bg-primary text-white shadow-3 row">
@@ -174,9 +179,10 @@ import {mapActions,mapState,mapGetters} from 'vuex'
 import mixinFormat from 'src/components/mixin/mixinFormat';
 import mixinRequiresAuth from 'src/components/mixin/mixinRequiresAuth';
 import bSelectFlags from 'src/components/zone/bSelectFlags.vue';
+import BSelectDates from 'src/components/zone/bSelectDates.vue';
 
 export default {
-  components: { bSelectFlags },
+  components: { bSelectFlags, BSelectDates },
     name :"Zone",
     mixins: [mixinFormat, mixinRequiresAuth],
     data() {
@@ -194,17 +200,19 @@ export default {
             alarmsZone: [],
             modesFlags: 0,
             modesData: [
-                { label: this.$t('modes[0]'), value: 0b0000000001},
-                { label: this.$t('modes[1]'), value: 0b0000000010},
-                { label: this.$t('modes[2]'), value: 0b0000000100},
-                { label: this.$t('modes[3]'), value: 0b0000001000},
-                { label: this.$t('modes[4]'), value: 0b0000010000},
-                { label: this.$t('modes[5]'), value: 0b0000100000},
-                { label: this.$t('modes[6]'), value: 0b0001000000},
-                { label: this.$t('modes[7]'), value: 0b0010000000},
-                { label: this.$t('modes[8]'), value: 0b0100000000},
-                { label: this.$t('modes[9]'), value: 0b1000000000}
+                { label: this.$t('modes[0]'),  value: 0b00000000001},
+                { label: this.$t('modes[1]'),  value: 0b00000000010},
+                { label: this.$t('modes[2]'),  value: 0b00000000100},
+                { label: this.$t('modes[3]'),  value: 0b00000001000},
+                { label: this.$t('modes[4]'),  value: 0b00000010000},
+                { label: this.$t('modes[5]'),  value: 0b00000100000},
+                { label: this.$t('modes[6]'),  value: 0b00001000000},
+                { label: this.$t('modes[7]'),  value: 0b00010000000},
+                { label: this.$t('modes[8]'),  value: 0b00100000000},
+                { label: this.$t('modes[9]'),  value: 0b01000000000},
+                { label: this.$t('modes[10]'), value: 0b10000000000}
             ],
+            datestStr: "",
         }
     },
     computed: {
@@ -214,9 +222,11 @@ export default {
         ),
     },
     methods: {
-        change(flags){
+        changedFlags(flags){
           this.modesFlags = flags;
-          console.log("change",this.modesFlags);
+        },
+        changedDates(dates){
+          this.datestStr = dates;
         },
         ...mapActions(['deleteAlarm', 'editZone', 'editAlarm', 'addZone', 'addAlarm']),
         onSaveZone() {

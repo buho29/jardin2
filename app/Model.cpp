@@ -202,6 +202,7 @@ String Model::sha1(const String & msg)
 //		data file
 bool Model::writeFile(const char * path, const char * message)
 {
+	if (!writeFileEnabled) return true;
 	//Serial.printf("path : %s\n",path);
 	int tim = millis();
 	File file = fs.open(path, FILE_WRITE);
@@ -295,7 +296,8 @@ void Model::writeJson(const char * path, Item * item)
 void Model::readFiles()
 {
 	if (!readJson("/data/zones.json", &zones) || 
-		!readJson("/data/alarms.json", &alarms)) 
+		!readJson("/data/alarms.json", &alarms) ||
+		!readJson("/data/modes.json", &modesItems))
 			loadDefaultZones();
 	
 	if(!readJson("/data/taps.json", &taps))
@@ -316,14 +318,21 @@ void Model::readFiles()
 //		data
 
 //return zone.id
-int Model::addZone(const char * name, uint32_t modes)
+int Model::addZone(const char * name, uint32_t fmodes,const char* rangs)
 {
 	ZoneItem * zone = zones.getEmpty();
+	ModesItem* modesItem = modesItems.getEmpty();
+
 	//Serial.println("addZone");
-	if (zone != nullptr) {
-		zone->set(-1, 0, 0, modes, name);
-		zone = zones.push(zone);
-		zone->can_watering = canWatering(modes);
+	if (zone && modesItem) {
+
+		zone->set(-1, 0, 0, name);
+		zones.push(zone);
+
+		modesItem->set(-1, fmodes, rangs);
+		modesItems.push(modesItem);
+
+		zone->can_watering = canWatering(zone->id);
 
 		dispachZone(false);
 		return zone->id;
@@ -331,15 +340,17 @@ int Model::addZone(const char * name, uint32_t modes)
 	return -1;
 }
 
-bool Model::editZone(int id, const char * name, uint32_t modes)
+bool Model::editZone(int id, const char * name, uint32_t fmodes, const char* rangs)
 {
-	if (zones.has(id)) {
+	if (zones.has(id) && modesItems.has(id)) 
+	{
 		ZoneItem * zone = zones[id];
+		ModesItem* modesItem = modesItems[id];
 
-		Serial.println("editZone");
+		modesItem->set(id, fmodes, rangs);
+
 		strncpy(zone->name, name, MODEL_MAX_CHAR_NAME_ZONE);
-		zone->modes = modes;
-		zone->can_watering = canWatering(modes);
+		zone->can_watering = canWatering(id);
 
 		dispachZone(false);
 
@@ -350,7 +361,7 @@ bool Model::editZone(int id, const char * name, uint32_t modes)
 
 bool Model::removeZone(int id)
 {
-	if (zones.has(id)) {
+	if (zones.has(id) && modesItems.has(id)) {
 
 		if (currentZone && currentZone->id == id)
 			stopWaterZone(false);
@@ -366,7 +377,8 @@ bool Model::removeZone(int id)
 				alarms.remove(alarm);
 			}
 		}
-		bool result = zones.remove(id);
+
+		bool result = zones.remove(id) && modesItems.remove(id);
 		
 		if (result) dispachZone(true);
 		return result;
@@ -549,6 +561,13 @@ void Model::printAlarms(uint8_t z)
 				alarm->id, Tasker::formatTime(alarm->time), alarm->duration, alarm->tapId);
 		}
 	}
+}
+
+ModesItem* Model::getModesItem(int id)
+{
+	//if (modesItems.has(id)) 
+		return modesItems[id];
+	return nullptr;
 }
 
 //		webclient
@@ -935,7 +954,7 @@ String Model::printJsonForecast()
 
 void Model::listDir(const char * dirname,const JsonArray & rootjson, uint8_t levels)
 {
-	Serial.printf("Listing %s \n", dirname);
+	//Serial.printf("Listing %s \n", dirname);
 
 	uint32_t c = millis();
 
@@ -971,7 +990,7 @@ void Model::listDir(const char * dirname,const JsonArray & rootjson, uint8_t lev
 		file = root.openNextFile();
 	}
 
-	Serial.printf("%dms\n", millis() - c);
+	//Serial.printf("%dms\n", millis() - c);
 
 }
 
@@ -1201,10 +1220,12 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 	else if (zone.containsKey("edit"))
 	{
 		JsonObject edit = zone["edit"];
-		int id = edit["id"];uint32_t modes = edit["modes"];
+		int id = edit["id"];
+		uint32_t modes = edit["modes"];
+		const char* dates = edit["dates"];
 		const char * name = edit["name"];
 
-		if (editZone(id, name, modes))
+		if (DatesInterp::isValide(dates) && editZone(id, name, modes,dates))
 			sendMessage(0, Str::edit , name);
 		else sendMessage(1, Str::errorEdit , name, client);
 	}
@@ -1213,9 +1234,10 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 		JsonObject newZone = zone["new"];
 
 		uint32_t modes = newZone["modes"];
+		const char* rangs = newZone["dates"];
 		const char * name = newZone["name"];
 
-		if (addZone(name, modes))
+		if (DatesInterp::isValide(rangs) && addZone(name, modes, rangs))
 			sendMessage(0, Str::create , name);
 		else
 			sendMessage(1, Str::errorCreate , name, client);
@@ -1477,7 +1499,7 @@ void Model::onWater(Task * t)
 	// si se abre los grifos manualment
 	// o esta pausado 
 	// o ya hay una alarma activa(no deberia pasar)
-	if (isManualWater || isPaused() || isAlarmRunning) {
+	if (isManualWater || isPaused()) {
 		/*Serial.printf("exit onWater manualwater %s || paused %s \n",
 			isManualWater ? "true" : "false",
 			isPaused() ? "true" : "false");*/
@@ -1509,13 +1531,18 @@ void Model::onWater(Task * t)
 	{
 		// si no se puede regar cancelamos
 		if (t->runing && !isManualZoneWater 
-			&& !canWatering(currentZone->modes)) 
+			&& !canWatering(currentZone->id)) 
 		{
 			stopWaterZone(false);
 			return;
 		}
 
 		if (t->runing) {
+
+			if (isAlarmRunning) {
+				// no deberia pasar
+				return;
+			}
 
 			isAlarmRunning = true;
 
@@ -1716,10 +1743,11 @@ void Model::loadDefaultZones()
 
 	uint8_t duration = 60;
 
+	const char* defaulRangs = "01/01-12/31";
 	///*	//grifo 0 27	//grifo 1 14	//grifo 2 21	//grifo 3 17
 	//*/
 	firevent = false;
-	int id = addZone("Cesped D", 0);
+	int id = addZone("Cesped D", 0, defaulRangs);
 
 	addAlarm(id, 0, duration, 7, 0, 0);
 	addAlarm(id, 1, duration, 7, 0, duration);
@@ -1727,20 +1755,20 @@ void Model::loadDefaultZones()
 
 	duration = 20;
 
-	id = addZone("Cesped N", 0);
+	id = addZone("Cesped N", 0, defaulRangs);
 	addAlarm(id, 0, duration, 21, 0, 0);
 	addAlarm(id, 1, duration, 21, 0, duration);
 	addAlarm(id, 3, duration, 21, 0, duration * 2);
 
-	id = addZone("Huerta", 0);
+	id = addZone("Huerta", 0, defaulRangs);
 	addAlarm(id, 3, duration, 14, 0, 0);
 	addAlarm(id, 3, duration, 14, 0, duration);
 
 	writeJson("/data/zones.json", &zones);
 	writeJson("/data/alarms.json", &alarms);
+	writeJson("/data/modes.json", &modesItems);
 	firevent = true;
 }
-
 
 void Model::loadDefaultTaps()
 {
@@ -2045,17 +2073,22 @@ void Model::saveLoger24(Task* t)
 }
 
 //		Modes
-bool Model::canWatering(uint flag)
+bool Model::canWatering(uint zoneId)
 {
-	modes.setFlags(flag);
-	int8_t evaluate = modes.evaluate();
-	bool skip = modes.skip();
+	if (zones.has(zoneId))
+	{
+		modes.target(zoneId);
+		
+		int8_t evaluate = modes.evaluate();
+		bool skip = modes.skip();
 	
-	//Serial.printf("skip %d evaluate %d result %d\n", 
-	// 	skip, evaluate, (!skip && (evaluate < 50 || evaluate < 0)));
+		//Serial.printf("skip %d evaluate %d result %d\n", 
+		// 	skip, evaluate, (!skip && (evaluate < 50 || evaluate < 0)));
 	
-	return !skip && (evaluate < 50 || evaluate < 0);
-
+		return !skip && (evaluate < 50 || evaluate < 0);
+	}
+	 
+	return false;
 }
 
 //		web server
@@ -2288,7 +2321,7 @@ void Model::updateTasks()
 
 void Model::reloadTasks(uint8_t zoneId)
 {
-	Serial.printf("reloadTasks %d\n", zoneId);
+	//Serial.printf("reloadTasks %d\n", zoneId);
 	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 
@@ -2315,7 +2348,7 @@ void Model::calcModes()
 {
 	for (auto &it : zones) {
 		ZoneItem * zone = it.second;
-		zone->can_watering = canWatering(zone->modes);
+		zone->can_watering = canWatering(zone->id);
 	}
 }
 

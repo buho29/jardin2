@@ -1,15 +1,19 @@
 #include "lib/dataTable.h"
+#include <AUnit.h>
+using aunit::TestRunner;
 
 struct MyItem : public Item
 {
 	uint8_t edad;
 	char name[20] = "";
 
-	void set(int id, uint8_t edad, const char * name) {
+	void set(int id, uint8_t edad, const char * name)
+	{
 		this->id = id; this->edad = edad;
 		strcpy(this->name, name);
 	};
-	void serializeItem(JsonObject &obj, bool extra) {
+	void serializeItem(JsonObject &obj, bool extra) 
+	{
 		obj["id"] = this->id;
 		obj["edad"] = this->edad;
 		obj["name"] = this->name;
@@ -24,24 +28,23 @@ struct MyItem : public Item
 };
 
 DataTable<7,MyItem> myTable;
-DataList <5,MyItem > myList;
+DataList<5,MyItem> myList;
 
-void setup() {
+test(DataTable) {
 
-	Serial.begin(115200);
-	delay(1000);
-
-	Serial.printf("maxsize : %d - %d\n",myTable.maxSize,myList.maxSize);
+	assertEqual(myTable.maxSize,7);
+	assertEqual(myList.maxSize,5);
 
 	//fill table
 	int i = myTable.size();
 	while (myTable.size() < myTable.maxSize)
 	{
-		String t = "table "+(String)++i;
+		String t = "table " + (String)++i;
 
 		MyItem* item = myTable.getEmpty();
-		if (item != nullptr) {
-			item->set(-1, 69 - i, t.c_str());			
+		assertTrue(item);
+		if (item) {
+			item->set(-1, 69 - i, t.c_str());
 			myTable.push(item);
 		}
 	}
@@ -52,37 +55,48 @@ void setup() {
 		String t = "list " + (String)++i;
 
 		MyItem* item = myList.getEmpty();
-
-		if (item != nullptr) {
+		assertTrue(item);
+		if (item) {
 			item->set(-1, 19 + i, t.c_str());
-			myList.push(item);		
+			myList.push(item);
 		}
 	}
-	
+
 	//Table loop
-	for (auto elem : myTable)
-		Serial.printf( "init %d :: %s\n",elem.first,elem.second->name);
 
-	Serial.printf( "remove(id 4) %s\n",(myTable.remove(4) ? "True" : "False"));
+	assertTrue(myTable.remove(4));
+	assertFalse(myTable.has(4));
+	assertFalse(myTable.has(666));
+	assertTrue(myTable.has(0));
 
-	for (auto elem : myTable)
-		Serial.printf( "end %d %s:: \n",elem.first,elem.second->name);
-	
-	//List Loop
+	MyItem* item = myList.first();
+	assertTrue(myList.shift());
+	assertFalse(myList.has(item));
+
+	Serial.println("myTable");
+	for (auto pair : myTable)
+		Serial.printf("\tid %d %s \n", pair.first, pair.second->name);
+
+	Serial.println("myList");
 	for (MyItem* item : myList)
-		Serial.printf( "init %s\n" , item->name);
-
-	//delete first
-	Serial.printf( "shift() %s\n",(myList.shift() ? "True" : "False"));
-
-	for (MyItem* item : myList)
-		Serial.printf( "end %s" , item->name );
+		Serial.printf("\t %s\n", item->name);
 
 	//print json
 	//myTable.deserializeData(("teta"));
-	Serial.println(myTable.serializeString());
+	//Serial.println(myTable.serializeString());
 	//Serial.println( myList.serializeString());
+}
 
+void setup() 
+{
+	delay(1000);
+	Serial.begin(115200);
+}
+
+
+void loop()
+{
+	TestRunner::run();
 }
 
 /* output:
@@ -114,9 +128,3 @@ end list 5
 [{"id":0,"name":"table 1","edad":68},{"id":1,"name":"table 2","edad":67},{"id":2,"name":"table 3","edad":66},{"id":3,"name":"table 4","edad":65},{"id":5,"name":"table 6","edad":63},{"id":6,"name":"table 7","edad":62}]
 [{"id":1,"name":"list 2","edad":21},{"id":1,"name":"list 3","edad":22},{"id":1,"name":"list 4","edad":23},{"id":1,"name":"list 5","edad":24}]
 */
-
-
-void loop() {
-
-}
-
