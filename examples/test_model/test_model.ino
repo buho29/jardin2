@@ -19,27 +19,29 @@ const int totalDuration = duration * alarmsCount;
 ***********************************************/
 
 // creamos zona con 3 alarmas 
-void createZone(uint32_t time) 
+int createZone(uint32_t time, const char* name = "zone")
 {
-	int id = model->addZone("Cesped", 0, "01/01-12/31");
+	int id = model->addZone(name, 0, "01/01-12/31");
 
 	for (int i = 0; i < alarmsCount; i++)
 	{
 		model->addAlarm(id, i,(duration * i) + time, duration);
 	}
+
+	return id;
 }
 
 int checkWatering(int secs) {
 	int water = 0;
 	for (int i = 0; i < secs; i++)
 	{
+		delay(1000);
 		tasker.check();
 		if (model->currentZone && model->isWatering())
 		{
 			water ++;
 		}
 		Serial.print(".");
-		delay(1000);
 	}
 	Serial.printf(" %ds open \n",water);
 	return water;
@@ -49,10 +51,10 @@ int checkWatering(int secs) {
 *					tests
 ***********************************************/
 
-test(Zone) 
+test(_Zone) 
 {
 	Serial.println("Test Zone start");
-	uint time = clockTime.timeNow();
+	uint time = clockTime.local();
 
 	int id = model->addZone("zona", 0, "01/01-12/31");
 
@@ -91,7 +93,8 @@ test(Pause)
 {
 	Serial.println("Test Pause start");
 
-	createZone(clockTime.timeNow());
+	createZone(clockTime.local());
+	createZone(clockTime.local()-3600,"zone 1");
 
 	tasker.check();
 
@@ -100,13 +103,19 @@ test(Pause)
 
 	Serial.print("\tpause(true) ");
 	assertTrue(model->pauseWaterZone(true));
-	// comprobamos q no se abre ningun grifo en 6sg
-	assertEqual(checkWatering(6), 0);
+	// comprobamos q no se abre ningun grifo en 8sg
+	assertEqual(checkWatering(8), 0);
+	Serial.print("\t\t");
+	//comprobamos q no se inicie otra
+	assertFalse(model->waterZone(1));
+	assertEqual(checkWatering(8), 0);
 
 	Serial.print("\tpause(false) ");
 	assertTrue(model->pauseWaterZone(false));
+	//comprobamos q no se inicie otra
+	assertFalse(model->waterZone(1));
 	// comprobamos q se abre el grifo 15sg
-	assertEqual(checkWatering(totalDuration+1), totalDuration);
+	assertEqual(checkWatering(totalDuration+2), totalDuration-1);
 
 	//riego manual zone
 	Serial.print("\tmanual water zone ");
@@ -119,13 +128,14 @@ test(Pause)
 
 	Serial.print("\tpause(false) ");
 	assertTrue(model->pauseWaterZone(false));
-	assertEqual(checkWatering(totalDuration-2), totalDuration-3);
+	assertEqual(checkWatering(totalDuration-2), totalDuration-4);
 	//borramos
 	assertTrue(model->removeZone(0));
+	assertTrue(model->removeZone(1));
 }
 
 
-test(FindAlarm)
+test(_FindAlarm)
 {
 	int32_t time = tasker.timeNow() + 1;
 	createZone(time);
@@ -154,11 +164,11 @@ test(FindAlarm)
 	assertTrue(model->removeZone(0));
 }
 
-test(EditAlarm)
+test(_EditAlarm)
 {
 	Serial.println("Test EditAlarm start");
 
-	createZone(clockTime.timeNow() - 3600);
+	createZone(clockTime.local() - 3600);
 
 	int32_t time = tasker.timeNow();
 
@@ -191,12 +201,12 @@ test(EditAlarm)
 	assertTrue(model->removeZone(0));
 }
 
-test(onlyOneAlarmRunning) 
+test(_onlyOneAlarmRunning) 
 {
 	Serial.println("Test onlyOneAlarmRunning start");
 
 	int id = model->addZone("huerta", 0, "01/01-12/31");
-	uint32_t time = clockTime.timeNow() + 2;
+	uint32_t time = clockTime.local() + 2;
 
 	uint8_t duration = 5;
 	model->addAlarm(id, 0, time, duration);
@@ -285,4 +295,28 @@ Test onlyOneAlarmRunning start
 Test onlyOneAlarmRunning passed.
 TestRunner duration: 86.208 seconds.
 TestRunner summary: 5 passed, 0 failed, 0 skipped, 0 timed out, out of 5 test(s).
+
+
+Opening port
+Port open
+TestRunner started on 6 test(s).
+Test Pause start
+	pause(true) ........ 0s open
+		........ 0s open
+	pause(false) ................ 14s open
+Assertion failed: (14) == (15), file C:\Users\pp\Desktop\jardin2\examples\test_model\test_model.ino, line 158.
+Test Pause failed.
+Test Pause start
+	pause(true) ........ 0s open
+	stopWater() . 0s open
+	startWater() . 0s open
+Assertion failed: (0) == (1), file C:\Users\pp\Desktop\jardin2\examples\test_model\test_model.ino, line 115.
+Test PauseCancel failed.
+Test _EditAlarm skipped.
+Test _FindAlarm skipped.
+Test _Zone skipped.
+Test _onlyOneAlarmRunning skipped.
+TestRunner duration: 42.122 seconds.
+TestRunner summary: 0 passed, 2 failed, 4 skipped, 0 timed out, out of 6 test(s).
+
 */

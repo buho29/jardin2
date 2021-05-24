@@ -28,7 +28,7 @@ export default {
   data() {
     return {            
       year: new Date().getFullYear(),
-      _dates: "03/20-06/21|07/02-07/10",
+      datesStr: "",
       proxyDate:[],
     };
   },
@@ -37,7 +37,7 @@ export default {
     printDates()
     {
       let result = "";
-      let arr = this._dates.split('|');
+      let arr = this.datesStr.split('|');
       for(let i = 0; i<arr.length; i++){
         result += arr[i] + " \n" ;
       }
@@ -53,15 +53,15 @@ export default {
     dates: function (newValue, oldValue) {
       if(newValue.toString() === oldValue.toString()) 
         return;
-      this._dates = newValue;
-      updateProxy();
+      this.datesStr = newValue;
+      this.updateProxy();
     }
   },
   methods: {
 
     updateProxy () {
       this.proxyDate = [];
-      let interval = this._dates.split('|');
+      let interval = this.datesStr.split('|');
       for(let i = 0; i<interval.length; i++){
         let dates = interval[i].split('-');
         this.proxyDate.push(
@@ -73,15 +73,16 @@ export default {
       }
     },
     save () {
-      this._dates = "";
-      if(this.proxyDate === null) return;
-      for(let i = 0; i<this.proxyDate.length; i++){
-        this._dates += this.proxyDate[i].from.slice(5) + "-" + 
-          this.proxyDate[i].to.slice(5);
-        if(i<this.proxyDate.length-1)
-          this._dates += '|'
+      this.datesStr = "";
+      if(this.proxyDate !== null) {
+        for(let i = 0; i<this.proxyDate.length; i++){
+          this.datesStr += this.proxyDate[i].from.slice(5) + "-" + 
+            this.proxyDate[i].to.slice(5);
+          if(i<this.proxyDate.length-1)
+            this.datesStr += '|'
+        }
       }
-      this.$emit("input", this._dates);
+      this.$emit("input", this.datesStr);
     },
     
   },

@@ -107,6 +107,20 @@ class Tasker
 		return t;
 	};
 
+	void timeHasChanged() {
+		uint32_t tnow = timeNow();
+		for (uint8_t i = 0; i < taskCount; i++)
+		{
+			Task* t = &tasks[i];
+			//setInterval
+			if (t->mode == 2) {
+				int duration = t->stop - t->start;
+				t->start = tnow;
+				t->stop = tnow + duration;
+			}
+		}
+	}
+
 	Task * add(uint32_t dateStart, uint32_t dateStop,
 		p_callbackTask callback) 
 	{
@@ -158,6 +172,7 @@ class Tasker
 			return;
 		}
 		task->mode = -1;
+		taskCount--;
 	};
 
 	// Devuelve un puntero de la primera ocurencia de id
@@ -176,7 +191,9 @@ class Tasker
 
 		if (millis() - time > TASK_INTERVAL) {
 			time = millis();
-			uint32_t current = Tasker::timeNow();
+			//update
+			clockTime.timeNow();
+			uint32_t current = timeNow();
 			for (uint8_t i = 0; i < taskCount; i++)
 			{
 				Task * t = &tasks[i];
@@ -220,9 +237,9 @@ class Tasker
 		return (h * 3600 + m * 60 + s) % TASK_TICKS_24H;
 	};
 	//devuelve los tick de el tiempo actual (24h)
-	uint32_t timeNow() 
+	uint32_t timeNow()
 	{
-		return clockTime.timeNow() % TASK_TICKS_24H;
+		return clockTime.local() % TASK_TICKS_24H;
 	};
 
 	//convierte en string los ticks

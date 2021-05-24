@@ -310,34 +310,34 @@ struct AlarmItem :public Item
 
 struct ModesItem :public Item
 {
-	uint flags = 0;
+	uint modes = 0;
 	// 10 rang
-	char rangs[120] ="01/01-12/31";
+	char datesStr[120] ="01/01-12/31";
 
-	void set(int id, uint flags, const char* rangs)
+	void set(int id, uint modes, const char* dates)
 	{
-		this->id = id; this->flags = flags;
-		strcpy(this->rangs, rangs);
+		this->id = id; this->modes = modes;
+		strcpy(this->datesStr, dates);
 	};
 
 	void serializeItem(JsonObject& obj, bool extra)
 	{
 		obj["id"] = this->id;
-		obj["rangs"] = this->rangs;
-		obj["flags"] = this->flags;
+		obj["dates"] = this->datesStr;
+		obj["modes"] = this->modes;
 	};
 
 	void deserializeItem(JsonObject& obj) {
-		if (!obj.containsKey("id") || !obj.containsKey("rangs") ||
-			!obj.containsKey("flags"))
+		if (!obj.containsKey("id") || !obj.containsKey("dates") ||
+			!obj.containsKey("modes"))
 		{
 			Serial.println("faill deserializeItem ZoneItem");
 			return;
 		}
 		set(
 
-			obj["id"].as<int>(), obj["flags"].as<uint>(),
-			obj["rangs"].as<char*>()
+			obj["id"].as<int>(), obj["modes"].as<uint>(),
+			obj["dates"].as<char*>()
 		);
 	};
 };

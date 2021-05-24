@@ -212,7 +212,7 @@ Modes::Modes()
 	add(&disable24);
 	add(&weater);
 	add(&sensor);
-	add(&rangs);
+	add(&dates);
 
 	for (uint8_t i = 0; i < 7; i++)
 	{
@@ -254,28 +254,28 @@ void Modes::setFlags(uint f)
 void Modes::target(int id)
 {
 	ModesItem* cur = model->getModesItem(id);
-	if (cur) setFlags(cur->flags);
+	if (cur) setFlags(cur->modes);
 	ListInterpreter::target(id);
 }
 
 const uint Modes::modesArr[countModes] = {
-		disable24F, weatherF, sensorsF, rangsF, mondayF, tuesdayF,
+		disable24F, weatherF, sensorsF, datesF, mondayF, tuesdayF,
 		WednesdayF, ThursdayF, fridayF, saturdayF, sundayF
 };
 
-bool DatesInterp::isValide(const char* rangs)
+bool DatesInterp::isValide(const char* dates)
 {
-	char rangsArray[10][12];
+	char datesArray[10][12];
 
 	char str[120];
-	strcpy(str, rangs);
+	strcpy(str, dates);
 
 	char* pch;
 	int i = 0;
 	pch = strtok(str, "|");
 	while (pch != NULL)
 	{
-		strcpy(rangsArray[i++], pch);
+		strcpy(datesArray[i++], pch);
 		//printf("%s %d\n", pch, i);
 		pch = strtok(NULL, "|");
 	}
@@ -284,7 +284,7 @@ bool DatesInterp::isValide(const char* rangs)
 	for (i = 0;i < count;i++) {
 
 		char buffSt[6];
-		char* st = strtok(rangsArray[i], "-");
+		char* st = strtok(datesArray[i], "-");
 		strcpy(buffSt, st);
 
 		char buffEnd[6];
@@ -322,14 +322,13 @@ bool DatesInterp::skip()
 
 	if (!cur) return true;
 
-	char rangsStr[120];
-	strcpy(rangsStr, cur->rangs);
+	char datesStr[120];
+	strcpy(datesStr, cur->datesStr);
 
-	char rangsArray[10][12];
-	//uint32_t rangs[10][2];
+	char datesArray[10][12];
 
 	char str[120];
-	strcpy(str, rangsStr);
+	strcpy(str, datesStr);
 
 	char* pch;
 
@@ -337,7 +336,7 @@ bool DatesInterp::skip()
 	pch = strtok(str, "|");
 	while (pch != NULL)
 	{
-		strcpy(rangsArray[i++], pch);
+		strcpy(datesArray[i++], pch);
 		//printf("%s %d\n", pch, i);
 		pch = strtok(NULL, "|");
 	}
@@ -347,7 +346,7 @@ bool DatesInterp::skip()
 	for (i = 0;i < count;i++) {
 
 		char buff[12];
-		strcpy(buff, rangsArray[i]);
+		strcpy(buff, datesArray[i]);
 
 		char buffSt[6];
 		char* st = strtok(buff, "-");
@@ -375,5 +374,5 @@ bool DatesInterp::skip()
 }
 
 const char* DatesInterp::getName(){
-	return "RangsDate";
+	return "Dates";
 }

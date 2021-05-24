@@ -29,6 +29,7 @@
         />
 
         <b-select-dates 
+          :dates= "datesStr"
           @input="changedDates"/>
 
         <div class="col-12 text-right">
@@ -186,39 +187,39 @@ export default {
     name :"Zone",
     mixins: [mixinFormat, mixinRequiresAuth],
     data() {
-        return {
-            zoneId: -1,
-            fab: false,
-            showDialog: false,
-            name: null,
-            can_watering: true,
-            lastAlarm: false,
-            selectedAlarmId: -1,
-            time: '10:15:00',
-            duration: 10,
-            tap: null,
-            alarmsZone: [],
-            modesFlags: 0,
-            modesData: [
-                { label: this.$t('modes[0]'),  value: 0b00000000001},
-                { label: this.$t('modes[1]'),  value: 0b00000000010},
-                { label: this.$t('modes[2]'),  value: 0b00000000100},
-                { label: this.$t('modes[3]'),  value: 0b00000001000},
-                { label: this.$t('modes[4]'),  value: 0b00000010000},
-                { label: this.$t('modes[5]'),  value: 0b00000100000},
-                { label: this.$t('modes[6]'),  value: 0b00001000000},
-                { label: this.$t('modes[7]'),  value: 0b00010000000},
-                { label: this.$t('modes[8]'),  value: 0b00100000000},
-                { label: this.$t('modes[9]'),  value: 0b01000000000},
-                { label: this.$t('modes[10]'), value: 0b10000000000}
-            ],
-            datestStr: "",
-        }
+      return {
+          zoneId: -1,
+          fab: false,
+          showDialog: false,
+          name: null,
+          can_watering: true,
+          lastAlarm: false,
+          selectedAlarmId: -1,
+          time: '10:15:00',
+          duration: 10,
+          tap: null,
+          alarmsZone: [],
+          modesFlags: 0,
+          modesData: [
+              { label: this.$t('modes[0]'),  value: 0b00000000001},
+              { label: this.$t('modes[1]'),  value: 0b00000000010},
+              { label: this.$t('modes[2]'),  value: 0b00000000100},
+              { label: this.$t('modes[3]'),  value: 0b00000001000},
+              { label: this.$t('modes[4]'),  value: 0b00000010000},
+              { label: this.$t('modes[5]'),  value: 0b00000100000},
+              { label: this.$t('modes[6]'),  value: 0b00001000000},
+              { label: this.$t('modes[7]'),  value: 0b00010000000},
+              { label: this.$t('modes[8]'),  value: 0b00100000000},
+              { label: this.$t('modes[9]'),  value: 0b01000000000},
+              { label: this.$t('modes[10]'), value: 0b10000000000}
+          ],
+          datesStr: "",
+      }
     },
     computed: {
-        ...mapState(['taps', 'zones', 'isConnected', 'alarms'] ),
+        ...mapState(['taps', 'zones', 'isConnected', 'alarms', 'modes'] ),
         ...mapGetters( ['getAllAlarms', 'getZoneById', 'getZoneByName',
-          'getAlarmById', 'getLastAlarm', 'getTapById']
+          'getAlarmById', 'getLastAlarm', 'getTapById','getModesById']
         ),
     },
     methods: {
@@ -226,22 +227,25 @@ export default {
           this.modesFlags = flags;
         },
         changedDates(dates){
-          this.datestStr = dates;
+          console.log(dates);
+          this.datesStr = dates;
         },
         ...mapActions(['deleteAlarm', 'editZone', 'editAlarm', 'addZone', 'addAlarm']),
         onSaveZone() {
             let error = false;
             if (this.zoneId >= 0) {
-              console.log(this.modesFlags);
+              console.log('editt',this.modesFlags,this.datesStr);
                 this.editZone({
                     id: this.zoneId,
                     name: this.name,
-                    modes: this.modesFlags
+                    modes: this.modesFlags,
+                    dates: this.datesStr
                 });
             } else {
                 this.addZone({
                     name: this.name,
-                    modes: this.modesFlags
+                    modes: this.modesFlags,
+                    dates: this.datesStr
                 });
             }
         },
@@ -290,12 +294,14 @@ export default {
                 }
             } else if (this.zoneId >= 0) {
                 const zone = this.getZoneById(this.zoneId);
-                if (zone !== undefined) {
-                    this.name = zone.name;
-                    this.modesFlags = zone.modes;
-                    this.can_watering = zone.can_watering;
-                }
+                const modes = this.getModesById(this.zoneId);
 
+                if (zone !== undefined && modes !== undefined) {
+                    this.name = zone.name;
+                    this.can_watering = zone.can_watering;
+                    this.modesFlags = modes.modes;
+                    this.datesStr = modes.dates;
+                }
             }
         },
         onLastAlarm(evt) {
@@ -325,6 +331,7 @@ export default {
             // borramos
             this.name = "";
             this.modesFlags = 0;
+            this.datesStr ="";
             this.alarmsZone = [];
         }
         next();

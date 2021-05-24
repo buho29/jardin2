@@ -51,17 +51,27 @@ public:
 		return nullptr;
 	};
 
+	virtual void clear() {
+		for (int i = 0; i < N; i++)
+		{
+			T* item = &items[i];
+			item->id = -1;
+		}
+	}
+
 	//Iserializable
 	bool deserializeData(const String & json) {
+		bool result = false;
 		DynamicJsonDocument doc(20000);
 		// Parse
 		deserializeJson(doc, json);
 		// Loop through all the elements of the array
 		for (JsonObject item : doc.as<JsonArray>()) {
 			push(create(item));
+			result = true;
 		}
 
-		return true;
+		return result;
 	};
 	String serializeString() {
 		DynamicJsonDocument doc(20000);
@@ -70,7 +80,7 @@ public:
 
 		serializeData(root);
 
-		serializeJsonPretty(root, str);
+		serializeJson(root, str);//Pretty
 		return str;
 	};
 
@@ -97,7 +107,10 @@ public:
 	bool has(K key) { 
 		return this->mapItems.find(key) != this->mapItems.end(); 
 	};
-	void clear() { mapItems.clear(); };
+	virtual void clear() { 
+		BaseData<N, T >::clear();
+		mapItems.clear(); 
+	};
 	virtual bool remove(K key) {
 		if (this->mapItems.find(key) != this->mapItems.end()) {
 			T* item = this->mapItems[key];
@@ -205,6 +218,7 @@ public:
 		return false;
 	};
 	void clear() {
+		BaseData<N, T >::clear();
 		listItems.clear();
 	};
 	bool shift() {

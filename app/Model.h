@@ -130,6 +130,7 @@ private:
 	int32_t pausedTime = 0;
 
 	String jsonFilesCached;
+	bool lock;
 
 	//default
 	void loadDefaultTaps();
@@ -244,7 +245,7 @@ private:
 	void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
 		AwsEventType type, void* arg, uint8_t* data, size_t len);
 	//update clients and write data
-	void dispachZone(bool alarm);
+	void dispachZone(bool alarm,bool mode=false);
 
 	void beginOTA();
 
@@ -288,8 +289,8 @@ public:
 	}
 
 	//data Zone
-	bool editZone(int zone, const char * name, uint32_t fmodes, const char* rangs);
-	int addZone(const char * name, uint32_t fmodes, const char* rangs);
+	bool editZone(int zone, const char * name, uint32_t fmodes, const char* dates);
+	int addZone(const char * name, uint32_t fmodes, const char* dates);
 	bool removeZone(int zone);
 
 	//alarmas

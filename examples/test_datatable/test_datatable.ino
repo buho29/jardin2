@@ -82,9 +82,19 @@ test(DataTable) {
 		Serial.printf("\t %s\n", item->name);
 
 	//print json
-	//myTable.deserializeData(("teta"));
-	//Serial.println(myTable.serializeString());
-	//Serial.println( myList.serializeString());
+	Serial.println(myTable.serializeString());
+	Serial.println( myList.serializeString());
+
+	myTable.clear();
+	assertEqual((int)myTable.size(), 0);
+	myList.clear();
+	assertEqual((int)myList.size(), 0);
+
+	String json = "[{\"id\":1,\"edad\":21,\"name\":\"list 2\"},{\"id\":1,\"edad\":22,\"name\":\"list 3\"}]";
+	assertTrue(myTable.deserializeData(json));
+	assertEqual((int)myTable.size(), 2);
+	assertFalse(myTable.deserializeData(String("teta")));
+
 }
 
 void setup() 
@@ -100,31 +110,22 @@ void loop()
 }
 
 /* output:
-maxsize :7 - 5
-init 0 :: table 1
-init 1 :: table 2
-init 2 :: table 3
-init 3 :: table 4
-init 4 :: table 5
-init 5 :: table 6
-init 6 :: table 7
-remove(id 4) True
-end 0 :: table 1
-end 1 :: table 2
-end 2 :: table 3
-end 3 :: table 4
-end 5 :: table 6
-end 6 :: table 7
-init list 1
-init list 2
-init list 3
-init list 4
-init list 5
-shift() True
-end list 2
-end list 3
-end list 4
-end list 5
-[{"id":0,"name":"table 1","edad":68},{"id":1,"name":"table 2","edad":67},{"id":2,"name":"table 3","edad":66},{"id":3,"name":"table 4","edad":65},{"id":5,"name":"table 6","edad":63},{"id":6,"name":"table 7","edad":62}]
-[{"id":1,"name":"list 2","edad":21},{"id":1,"name":"list 3","edad":22},{"id":1,"name":"list 4","edad":23},{"id":1,"name":"list 5","edad":24}]
+05:00:49:985 -> TestRunner started on 1 test(s).
+myTable
+	id 0 table 1
+	id 1 table 2
+	id 2 table 3
+	id 3 table 4
+	id 5 table 6
+	id 6 table 7
+myList
+	 list 2
+	 list 3
+	 list 4
+	 list 5
+[{"id":0,"edad":68,"name":"table 1"},{"id":1,"edad":67,"name":"table 2"},{"id":2,"edad":66,"name":"table 3"},{"id":3,"edad":65,"name":"table 4"},{"id":5,"edad":63,"name":"table 6"},{"id":6,"edad":62,"name":"table 7"}]
+[{"id":1,"edad":21,"name":"list 2"},{"id":1,"edad":22,"name":"list 3"},{"id":1,"edad":23,"name":"list 4"},{"id":1,"edad":24,"name":"list 5"}]
+Test DataTable passed.
+TestRunner duration: 0.038 seconds.
+TestRunner summary: 1 passed, 0 failed, 0 skipped, 0 timed out, out of 1 test(s).
 */

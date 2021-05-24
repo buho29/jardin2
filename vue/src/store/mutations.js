@@ -13,7 +13,11 @@ export function updatehHistory(state, array) {
 }
 
 export function updateSensor(state, obj) { 
-    state.sensor = obj;
+  state.sensor = obj;
+}
+export function updateModes(state, obj) { 
+    console.log(obj);
+    state.modes = obj;
 }
 
 export function updateConfig(state, obj) { 

@@ -33,7 +33,7 @@ test(IntervalsDates) {
 		"01/01-06/21|09/22-12/21",
 		"09/22-12/21|01/01-06/21",
 		"09/22-12/21",
-		"01/02-03/1|04/02-06/21|09/22-12/21",
+		"01/02-03/01|04/02-06/21|09/22-12/21",
 		""
 	};
 	
@@ -65,9 +65,9 @@ test(IntervalsDates) {
 	dates.target(6);
 	assertTrue(dates.skip());
 
-	assertTrue(dates.isValide(""));
+	assertTrue(dates.isValide("01/02-03/1|04/02-06/21|09/22-12/21"));
 	assertFalse(dates.isValide("mlkjmlj"));
-	assertTrue(DatesInterp::isValide("01/02-03/1|04/02-06/21|09/22-12/21"));
+	assertTrue(DatesInterp::isValide(""));
 
 	for (size_t i = 0; i < 7; i++)
 	{

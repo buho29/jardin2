@@ -3,8 +3,7 @@
 
 #include "RTClib.h"
 
-// TODO : not full tested using timelib.h
-#define __RTC__ 1
+#define __RTC__ 0
 #if !__RTC__
 #include <TimeLib.h>
 #endif
@@ -162,8 +161,6 @@ public:
 			//we don't need the 32K Pin, so disable it
 			rtc.disable32K();
 
-			timeNow();
-
 			return true;
 		}
 #else 
@@ -172,35 +169,33 @@ public:
 	};
 
 	uint32_t timeNow() {
-		static int time = 0;
-		if (millis() - time > 50) {
-			time = millis();
 
 #if !__RTC__
-			DateTime st = now();	
+		DateTime st = now();
 #else 
-			DateTime st = rtc.now();		
+		DateTime st = rtc.now();		
 #endif
-			_utc = st.unixtime();
+		_utc = st.unixtime();
 
-			DateTime local = dst.calculateTime(st + (_offset * 3600)); // takes into account DST
+		DateTime local = dst.calculateTime(st + (_offset * 3600)); // takes into account DST
 
-			_hour = local.hour();
-			_min = local.minute();
-			_sec = local.second();
-			_mon = local.month();
-			_day = local.day();
-			_year = local.year();
-			_dayWeek = local.dayOfTheWeek();
-			_local = local.unixtime();
-		}
+		_hour = local.hour();
+		_min = local.minute();
+		_sec = local.second();
+		_mon = local.month();
+		_day = local.day();
+		_year = local.year();
+		_dayWeek = local.dayOfTheWeek();
+		_local = local.unixtime();
+
 		return _local;
 	};
 
 	void setTimeNow(int8_t hours, int8_t min, int8_t sec, int8_t day,
 		int8_t mon, int16_t year) {
 		DateTime dt = DateTime(year, mon, day, hours, min, sec);
-		if (dt.unixtime() != _utc) {
+		uint u = dt.unixtime();
+		if (u != _utc) {
 
 #if !__RTC__
 			setTime(hours, min, sec, day, mon, year);
@@ -208,16 +203,19 @@ public:
 			rtc.adjust(dt);
 #endif
 		}
+
+		timeNow();
 	};
 
 	void setTimeLocal(int8_t hours, int8_t min, int8_t sec, int8_t day,
 		int8_t mon, int16_t year) {
 		int dsth = 0;
-		if (dst.checkDST(DateTime(year, mon, day, hours, min, sec))) {
+		DateTime dt = DateTime(year, mon, day, hours, min, sec);
+		if (dst.checkDST(dt)) {
 			dsth = 1;
 		}
 
-		setTimeNow(hours - _offset - dsth, min, sec, day, mon, year);
+		setTimeNow(dt.unixtime()-((_offset + dsth)*3600) );
 	};
 
 	void setTimeNow(int32_t utc) {
@@ -229,6 +227,8 @@ public:
 			setTime(utc);
 #endif
 		}
+
+		timeNow();
 	}
 
 	void setDst(uint8_t irregularity,
@@ -281,6 +281,7 @@ public:
 				timeinfo.tm_sec// seconds 
 			);
 
+
 			if (abs(dt.unixtime() - _utc) > 2) {
 				setTimeNow(dt.unixtime());
 				Serial.printf("updateNTP dife = %ds ", (dt.unixtime() - _utc));
@@ -291,6 +292,7 @@ public:
 
 		return false;
 	};
+
 	bool isDst() { return dst.isDst();};
 
 private:

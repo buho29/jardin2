@@ -28,12 +28,27 @@ void Model::begin()
 #endif // USELITTLEFS
 
 	clockTime.begin();
+	modes.begin();
 
+	//abrimos json config
 	readFiles();
+
+	// iniciamos puertos de salida
+	for (auto &it : taps) {
+		TapItem * tap = it.second;
+
+		pinMode(tap->pin, OUTPUT);
+		digitalWrite(tap->pin, OFF);
+
+		//Serial.printf("pin %d\n", tap->pin);
+	}
 
 	updateTimeZone();
 
-	modes.begin();
+	//activamos softAP
+	enableSoftAP();
+	////intentamos conectar al wifi y descargar la hora y la meteo
+	connectWifi();
 
 	//sensor 
 	if (bme.begin(0x76)) {
@@ -45,35 +60,28 @@ void Model::begin()
 
 		updateSensor();
 
-		// cada 1/2 hora guardamos los valores de los sensores
-		tasker.setInterval(std::bind(&Model::saveLoger, this, _1), (30*60));
 
-		Task * t = tasker.setInterval(
-			std::bind(&Model::saveLoger24, this, _1), 0,0);
+		char msg[9];
+		Tasker::formatTime(msg, tasker.timeNow());
+		Serial.print(msg);
+
+		Serial.printf(" - %02d / %02d / %d \n",
+			clockTime.day(), clockTime.month(), clockTime.year()
+		);
+		// cada 1/2 hora guardamos los valores de los sensores
+		Task* t = tasker.setInterval(std::bind(&Model::saveLoger, this, _1), (30*60));//30*60
+		Tasker::printTask(t);
+		t = tasker.setInterval(std::bind(&Model::saveLoger24, this, _1), 0, 0);
+		Tasker::printTask(t);
 
 	}
 	else {
 		Serial.println("bme280 Error");
-		strcpy(msgError, lang.get(Str::errorSensor).c_str() );
+		strcpy(msgError, lang.get(Str::errorSensor).c_str());
 		dispachEvent(EventType::error);
 	}
 
-	//activamos softAP
-	enableSoftAP();
-	////intentamos conectar al wifi y descargar la hora y la meteo
-	connectWifi();
-
 	calcModes();
-
-	// iniciamos puertos de salida
-	for (auto &it : taps) {
-		TapItem * tap = it.second;
-
-		pinMode(tap->pin, OUTPUT);
-		digitalWrite(tap->pin, OFF);
-
-		//Serial.printf("pin %d\n", tap->pin);
-	}
 
 	//iniciamos las tareas
 	updateTasks();
@@ -98,12 +106,13 @@ void Model::update()
 		ArduinoOTA.handle();
 	}
 
+
 	tasker.check();
 
 	static uint32_t delayfree = 0;
 	if (millis() - delayfree > 1000) {
 		delayfree = millis();
-		//ws.cleanupClients();
+		ws.cleanupClients();
 	}
 
 	dnsServer.processNextRequest();
@@ -116,7 +125,7 @@ void Model::update()
 
 	static uint32_t delayZone = 0;
 	//se esta regando una zona
-	if (currentZone != nullptr && !isPaused() && millis() - delayZone > 1000) {
+	if (!lock && currentZone != nullptr && !isPaused() && millis() - delayZone > 1000) {
 		delayZone = millis();
 		currentZone->elapsed = getElapsedAlarm();
 		//actualizamos todos los clientes;
@@ -318,7 +327,7 @@ void Model::readFiles()
 //		data
 
 //return zone.id
-int Model::addZone(const char * name, uint32_t fmodes,const char* rangs)
+int Model::addZone(const char * name, uint32_t fmodes,const char* dates)
 {
 	ZoneItem * zone = zones.getEmpty();
 	ModesItem* modesItem = modesItems.getEmpty();
@@ -329,30 +338,30 @@ int Model::addZone(const char * name, uint32_t fmodes,const char* rangs)
 		zone->set(-1, 0, 0, name);
 		zones.push(zone);
 
-		modesItem->set(-1, fmodes, rangs);
+		modesItem->set(zone->id, fmodes, dates);
 		modesItems.push(modesItem);
 
 		zone->can_watering = canWatering(zone->id);
 
-		dispachZone(false);
+		dispachZone(false,true);
 		return zone->id;
 	}
 	return -1;
 }
 
-bool Model::editZone(int id, const char * name, uint32_t fmodes, const char* rangs)
+bool Model::editZone(int id, const char * name, uint32_t fmodes, const char* dates)
 {
 	if (zones.has(id) && modesItems.has(id)) 
 	{
 		ZoneItem * zone = zones[id];
 		ModesItem* modesItem = modesItems[id];
 
-		modesItem->set(id, fmodes, rangs);
+		modesItem->set(id, fmodes, dates);
 
 		strncpy(zone->name, name, MODEL_MAX_CHAR_NAME_ZONE);
 		zone->can_watering = canWatering(id);
 
-		dispachZone(false);
+		dispachZone(false, true);
 
 		return true;
 	}
@@ -380,20 +389,22 @@ bool Model::removeZone(int id)
 
 		bool result = zones.remove(id) && modesItems.remove(id);
 		
-		if (result) dispachZone(true);
+		if (result) dispachZone(true, true);
 		return result;
 	}
 	return false;
 }
 
-void Model::dispachZone(bool alarm)
+void Model::dispachZone(bool alarm,bool mode)
 {
 	if (firevent) 
 	{
-		sendAll(printJson("zones", &zones));
+		if(mode) sendAll(printJson("modes", &modesItems));
 		if(alarm) sendAll(printJson("alarms", &alarms));
+		sendAll(printJson("zones", &zones));
 
 		writeJson("/data/zones.json", &zones);
+		if(mode) writeJson("/data/modes.json", &modesItems);
 		if (alarm) writeJson("/data/alarms.json", &alarms);
 
 		dispachEvent(EventType::zoneChanged);
@@ -507,7 +518,6 @@ bool Model::editAlarm(int id, int tapId, uint32_t time, uint16_t duration)
 		calcZone(a->zoneId);
 		updateTasks(a->zoneId);
 
-
 		dispachZone(true);
 		return true;
 	}
@@ -565,7 +575,7 @@ void Model::printAlarms(uint8_t z)
 
 ModesItem* Model::getModesItem(int id)
 {
-	//if (modesItems.has(id)) 
+	if (modesItems.has(id)) 
 		return modesItems[id];
 	return nullptr;
 }
@@ -594,6 +604,11 @@ void Model::sendAllAuth(const String & str)
 
 String Model::printJson(const char * name, Item * item)
 {
+	if (!item) {
+		Serial.printf("%s is null", name);
+		return String();
+	}
+
 	DynamicJsonDocument doc(2000);
 	JsonObject root = doc.to<JsonObject>();
 
@@ -636,6 +651,9 @@ String Model::printJsonFirstRun()
 
 	a = root.createNestedArray("zones");
 	zones.serializeData(a, true);
+
+	a = root.createNestedArray("modes");
+	modesItems.serializeData(a, true);
 
 	a = root.createNestedArray("alarms");
 	alarms.serializeData(a, true);
@@ -1027,6 +1045,7 @@ void Model::sendClient(const char* tag,const char* msg, AsyncWebSocketClient * c
 
 void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 {
+	lock = true;
 	Serial.println(json);
 	DynamicJsonDocument doc(20000);
 	// Parse
@@ -1120,12 +1139,12 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		JsonObject con = cmd["config"];
 		String r;
 		serializeJson(con, r);
-		Serial.println(r);
+		//Serial.println(r);
 
 		if (con.containsKey("tz") && con.containsKey("dst")) {
 			config.setTimeZone(con["dst"].as<char*>(), con["tz"].as<int>());
 			updateTimeZone();
-			sendAll(printJsonForecast());
+			loadForecast();
 			modified = true;
 		}
 
@@ -1165,7 +1184,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 			//TODO dispach event
 		}
 	}
-
+	lock = false;
 }
 
 void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & zone)
@@ -1179,7 +1198,6 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 
 		if (waterZone(id)) {
 			sendMessage(0, Str::open, name);
-
 		}
 		else if(isWatering()) 
 			sendMessage(1, String(Str::errorBusy), client);
@@ -1220,27 +1238,49 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 	else if (zone.containsKey("edit"))
 	{
 		JsonObject edit = zone["edit"];
-		int id = edit["id"];
-		uint32_t modes = edit["modes"];
-		const char* dates = edit["dates"];
-		const char * name = edit["name"];
+		if (
+			edit.containsKey("id") && 
+			edit.containsKey("modes") && 
+			edit.containsKey("dates") && 
+			edit.containsKey("name")
+		){
+			int id = edit["id"];
+			uint32_t modes = edit["modes"];
+			const char* dates = edit["dates"];
+			const char* name = edit["name"];
 
-		if (DatesInterp::isValide(dates) && editZone(id, name, modes,dates))
-			sendMessage(0, Str::edit , name);
-		else sendMessage(1, Str::errorEdit , name, client);
+			if(!DatesInterp::isValide(dates) ) 
+				sendMessage(1, Str::errorEdit, "Invalid Format Dates", client);
+			//ok
+			else if (editZone(id, name, modes, dates))
+				sendMessage(0, Str::edit, name);
+			//faill
+			else sendMessage(1, Str::errorEdit, name, client);
+		}else sendMessage(1, Str::errorEdit, "Invalid Variables", client);
+
 	}
 	else if (zone.containsKey("new"))
 	{
 		JsonObject newZone = zone["new"];
+		if (
+			newZone.containsKey("modes") &&
+			newZone.containsKey("dates") &&
+			newZone.containsKey("name")
+		){
+			uint32_t modes = newZone["modes"];
+			const char* dates = newZone["dates"];
+			const char * name = newZone["name"];
 
-		uint32_t modes = newZone["modes"];
-		const char* rangs = newZone["dates"];
-		const char * name = newZone["name"];
+			if(!DatesInterp::isValide(dates) ) 
+				sendMessage(1, Str::errorCreate, "Invalid Format Dates", client);
+			//ok
+			else if (addZone(name, modes, dates))
+				sendMessage(0, Str::create, name);
+			//faill
+			else sendMessage(1, Str::errorCreate, name, client);
 
-		if (DatesInterp::isValide(rangs) && addZone(name, modes, rangs))
-			sendMessage(0, Str::create , name);
-		else
-			sendMessage(1, Str::errorCreate , name, client);
+		}
+		else sendMessage(1, Str::errorCreate, "Invalid Variables", client);
 	}
 }
 
@@ -1250,7 +1290,7 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 	{
 		int id = alarm["delete"];
 
-		String msg = lang.get(Str::notFound);
+		String msg = "Not Found";
 
 		if (alarms.has(id)) {
 			AlarmItem* a = alarms[id];
@@ -1265,57 +1305,76 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 	else if (alarm.containsKey("edit"))
 	{
 		JsonObject edit = alarm["edit"];
+		if (
+			edit.containsKey("id") &&
+			edit.containsKey("time") &&
+			edit.containsKey("tapId") &&
+			edit.containsKey("duration")
+		){
+			int id = edit["id"];
+			uint32_t time = edit["time"];
+			int tapId = edit["tapId"];
+			int duration = edit["duration"];
 
-		int id = edit["id"];uint32_t time = edit["time"];
-		int tapId = edit["tapId"];int duration = edit["duration"];
+			String msg = "Not Found";
 
-		String msg = lang.get(Str::notFound);
+			AlarmItem* ocuped = nullptr;
 
-		AlarmItem* ocuped = nullptr;
-		
-		findAlarm(time, duration, id);
+			findAlarm(time, duration, id);
 
-		if (alarms.has(id)) {
-			AlarmItem* a = alarms[id];
-			msg = String(zones[a->zoneId]->name) + " : " + Tasker::formatTime(time);
+			if (alarms.has(id)) {
+				AlarmItem* a = alarms[id];
+				msg = String(zones[a->zoneId]->name) + " : " + Tasker::formatTime(time);
+			}
+
+			if (ocuped) {
+				msg = String(zones[ocuped->zoneId]->name) + " : " +
+					Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
+
+				sendMessage(1, Str::occupied, msg, client);
+			}
+			else if (editAlarm(id, tapId, time, duration))
+				//TODO dispach event
+				sendMessage(0, Str::edit, msg);
+			else sendMessage(1, Str::errorEdit, msg, client);
 		}
+		else sendMessage(1, Str::errorEdit, "Invalid Variables", client);
 
-		if (ocuped) {
-			msg = String(zones[ocuped->zoneId]->name) + " : " +
-				Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
-
-			sendMessage(1, Str::occupied, msg, client);
-		}
-		else if (editAlarm(id, tapId, time, duration))
-			sendMessage(0, Str::edit, msg);
-		else sendMessage(1, Str::errorEdit, msg, client);
 	}
 	else if (alarm.containsKey("new"))
 	{
 		JsonObject edit = alarm["new"];
+		if (
+			edit.containsKey("zoneId") &&
+			edit.containsKey("time") &&
+			edit.containsKey("tapId") &&
+			edit.containsKey("duration")
+		) {
+			int zoneId = edit["zoneId"];
+			uint32_t time = edit["time"];
+			int tapId = edit["tapId"];
+			int duration = edit["duration"];
 
-		int zoneId = edit["zoneId"];uint32_t time = edit["time"];
-		int tapId = edit["tapId"];int duration = edit["duration"];
+			String msg = "Not Found";
 
-		String msg = lang.get(Str::notFound);
+			AlarmItem* ocuped = nullptr;
+			findAlarm(time, duration);
 
-		findAlarm(time, duration);
+			if (zones.has(zoneId))
+				msg = String(zones[zoneId]->name) + " : " + Tasker::formatTime(time);
 
-		AlarmItem* ocuped = nullptr;
-		
-		if (zones.has(zoneId))
-			msg = String(zones[zoneId]->name) + " : " + Tasker::formatTime(time);
+			if (ocuped) {
+				msg = String(zones[ocuped->zoneId]->name) + " : " +
+					Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
 
-		if (ocuped) {
-			msg = String(zones[ocuped->zoneId]->name) + " : " +
-				Tasker::formatTime(ocuped->time) + " " + Tasker::formatTime(time);
-
-			sendMessage(1, Str::occupied, msg, client);
+				sendMessage(1, Str::occupied, msg, client);
+			}
+			else if (addAlarm(zoneId, tapId, time, duration) > -1)
+				sendMessage(0, Str::create, msg);
+			else
+				sendMessage(1, Str::errorCreate, msg, client);
 		}
-		else if (addAlarm(zoneId, tapId, time, duration)>-1)
-			sendMessage(0, Str::create, msg);
-		else
-			sendMessage(1, Str::errorCreate, msg, client);
+		else sendMessage(1, Str::errorEdit, "Invalid Variables", client);
 	}
 }
 
@@ -1648,14 +1707,14 @@ bool Model::stopWaterZone(bool save)
 
 	currentZone->paused = false;
 	currentZone->runing = false;
-	currentZone->elapsed = getElapsedAlarm();
+	currentZone->elapsed = 0;
 
 	sendAll(printJson("zone", currentZone));
 
 	AlarmItem* currentAlarm = alarms[currentZone->alarmId];
 
-	// cancelamos el q esta activo 
-	bool r = openTap(currentAlarm->tapId, false); // apaga el pin
+	// cerramos el grifo q esta activo 
+	bool r = openTap(currentAlarm->tapId, false);
 
 	if (save) {
 		addHistory(clockTime.local(),Action::zoneManualA, 0, currentAlarm->id);
@@ -1669,12 +1728,12 @@ bool Model::stopWaterZone(bool save)
 
 	status = Status::standby;
 	dispachEvent(EventType::status);
-	return r;
+	return true;
 }
 
 bool Model::waterZone(uint8_t zoneId)
 {
-	if (!isWatering() && zones.has(zoneId)) {
+	if (!isWatering() && !isPaused() && zones.has(zoneId)) {
 
 		uint32_t current = tasker.timeNow();
 
@@ -1743,11 +1802,11 @@ void Model::loadDefaultZones()
 
 	uint8_t duration = 60;
 
-	const char* defaulRangs = "01/01-12/31";
+	const char* defaultDates = "";
 	///*	//grifo 0 27	//grifo 1 14	//grifo 2 21	//grifo 3 17
 	//*/
 	firevent = false;
-	int id = addZone("Cesped D", 0, defaulRangs);
+	int id = addZone("Cesped D", 0, defaultDates);
 
 	addAlarm(id, 0, duration, 7, 0, 0);
 	addAlarm(id, 1, duration, 7, 0, duration);
@@ -1755,12 +1814,12 @@ void Model::loadDefaultZones()
 
 	duration = 20;
 
-	id = addZone("Cesped N", 0, defaulRangs);
+	id = addZone("Cesped N", 0, defaultDates);
 	addAlarm(id, 0, duration, 21, 0, 0);
 	addAlarm(id, 1, duration, 21, 0, duration);
 	addAlarm(id, 3, duration, 21, 0, duration * 2);
 
-	id = addZone("Huerta", 0, defaulRangs);
+	id = addZone("Huerta", 0, defaultDates);
 	addAlarm(id, 3, duration, 14, 0, 0);
 	addAlarm(id, 3, duration, 14, 0, duration);
 
@@ -1913,6 +1972,8 @@ void Model::loadLocalTime()
 
 		strcpy(msgStatus, lang.get(Str::updatedTime).c_str());
 		strcat(msgStatus, buff);
+		//actualizar setIntervals
+		tasker.timeHasChanged();
 		//actualizar alarmas
 		updateTasks();
 		dispachEvent(EventType::loadedTime);
@@ -1963,7 +2024,7 @@ void Model::updateSensor()
 	currentSensor.temperature = bme.readTemperature();
 	currentSensor.pressure = round(bme.readPressure()) / 100.0F;
 	currentSensor.humidity = bme.readHumidity();
-	currentSensor.time = clockTime.timeNow();
+	currentSensor.time = clockTime.local();
 
 	const String &json = printJson("sensor", &currentSensor);
 	ws.textAll(json);
@@ -1975,7 +2036,8 @@ void Model::updateSensor()
 void Model::saveHistory()
 {
 	uint t = millis();
-	writeJson("/data/history.json", &history);
+	//
+	 writeJson("/data/history.json", &history);
 	//Serial.printf("saveHistory elapsed:%dms size: %d\n",(millis()-t), history.size());
 }
 
@@ -2011,13 +2073,13 @@ void Model::saveLoger(Task * t)
 
 	const String & str = sensors.serializeString();
 
-	writeFile("/data/logSensors.json", str.c_str());
+	//writeFile("/data/logSensors.json", str.c_str());
 
 	uint32_t c = millis();
 	const String & json = printJson("sensors", &sensors);
 	ws.textAll(json.c_str());
 
-	//Serial.println(str);
+	Serial.println(str);
 
 	dispachEvent(EventType::sensorLog);
 }
@@ -2125,7 +2187,6 @@ void Model::sendResponse(AsyncWebServerRequest * request, AsyncWebServerResponse
 //		file
 void Model::onFilePage(AsyncWebServerRequest * request)
 {
-
 	if (request->method() == HTTP_OPTIONS) 
 	{
 		AsyncWebServerResponse *response = request->beginResponse(200);
@@ -2272,13 +2333,15 @@ void Model::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client,
 
 void Model::updateTimeZone()
 {
-
 	clockTime.setTimeZone(config.tz);
 	//irregularity, beginDay, beginMonth, endDay, endMonth, beginHour, endHour
 	clockTime.setDst(
 		config.dst[0], config.dst[1], config.dst[2],
 		config.dst[3], config.dst[4], config.dst[5], config.dst[6]
 	);
+
+	clockTime.timeNow();
+	tasker.timeHasChanged();
 }
 
 //bind task alarma y reasignamos los valores

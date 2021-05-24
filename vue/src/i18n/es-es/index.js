@@ -117,7 +117,7 @@ export default {
     0: 'Desactivar 24h',
     1: 'Meteorologia',
     2: '@:sensors',
-    3: 'Intervalos fecha',
+    3: 'Calendario',
     4: '@:date.days.1',
     5: '@:date.days.2',
     6: '@:date.days.3',

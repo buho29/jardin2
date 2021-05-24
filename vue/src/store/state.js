@@ -5,6 +5,7 @@ export default function () {
     sensors: [],
     sensors24: [],
     zones: [],
+    modes: [],
     taps: [],
     alarms: [],
     history: [],

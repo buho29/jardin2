@@ -76,7 +76,7 @@ public:
 class DatesInterp :public Interpreter
 {
 public:
-	static bool isValide(const char* rangs);
+	static bool isValide(const char* dates);
 	virtual int8_t evaluate();
 	virtual bool skip();
 	virtual const char* getName();
@@ -116,7 +116,7 @@ public:
 	static const uint disable24F	 = 0b00000000001;
 	static const uint weatherF		 = 0b00000000010;
 	static const uint sensorsF		 = 0b00000000100;
-	static const uint rangsF		 = 0b00000001000;
+	static const uint datesF		 = 0b00000001000;
 	static const uint mondayF		 = 0b00000010000;
 	static const uint tuesdayF		 = 0b00000100000;
 	static const uint WednesdayF	 = 0b00001000000;
@@ -132,7 +132,7 @@ private:
 	WeatherInterp weater;
 	SensorInterp sensor;
 	DayInterp week[7];
-	DatesInterp rangs;
+	DatesInterp dates;
 };
 
 #endif
