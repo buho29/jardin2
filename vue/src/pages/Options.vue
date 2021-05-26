@@ -39,6 +39,7 @@
             </b-card>
             
             <b-card :title="$t('config.weather')">
+              <p class="">www.accuweather.com</p>
               <b-config-weather/>
             </b-card>
 

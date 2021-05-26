@@ -119,11 +119,13 @@ private:
 
 	//history action (log)
 	DataList<100, ActionItem> history;
-	void saveHistory();
+	Task* taskSaveHistory = nullptr;
+	void saveHistory(bool delayed = true);
 	void addHistory(
 		uint32_t time, Action action, 
 		uint8_t value = 1, int32_t idItem = -1
 	);
+	void saveDelayedHistory(Task* t);
 	
 	//pause variable
 	int16_t elapsedPausedTask = 0;

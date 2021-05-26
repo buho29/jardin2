@@ -3,7 +3,7 @@
 
 #include "RTClib.h"
 
-#define __RTC__ 0
+#define __RTC__ 1
 #if !__RTC__
 #include <TimeLib.h>
 #endif

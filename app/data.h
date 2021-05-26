@@ -87,39 +87,51 @@ struct Config :public Item
 		setTimeZone(dst, tz);
 	};
 	
-	void setAdmin(const char * www_user, const char * www_pass) {
+	bool setAdmin(const char * www_user, const char * www_pass) 
+	{
+		if (strlen(www_user) > 32 || strlen(www_pass) > 64) 
+			return false;
+
 		strcpy(this->www_user, www_user);
 		strcpy(this->www_pass, www_pass);
+		return true;
 	};
-	void setWifi(const char * wifi_ssid, const char * wifi_pass) {
+	bool setWifi(const char * wifi_ssid, const char * wifi_pass) 
+	{
+		if (strlen(wifi_ssid) > 32 || strlen(wifi_pass) > 64)
+			return false;
+
 		strcpy(this->wifi_ssid, wifi_ssid);
 		strcpy(this->wifi_pass, wifi_pass);
+		return true;
 	};
-	void setAccu(const char * cityID, const char * cityName, const char *accuURL) 
+	bool setAccu(const char * cityID, const char * cityName, const char *accuURL) 
 	{
+
+		if (strlen(cityID) > 10) return false;
 		strcpy(this->cityID, cityID);
 		strcpy(this->cityName, cityName);
 		strcpy(this->accuURL, accuURL);
-		Serial.printf("read accuUrl %s \n", accuURL);
+		return true;
 	};
-	void setTimeZone(const char * dst, int tz) {
-		setDst(dst);
+	bool setTimeZone(const char * dst, int tz) 
+	{
 		this->tz = tz;
+		return setDst(dst);
 	};
 
 
-	void setDst(const char * dst) {
-		Serial.println(dst);
-		//TODO probar setDst
-		return;
+	bool setDst(const char * dst) {
+
 		char str[30];
+
+		int len = strlen(dst);
+		if (!(len > 13 && len <16) ) return false;
+
 		strcpy(str, dst);
 
-		char * pch;
-		//printf("\"%s\" into tokens:\n", str);
-
 		int i = 0;
-		pch = strtok(str, " ,");
+		char * pch = strtok(str, " ,");
 		while (pch != NULL)
 		{
 			if (i < 7) {
@@ -128,7 +140,8 @@ struct Config :public Item
 			}
 			pch = strtok(NULL, " ,");
 		}
-
+		if (i == 7)return true;
+		return false;
 		//for (i = 0;i < 7;i++) {
 		//	printf("dst[%d] = %d\n", i, this->dst[i]);
 		//}
@@ -151,7 +164,7 @@ struct Config :public Item
 
 			r += tt;
 		}
-		Serial.println(r);
+		//Serial.println(r);
 		return r;
 	};
 	
@@ -266,7 +279,6 @@ struct TapItem : public Item
 	};
 };
 
-
 struct AlarmItem :public Item
 {
 	uint8_t tapId;
@@ -306,7 +318,6 @@ struct AlarmItem :public Item
 		);
 	};
 };
-
 
 struct ModesItem :public Item
 {

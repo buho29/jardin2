@@ -89,7 +89,7 @@ void Model::begin()
 	jsonFilesCached = printJsonFiles();
 
 	addHistory(clockTime.local(),Action::initA);
-	saveHistory();
+	saveHistory(false);
 
 	startWebServer();
 
@@ -894,7 +894,7 @@ bool Model::parseForescast()
 
 }
 
-//TODO : falla settimeout
+
 void Model::updateSunTask()
 {
 	uint32_t s;
@@ -1134,6 +1134,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 	if (cmd.containsKey("system") && cmd["system"].containsKey("restart")) {
 		ESP.restart();
 	}
+	
 	bool modified = false;
 	if (cmd.containsKey("config")) {
 		JsonObject con = cmd["config"];
@@ -1141,38 +1142,36 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 		serializeJson(con, r);
 		//Serial.println(r);
 
-		if (con.containsKey("tz") && con.containsKey("dst")) {
-			config.setTimeZone(con["dst"].as<char*>(), con["tz"].as<int>());
+		if (con.containsKey("tz") && con.containsKey("dst") && 
+			config.setTimeZone(con["dst"].as<char*>(), con["tz"].as<int>()))
+		{
 			updateTimeZone();
 			loadForecast();
 			modified = true;
 		}
 
-		if (con.containsKey("wifi_ssid") && con.containsKey("wifi_pass")) {
-			config.setWifi(
-				con["wifi_ssid"].as<char*>(), con["wifi_pass"].as<char*>()
-			);
+		if (con.containsKey("wifi_ssid") && con.containsKey("wifi_pass") &&
+			config.setWifi(con["wifi_ssid"].as<char*>(), con["wifi_pass"].as<char*>())) 
+		{
 			modified = true;
 			//TODO actualizar wifi o resetEsp
 		}
 
-		if (con.containsKey("cityName") && con.containsKey("accuURL") 
-				&& con.containsKey("cityID")) 
-		{
+		if (con.containsKey("cityName") && con.containsKey("accuURL") &&
+			con.containsKey("cityID") &&
 			config.setAccu(
-				con["cityID"].as<char*>(),
-				con["cityName"].as<char*>(), 
-				con["accuURL"].as<char*>()
-			);
+				con["cityID"].as<char*>(),con["cityName"].as<char*>(),con["accuURL"].as<char*>()
+			)) 
+		{
 			modified = true;
 			if (connectedWifi) loadForecast();
 		}
 
-		if (con.containsKey("www_user") && con.containsKey("www_pass")) {
-			config.setAdmin(
-				con["www_user"].as<char*>(),
-				con["www_pass"].as<char*>()
-			);
+		if (con.containsKey("www_user") && con.containsKey("www_pass") && 
+			config.setAdmin( 
+				con["www_user"].as<char*>(),con["www_pass"].as<char*>())
+			) 
+		{
 			modified = true;
 			//TODO actualizar werver pass :???
 		}
@@ -1345,10 +1344,8 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 	{
 		JsonObject edit = alarm["new"];
 		if (
-			edit.containsKey("zoneId") &&
-			edit.containsKey("time") &&
-			edit.containsKey("tapId") &&
-			edit.containsKey("duration")
+			edit.containsKey("zoneId") && edit.containsKey("time") &&
+			edit.containsKey("tapId") && edit.containsKey("duration")
 		) {
 			int zoneId = edit["zoneId"];
 			uint32_t time = edit["time"];
@@ -1646,7 +1643,6 @@ void Model::onWater(Task * t)
 				addHistory(clockTime.local(),
 					isManualZoneWater ? Action::zoneManualA : Action::zoneA,
 					t->runing, currentAlarm->id);
-				//TODO delay write history ?
 				saveHistory();
 			}
 
@@ -2032,13 +2028,24 @@ void Model::updateSensor()
 	dispachEvent(EventType::sensor);
 }
 
-
-void Model::saveHistory()
+void Model::saveDelayedHistory(Task* t)
 {
-	uint t = millis();
-	//
-	 writeJson("/data/history.json", &history);
-	//Serial.printf("saveHistory elapsed:%dms size: %d\n",(millis()-t), history.size());
+	writeJson("/data/history.json", &history);
+	taskSaveHistory = nullptr;
+	Serial.println("saved history delayed");
+}
+
+void Model::saveHistory(bool delayed)
+{
+	using namespace std::placeholders;
+	if (delayed) 
+	{
+		if (taskSaveHistory) tasker.remove(taskSaveHistory);
+		taskSaveHistory = tasker.setTimeout(
+			std::bind(&Model::saveDelayedHistory, this, _1), 60);
+		Tasker::printTask(taskSaveHistory);
+	} 
+	else writeJson("/data/history.json", &history);
 }
 
 void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idItem)
@@ -2053,6 +2060,7 @@ void Model::addHistory(uint32_t time, Action action, uint8_t value, int32_t idIt
 	history.push(a);
 	sendAllAuth(printJson("history", &history));
 }
+
 
 void Model::saveLoger(Task * t)
 {
@@ -2073,7 +2081,7 @@ void Model::saveLoger(Task * t)
 
 	const String & str = sensors.serializeString();
 
-	//writeFile("/data/logSensors.json", str.c_str());
+	writeFile("/data/logSensors.json", str.c_str());
 
 	uint32_t c = millis();
 	const String & json = printJson("sensors", &sensors);
@@ -2162,7 +2170,7 @@ void Model::startWebServer()
 	server.addHandler(&ws);
 	// file manager
 	server.on("/file", HTTP_ANY, std::bind(&Model::onFilePage, this, _1),
-		std::bind(&Model::onUploadFile, this, _1, _2, _3, _4, _5, _6));
+		std::bind(&Model::onUploadFile, this,_1,_2,_3,_4,_5,_6));
 	//root
 	server.serveStatic("/", fs, "/www/").setDefaultFile("index.html");
 

@@ -19,7 +19,6 @@ void Interpreter::target(int id)
 	targetId = id;
 }
 
-
 int8_t WeatherInterp::evaluate()
 {
 	/*{
@@ -36,9 +35,10 @@ int8_t WeatherInterp::evaluate()
 		result += fore->precipitationProbability;
 		result += fore->hoursOfPrecipitation * 100;
 		result = MIN(result / 3, 100);
-		Serial.printf("weater evaluate %d cloud%d precipitation %d%% hoursOfPrecipitation %dh\n", result,
-			fore->cloudCover, fore->precipitationProbability, fore->hoursOfPrecipitation);
+		/*Serial.printf("weater evaluate %d cloud%d precipitation %d%% hoursOfPrecipitation %dh\n", result,
+			fore->cloudCover, fore->precipitationProbability, fore->hoursOfPrecipitation);*/
 
+		Serial.printf("%s evaluate %d\n", getName(), (int8_t)result);
 		return (int8_t)result;
 	}
 	return -1;
@@ -46,9 +46,13 @@ int8_t WeatherInterp::evaluate()
 
 bool WeatherInterp::skip()
 {
-	if (this->model && this->model->loadedForescast)
+	if (this->model && this->model->loadedForescast) 
+	{
 		// cancelamos cuando el viento es mas de 8km/h
-		return this->model->weather[0].speedWin() > 8;
+		bool result = this->model->weather[0].speedWin() > 8;
+		if (result) Serial.printf("%s skip\n", getName());
+		return result;
+	}
 	return false;
 }
 
@@ -76,20 +80,23 @@ int8_t SensorInterp::evaluate()
 
 	result /= 2;
 
-	Serial.printf("tmp %.0f hum %.0f ", averageTmp,averageHum);
+	/*Serial.printf("tmp %.0f hum %.0f ", averageTmp,averageHum);
 	Serial.printf("sensor evaluate %.0f tmp %d hum %d \n", result,
-		map(averageTmp, 0, 30, 100, 0), map(averageHum, 30, 80, 0, 100));
+		map(averageTmp, 0, 30, 100, 0), map(averageHum, 30, 80, 0, 100));*/
 	//Serial.printf("tmp1 %d tmp2 %d \n",map(10,0,30,100,0), map(15,0,30,100,0));
 	//Serial.printf("tmp3 %d tmp4 %d \n",map(20,0,30,100,0), map(25,0,30,100, 0));
-
-	return  MIN((int8_t)(result), 100);
+	result = MIN(result, 100);
+	Serial.printf("%s evaluate %d\n", getName(), (int8_t)result);
+	return (int8_t) result;
 }
 
 
 bool SensorInterp::skip()
 {
 	// cancelamos cuando la temp es menos 5°
-	return this->model->currentSensor.temperature < 5;
+	bool result = this->model->currentSensor.temperature < 5;
+	if (result) Serial.printf("%s skip\n", getName());
+	return result;
 }
 
 const char * SensorInterp::getName(){return "sensors";}
@@ -171,7 +178,11 @@ const char * ListInterpreter::getName(){return "List";}
 
 int8_t Disable24Interp::evaluate(){ return -1; }
 
-bool Disable24Interp::skip() { return true; }
+bool Disable24Interp::skip()
+{ 
+	Serial.printf("%s skip\n", getName());
+	return true; 
+}
 
 void Disable24Interp::setEnabled(bool value)
 {
@@ -202,7 +213,9 @@ int8_t DayInterp::evaluate() { return -1; }
 
 bool DayInterp::skip()
 {
-	return ClockTime::instance().dayWeek() == day;
+	bool result = ClockTime::instance().dayWeek() == day;
+	if (result) Serial.printf("%s skip\n",getName());
+	return result;
 }
 
 const char * DayInterp::getName() { return "day"; }
@@ -370,6 +383,7 @@ bool DatesInterp::skip()
 
 		if (date >= ust && date <= uen) return false;
 	}
+	Serial.printf("%s skip\n",getName());
 	return true;
 }
 

@@ -295,28 +295,4 @@ Test onlyOneAlarmRunning start
 Test onlyOneAlarmRunning passed.
 TestRunner duration: 86.208 seconds.
 TestRunner summary: 5 passed, 0 failed, 0 skipped, 0 timed out, out of 5 test(s).
-
-
-Opening port
-Port open
-TestRunner started on 6 test(s).
-Test Pause start
-	pause(true) ........ 0s open
-		........ 0s open
-	pause(false) ................ 14s open
-Assertion failed: (14) == (15), file C:\Users\pp\Desktop\jardin2\examples\test_model\test_model.ino, line 158.
-Test Pause failed.
-Test Pause start
-	pause(true) ........ 0s open
-	stopWater() . 0s open
-	startWater() . 0s open
-Assertion failed: (0) == (1), file C:\Users\pp\Desktop\jardin2\examples\test_model\test_model.ino, line 115.
-Test PauseCancel failed.
-Test _EditAlarm skipped.
-Test _FindAlarm skipped.
-Test _Zone skipped.
-Test _onlyOneAlarmRunning skipped.
-TestRunner duration: 42.122 seconds.
-TestRunner summary: 0 passed, 2 failed, 4 skipped, 0 timed out, out of 6 test(s).
-
 */
