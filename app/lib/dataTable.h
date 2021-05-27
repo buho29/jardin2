@@ -32,7 +32,8 @@ protected:
 public:
 	const int maxSize = N;
 
-	virtual T* getEmpty() {
+	virtual T* getEmpty()
+	{
 		for (int i = 0; i < N; i++)
 		{
 			T * item = &items[i];
@@ -41,7 +42,8 @@ public:
 		return nullptr;
 	};
 
-	T* create(JsonObject &obj) {
+	T* create(JsonObject &obj) 
+	{
 		T* t = getEmpty();
 
 		if (t) {

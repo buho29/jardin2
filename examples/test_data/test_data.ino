@@ -119,8 +119,6 @@ test(testDstConfig) {
 	assertFalse(config.setDst("s,69,re,rzes,fdsf,qsdqs,qsdqd"));
 	assertFalse(config.setDst("te,ta"));
 }
-
-
 test(testAdmin) {
 	assertTrue(config.setAdmin("teta","pass"));
 	assertFalse(config.setAdmin("this have more 32 characters long","pass"));
