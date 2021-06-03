@@ -14,7 +14,7 @@ struct StrItem :public Item
 {
 	char value[50] = "";
 
-	void set(const int id, const char * str) {
+	void set(uint32_t id, const char * str) {
 		this->id = id;
 		strcpy(this->value, str);
 	};
@@ -29,23 +29,24 @@ struct StrItem :public Item
 			return;
 		}
 		set(
-			obj["id"].as<int>(),
+			obj["id"].as<uint32_t>(),
 			obj["value"].as<char*>()
 		);
 	};
 };
 
-template <int N>
+template <uint N>
 class StringTable :public DataTable<N, StrItem> {
 public:
-	String get(int key) {
+	String get(uint32_t key) {
 		if (this->has(key)) {
 			StrItem * str = this->mapItems[key];
 			return String(str->value);
 		}
 		return String(" String not Found ");
 	};
-	void add(int key, const char * str) {
+	void add(uint32_t
+		key, const char * str) {
 		StrItem * item = this->getEmpty();
 		if (item != nullptr) {
 			item->set(key, str);
@@ -125,7 +126,7 @@ struct Config :public Item
 
 		char str[30];
 
-		int len = strlen(dst);
+		uint len = strlen(dst);
 		if (!(len > 13 && len <16) ) return false;
 
 		strcpy(str, dst);
@@ -150,9 +151,9 @@ struct Config :public Item
 	String getDst() {
 		//write
 		r = "";
-		for (int i = 0;i < 7;i++)
+		for (uint i = 0;i < 7;i++)
 		{
-			int param = dst[i];
+			uint param = dst[i];
 
 			String tt = String(param);
 
@@ -208,14 +209,14 @@ struct Config :public Item
 struct ZoneItem : public Item
 {
 	uint32_t time;
-	int32_t alarmId=-1;
+	uint32_t alarmId= Item::CREATE_NEW;
 	uint32_t elapsed;
 	uint16_t duration;
 	char name[20] = "";
 	bool can_watering = true;
 	bool runing = false; bool paused = false;
 
-	void set(int id, uint32_t time, uint16_t duration, const char * name) 
+	void set(uint32_t id, uint32_t time, uint16_t duration, const char * name) 
 	{
 		this->id = id; this->time = time; this->duration = duration;
 		strcpy(this->name, name); this->runing = false; this->paused = false;
@@ -240,8 +241,8 @@ struct ZoneItem : public Item
 			return;
 		}
 		set(
-			obj["id"].as<int>(), obj["time"].as<uint32_t>(),
-			obj["duration"].as<int>(), obj["name"].as<char*>()
+			obj["id"].as<uint32_t>(), obj["time"].as<uint32_t>(),
+			obj["duration"].as<uint16_t>(), obj["name"].as<char*>()
 		);
 	};
 };
@@ -252,7 +253,7 @@ struct TapItem : public Item
 	bool open = false;
 	char name[20] = "";
 
-	void set(int id, uint8_t pin, const char * name) 
+	void set(uint32_t id, uint8_t pin, const char * name) 
 	{
 		this->id = id; this->pin = pin;
 		strcpy(this->name, name); this->open = open;
@@ -273,7 +274,7 @@ struct TapItem : public Item
 			return;
 		}
 		set(
-			obj["id"].as<int>(),obj["pin"].as<int>(),
+			obj["id"].as<uint32_t>(),obj["pin"].as<uint>(),
 			obj["name"].as<char*>()
 		);
 	};
@@ -281,14 +282,14 @@ struct TapItem : public Item
 
 struct AlarmItem :public Item
 {
-	uint8_t tapId;
-	int8_t zoneId = -1;
+	uint32_t tapId;
+	uint32_t zoneId = Item::CREATE_NEW;
 	uint32_t time;
 	int16_t duration;
 	Task * task;
 
-	void set(int id, uint32_t time, uint16_t duration,
-		uint8_t tapId, int8_t zoneId) 
+	void set(uint32_t id, uint32_t time, uint16_t duration,
+		uint32_t tapId, uint32_t zoneId) 
 	{
 		this->id = id; this->time = time; this->duration = duration;
 		this->tapId = tapId; this->zoneId = zoneId;
@@ -312,9 +313,9 @@ struct AlarmItem :public Item
 			return;
 		}
 		set(
-			obj["id"].as<int>(), obj["time"].as<int>(),
-			obj["duration"].as<int>(), obj["tapId"].as<int>(),
-			obj["zoneId"].as<int>()
+			obj["id"].as<uint32_t>(), obj["time"].as<uint32_t>(),
+			obj["duration"].as<uint16_t>(), obj["tapId"].as<uint32_t>(),
+			obj["zoneId"].as<uint32_t>()
 		);
 	};
 };
@@ -325,7 +326,7 @@ struct ModesItem :public Item
 	// 10 rang
 	char datesStr[120] ="01/01-12/31";
 
-	void set(int id, uint modes, const char* dates)
+	void set(uint32_t id, uint32_t modes, const char* dates)
 	{
 		this->id = id; this->modes = modes;
 		strcpy(this->datesStr, dates);
@@ -347,7 +348,7 @@ struct ModesItem :public Item
 		}
 		set(
 
-			obj["id"].as<int>(), obj["modes"].as<uint>(),
+			obj["id"].as<uint32_t>(), obj["modes"].as<uint32_t>(),
 			obj["dates"].as<char*>()
 		);
 	};
@@ -380,7 +381,7 @@ struct SensorItem :public Item
 		}
 		set(
 			obj["te"].as<float>(), obj["pr"].as<float>(),
-			obj["hu"].as<int>(), obj["ti"].as<int>()
+			obj["hu"].as<uint>(), obj["ti"].as<uint>()
 		);
 	};
 };
@@ -432,12 +433,12 @@ enum Action {
 };
 struct ActionItem :public Item
 {
-	int32_t idItem = -1;
+	uint32_t idItem = Item::CREATE_NEW;
 	uint8_t action;// 0:taps 1:zone-time 2:zone-manual
 	uint8_t value;// 0:false 1:true  
 	uint32_t time;
 
-	void set(uint32_t time, uint8_t action, uint8_t value,int32_t idItem =-1)
+	void set(uint32_t time, uint8_t action, uint8_t value,uint32_t idItem = Item::CREATE_NEW)
 	{
 		this->time = time; this->action = action;
 		this->value = value; this->idItem = idItem;

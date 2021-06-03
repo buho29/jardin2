@@ -13,7 +13,8 @@
 ///////////////////////////////////////
 
 struct Item {
-	int32_t id = -1;
+	static const uint32_t CREATE_NEW = 4294967295;
+	uint32_t id = CREATE_NEW;
 	virtual void serializeItem(JsonObject &obj,bool extra) = 0;
 	virtual void deserializeItem(JsonObject &obj) = 0;
 };
@@ -25,7 +26,7 @@ public:
 	virtual void serializeData(JsonArray &obj, bool extra) = 0;
 };
 
-template <int N,class T>
+template <uint N,class T>
 class BaseData:public Iserializable {
 protected:
 	T items[N];
@@ -37,7 +38,7 @@ public:
 		for (int i = 0; i < N; i++)
 		{
 			T * item = &items[i];
-			if (item->id < 0) return item;
+			if (item->id == Item::CREATE_NEW) return item;
 		}
 		return nullptr;
 	};
@@ -57,7 +58,7 @@ public:
 		for (int i = 0; i < N; i++)
 		{
 			T* item = &items[i];
-			item->id = -1;
+			item->id = Item::CREATE_NEW;
 		}
 	}
 
@@ -91,7 +92,7 @@ public:
 };
 
 // map base
-template <int N, class T, class K>
+template <uint N, class T, class K>
 class MapBaseData :public BaseData<N,T > {
 protected:
 	std::map<K, T*> mapItems;
@@ -118,14 +119,14 @@ public:
 			T* item = this->mapItems[key];
 			if (this->mapItems.erase(key)) {
 				//lo marcamos para reutilizacion
-				item->id = -1;
+				item->id = Item::CREATE_NEW;
 				return true;
 			}
 		}
 
 		return false;
 	};
-	bool remove(T* item) { return remove(item->id); };
+	//bool remove(T* item) { return remove(item->id); };
 	void printItems() {
 		for (size_t i = 0; i < N; i++)
 		{
@@ -141,7 +142,6 @@ public:
 		for (auto elem : this->mapItems)
 		{
 			T* item = elem.second;
-
 			JsonObject o = obj.createNestedObject();
 			item->serializeItem(o, extra);
 		};
@@ -151,23 +151,23 @@ public:
 };
 
 // Table
-template < int N,class T>
-class DataTable :public MapBaseData<N,T, int> {
+template < uint N,class T>
+class DataTable :public MapBaseData<N,T, uint32_t> {
 protected:
-	int getUniqueId(int id = -1) {
-		if (id >= 0) return id;
+	uint getUniqueId(uint id = Item::CREATE_NEW) {
+		if (id < Item::CREATE_NEW) return id;
 		for (int i = 0; i < N; i++)
 		{
 			if (this->mapItems.find(i) == this->mapItems.end())
 				return i;
 		}
-		return -1;
+		return Item::CREATE_NEW;
 	};
 public:
 	T* push(T * item) {
 		if (item) {
-			int id = getUniqueId(item->id);
-			if (id >= 0) {
+			uint id = getUniqueId(item->id);
+			if (id < Item::CREATE_NEW) {
 				item->id = id;
 				this->mapItems.insert(std::make_pair(id, item));
 				return item;
@@ -178,7 +178,7 @@ public:
 };
 
 // List
-template <int N,class T>
+template <uint N,class T>
 class DataList :public BaseData<N,T> {
 protected:
 	std::list<T *> listItems;
@@ -212,7 +212,7 @@ public:
 			listItems.erase(it);
 
 			//lo marcamos para reutilizacion
-			item->id = -1;
+			item->id = Item::CREATE_NEW;
 
 			return true;
 		}
@@ -227,14 +227,14 @@ public:
 		if (size() <= 0) return false;
 
 		//lo marcamos para reutilizacion
-		listItems.front()->id = -1;
+		listItems.front()->id = Item::CREATE_NEW;
 		listItems.pop_front();
 		return true;
 	};
 	bool pop() {
 		if (size() <= 0) return false;
 		//lo marcamos para reutilizacion
-		listItems.back()->id = -1;
+		listItems.back()->id = Item::CREATE_NEW;
 		listItems.pop_back();
 		return true;
 	};

@@ -39,26 +39,26 @@ test(testLang)
 ZoneItem* addZone(char * name) 
 {
 	ZoneItem* zone = zones.getEmpty();
-	zone->set(-1, 0, 0, name);
+	zone->set(Item::CREATE_NEW, 0, 0, name);
 
 	return zones.push(zone);
 }
-int32_t addAlarm(uint8_t zoneId, uint8_t tapId, uint32_t time, uint16_t duration)
+AlarmItem* addAlarm(uint8_t zoneId, uint8_t tapId, uint32_t time, uint16_t duration)
 {
 	if (zones.has(zoneId)) {
 		AlarmItem* alarm = alarms.getEmpty();
 		alarm->set(-1, time, duration, tapId, zoneId);
 		alarms.push(alarm);
-		return alarm->id;
+		return alarm;
 	}
-	return -1;
+	return nullptr;
 }
-int32_t addAlarm(uint8_t zoneId, uint8_t tapId, uint16_t duration, uint8_t h, uint8_t m, uint8_t s)
+AlarmItem* addAlarm(uint8_t zoneId, uint8_t tapId, uint16_t duration, uint8_t h, uint8_t m, uint8_t s)
 {
 	int32_t alarmTime = Tasker::getTickTime(h, m, s);
 	return addAlarm(zoneId, tapId, alarmTime, duration);
 }
-test(_testAppData) 
+test(testAppData) 
 {
 	Serial.println("testAppData");
 
@@ -76,20 +76,20 @@ test(_testAppData)
 	uint8_t duration = 60; 
 
 	ZoneItem* _zone = addZone("Cesped D");
-	assertMore((int)_zone, 0);
-	assertMore(addAlarm(_zone->id, 0, duration, 7, 0, 0), -1);
-	assertMore(addAlarm(_zone->id, 1, duration, 7, 0, duration), -1);
-	assertMore(addAlarm(_zone->id, 2, duration, 7, 0, duration * 2), -1);
+	assertTrue(_zone);
+	assertTrue(addAlarm(_zone->id, 0, duration, 7, 0, 0));
+	assertTrue(addAlarm(_zone->id, 1, duration, 7, 0, duration));
+	assertTrue(addAlarm(_zone->id, 2, duration, 7, 0, duration * 2));
 	
 	_zone = addZone("Cesped N");
-	assertMore((int)_zone, 0);
-	assertMore(addAlarm(_zone->id, 0, duration, 21, 0, 0), -1);
-	assertMore(addAlarm(_zone->id, 1, duration, 21, 0, duration), -1);
-	assertMore(addAlarm(_zone->id, 3, duration, 21, 0, duration * 2), -1);
+	assertTrue(_zone);
+	assertTrue(addAlarm(_zone->id, 0, duration, 21, 0, 0));
+	assertTrue(addAlarm(_zone->id, 1, duration, 21, 0, duration));
+	assertTrue(addAlarm(_zone->id, 3, duration, 21, 0, duration * 2));
 
 	_zone = addZone("Huerta");
-	assertMore((int)_zone, 0);
-	assertMore(addAlarm(_zone->id, 3, duration, 7, 0, duration * 3), -1);
+	assertTrue(_zone);
+	assertTrue(addAlarm(_zone->id, 3, duration, 7, 0, duration * 3));
 
 
 	for (auto pair : zones)
@@ -107,7 +107,7 @@ test(_testAppData)
 	assertEqual((int)taps.size(), 4);
 	assertEqual((int)alarms.size(), 7);
 
-	assertTrue(zones.remove(0));
+	assertTrue(zones.remove(_zone->id));
 	assertEqual((int)zones.size(), 2);
 }
 
@@ -142,8 +142,24 @@ void loop() {
 Opening port
 Port open
 TestRunner started on 5 test(s).
-Test _testAppData skipped.
 Test testAdmin passed.
+testAppData
+zones 0 :: Cesped D
+zones 1 :: Cesped N
+zones 2 :: Huerta
+taps 0 :: Grifo 0
+taps 1 :: Grifo 1
+taps 2 :: Grifo 2
+taps 3 :: Grifo 3
+alarms 0 :: 25200
+alarms 1 :: 25260
+alarms 2 :: 25320
+alarms 3 :: 75600
+alarms 4 :: 75660
+alarms 5 :: 75720
+alarms 6 :: 25380
+
+Test testAppData passed.
 Test testDstConfig passed.
 testLang
 Bienvenido  : usuario o pass no valido
@@ -152,6 +168,7 @@ lang key :1 :: usuario o pass no valido
 lang key :2 :: Requierre logearse
 Test testLang passed.
 Test testWifi passed.
-TestRunner duration: 0.016 seconds.
-TestRunner summary: 4 passed, 0 failed, 1 skipped, 0 timed out, out of 5 test(s).
+TestRunner duration: 0.040 seconds.
+TestRunner summary: 5 passed, 0 failed, 0 skipped, 0 timed out, out of 5 test(s).
+
 */

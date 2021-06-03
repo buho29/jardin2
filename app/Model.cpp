@@ -107,7 +107,12 @@ void Model::update()
 	}
 
 
-	tasker.check();
+	static uint32_t delayTask = 0;
+	if (millis() - delayTask > 100) {
+		clockTime.timeNow();
+		tasker.check();
+	}
+	
 
 	static uint32_t delayfree = 0;
 	if (millis() - delayfree > 1000) {
@@ -213,14 +218,14 @@ bool Model::writeFile(const char * path, const char * message)
 {
 	if (!writeFileEnabled) return true;
 	//Serial.printf("path : %s\n",path);
-	int tim = millis();
+	uint tim = millis();
 	File file = fs.open(path, FILE_WRITE);
 	if (!file) {
 		//Serial.printf("- failed to open file for writing path : %s\n",path);
 		return false;
 	}
 	if (file.print(message)) {
-		int elapsed = (millis() - tim);
+		uint elapsed = (millis() - tim);
 		file.close();
 		Serial.printf("- file written in %dms :%s len:%d\n", elapsed, path, strlen(message));
 		return true;
@@ -327,7 +332,7 @@ void Model::readFiles()
 //		data
 
 //return zone.id
-int Model::addZone(const char * name, uint32_t fmodes,const char* dates)
+ZoneItem* Model::addZone(const char * name, uint32_t fmodes,const char* dates)
 {
 	ZoneItem * zone = zones.getEmpty();
 	ModesItem* modesItem = modesItems.getEmpty();
@@ -344,12 +349,12 @@ int Model::addZone(const char * name, uint32_t fmodes,const char* dates)
 		zone->can_watering = canWatering(zone->id);
 
 		dispachZone(false,true);
-		return zone->id;
+		return zone;
 	}
-	return -1;
+	return nullptr;
 }
 
-bool Model::editZone(int id, const char * name, uint32_t fmodes, const char* dates)
+bool Model::editZone(uint id, const char * name, uint32_t fmodes, const char* dates)
 {
 	if (zones.has(id) && modesItems.has(id)) 
 	{
@@ -368,7 +373,7 @@ bool Model::editZone(int id, const char * name, uint32_t fmodes, const char* dat
 	return false;
 }
 
-bool Model::removeZone(int id)
+bool Model::removeZone(uint id)
 {
 	if (zones.has(id) && modesItems.has(id)) {
 
@@ -383,7 +388,7 @@ bool Model::removeZone(int id)
 					tasker.remove(alarm->task);
 					alarm->task = nullptr;
 				}
-				alarms.remove(alarm);
+				alarms.remove(alarm->id);
 			}
 		}
 
@@ -458,36 +463,37 @@ void Model::beginOTA()
 
 //		alarm
 // return zone.id
-int Model::addAlarm(int zoneId, int tapId, uint32_t time, uint16_t duration)
+AlarmItem* Model::addAlarm(uint32_t zoneId, uint32_t tapId, uint32_t time, uint16_t duration)
 {
 	if (zones.has(zoneId)) 
 	{
 		time = time % TASK_TICKS_24H;
 
 		AlarmItem* alarm = alarms.getEmpty();
-		// usamos el tiempo como id y como key
-		alarm->set(time, time, duration, tapId, zoneId);
+		if (alarm) {
+			// usamos el tiempo como id/key
+			alarm->set(time, time, duration, tapId, zoneId);
+			alarms.push(alarm);
 
-		AlarmItem* alarm1 = alarms.push(alarm);
+			//Serial.printf("addAlarm %d\n",alarm1->id);
+			calcZone(zoneId);
+			updateTasks(zoneId);
 
-		//Serial.printf("addAlarm %d\n",alarm1->id);
-		calcZone(zoneId);
-		updateTasks(zoneId);
+			dispachZone(true);
+		}
 
-		dispachZone(true);
-
-		return alarm->id;
+		return alarm;
 	}
-	return -1;
+	return nullptr;
 }
 
-int Model::addAlarm(int zoneId, int tapId, uint16_t duration, uint8_t h, uint8_t m, uint8_t s)
+AlarmItem* Model::addAlarm(uint32_t zoneId, uint32_t tapId, uint16_t duration, uint8_t h, uint8_t m, uint8_t s)
 {
 	int32_t alarmTime = Tasker::getTickTime(h, m, s);
 	return addAlarm(zoneId, tapId, alarmTime, duration);
 }
 
-bool Model::editAlarm(int id, int tapId, uint32_t time, uint16_t duration)
+bool Model::editAlarm(uint32_t id, uint32_t tapId, uint32_t time, uint16_t duration)
 {
 	if (!taps.has(tapId) || time < 0 || duration < 0 || duration > 21600) {
 		Serial.printf("!taps.has(tapId) |%d| time |%d| duration |%d|",
@@ -506,8 +512,8 @@ bool Model::editAlarm(int id, int tapId, uint32_t time, uint16_t duration)
 		if (a->time != time) {
 			tasker.remove(a->task);
 			a->task = nullptr;
-			if (alarms.remove(a)) {
-				return addAlarm(a->zoneId, tapId, time, duration) > -1;
+			if (alarms.remove(a->id)) {
+				return addAlarm(a->zoneId, tapId, time, duration) != nullptr;
 			}
 		}
 		else {
@@ -524,13 +530,13 @@ bool Model::editAlarm(int id, int tapId, uint32_t time, uint16_t duration)
 	return false;
 }
 
-bool Model::removeAlarm(int index)
+bool Model::removeAlarm(uint32_t index)
 {
 	if (alarms.has(index)) {
 
 		Serial.println("removeAlarm");
 		AlarmItem * a = alarms[index];
-		int zoneId = a->zoneId;
+		uint32_t zoneId = a->zoneId;
 		tasker.remove(a->task);
 		a->task = nullptr;
 
@@ -555,25 +561,27 @@ void Model::printZones()
 		ZoneItem * zone = it.second;
 
 
-		Serial.printf("zoneId: %d name %s time : %s duration : %d\n",
+		Serial.printf("zoneId: %u name %s time : %s duration : %d\n",
 			zone->id, zone->name, Tasker::formatTime(zone->time), zone->duration);
 
 		printAlarms(zone->id);
 	}
 }
 
-void Model::printAlarms(uint8_t z)
+
+void Model::printAlarms(uint z)
 {
 	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;
 		if (z == alarm->zoneId) {
-			Serial.printf("\t alarm Id: %d time: %s duration: %d tap: %d\n",
-				alarm->id, Tasker::formatTime(alarm->time), alarm->duration, alarm->tapId);
+			Serial.printf("\t alarm Id: %u time: %s duration: %d tap: %d task:%s\n",
+				alarm->id, Tasker::formatTime(alarm->time), alarm->duration, 
+				alarm->tapId,alarm->task?String("found ")+ alarm->task->id:"not found");
 		}
 	}
 }
 
-ModesItem* Model::getModesItem(int id)
+ModesItem* Model::getModesItem(uint id)
 {
 	if (modesItems.has(id)) 
 		return modesItems[id];
@@ -584,7 +592,7 @@ ModesItem* Model::getModesItem(int id)
 void Model::sendAll(const String & str)
 {
 	if (str == String("")) {
-		Serial.println("sendAll empty!!");
+		Serial.println("sendAll CREATE_NEW!!");
 	}else ws.textAll(str);
 	//Serial.printf("sendAll %d \n",str.length(),str.c_str());
 }
@@ -1108,7 +1116,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 
 		if (tap.containsKey("id") && tap.containsKey("open"))
 		{
-			int id = tap["id"]; bool open = tap["open"];
+			uint id = tap["id"]; bool open = tap["open"];
 			String const & name = String(taps[id]->name);
 			isManualWater = true;
 			// abrir/cerrar grifo
@@ -1191,7 +1199,7 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 	if (zone.containsKey("id") && zone.containsKey("runing")
 		&& zone["runing"].as<bool>())
 	{
-		int id = zone["id"];
+		uint32_t id = zone["id"];
 		const String & name = String(zones[id]->name);
 
 
@@ -1225,7 +1233,7 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 	}
 	else if (zone.containsKey("delete"))
 	{
-		int id = zone["delete"];
+		uint32_t id = zone["delete"];
 
 		String name = String(Str::notFound);
 		if (zones.has(id)) name = String(zones[id]->name);
@@ -1243,7 +1251,7 @@ void Model::receivedJsonZone(AsyncWebSocketClient * client, const JsonObject & z
 			edit.containsKey("dates") && 
 			edit.containsKey("name")
 		){
-			int id = edit["id"];
+			uint32_t id = edit["id"];
 			uint32_t modes = edit["modes"];
 			const char* dates = edit["dates"];
 			const char* name = edit["name"];
@@ -1287,7 +1295,7 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 {
 	if (alarm.containsKey("delete"))
 	{
-		int id = alarm["delete"];
+		uint32_t id = alarm["delete"];
 
 		String msg = "Not Found";
 
@@ -1310,10 +1318,10 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 			edit.containsKey("tapId") &&
 			edit.containsKey("duration")
 		){
-			int id = edit["id"];
+			uint32_t id = edit["id"];
 			uint32_t time = edit["time"];
-			int tapId = edit["tapId"];
-			int duration = edit["duration"];
+			uint32_t tapId = edit["tapId"];
+			uint16_t duration = edit["duration"];
 
 			String msg = "Not Found";
 
@@ -1347,10 +1355,10 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 			edit.containsKey("zoneId") && edit.containsKey("time") &&
 			edit.containsKey("tapId") && edit.containsKey("duration")
 		) {
-			int zoneId = edit["zoneId"];
+			uint32_t zoneId = edit["zoneId"];
 			uint32_t time = edit["time"];
-			int tapId = edit["tapId"];
-			int duration = edit["duration"];
+			uint32_t tapId = edit["tapId"];
+			uint32_t duration = edit["duration"];
 
 			String msg = "Not Found";
 
@@ -1366,7 +1374,7 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 
 				sendMessage(1, Str::occupied, msg, client);
 			}
-			else if (addAlarm(zoneId, tapId, time, duration) > -1)
+			else if (addAlarm(zoneId, tapId, time, duration))
 				sendMessage(0, Str::create, msg);
 			else
 				sendMessage(1, Str::errorCreate, msg, client);
@@ -1447,16 +1455,16 @@ bool Model::pauseWaterZone(bool pause)
 	bool iswate = isWatering();
 
 	uint32_t now = tasker.timeNow();
-/*
-	Serial.printf("now %s ", Tasker::formatTime(now));
-	Serial.printf("elapsedPausedTask %s ", Tasker::formatTime(elapsedPausedTask));
-	Serial.printf("pausedTime %s \n", Tasker::formatTime(pausedTime));*/
+
+	//Serial.printf("now %s ", Tasker::formatTime(now));
+	//Serial.printf("elapsedPausedTask %s ", Tasker::formatTime(elapsedPausedTask));
+	//Serial.printf("pausedTime %s \n", Tasker::formatTime(pausedTime));
 	//pausamos
 	if (iswate && !isPaused()) {
 
 		// tiempo trancurrido de la tarea actual
 		elapsedPausedTask = Tasker::getDuration(t->start, now);
-		pausedTime = now;
+		pausedTime = clockTime.local() ;
 
 		uint16_t da = currentAlarm->duration;
 		uint16_t dt = Tasker::getDuration(t->start, t->stop);
@@ -1495,7 +1503,7 @@ bool Model::pauseWaterZone(bool pause)
 	}
 	else if (!iswate && !pause) {//reanudamos
 
-		uint16_t elapsed = Tasker::getDuration(pausedTime, now);
+		uint16_t elapsed = Tasker::getDuration(pausedTime % TASK_TICKS_24H, now);
 		// 
 		t->enabled = true;
 		t->start = now;
@@ -1552,20 +1560,23 @@ bool Model::pauseWaterZone(bool pause)
 void Model::onWater(Task * t)
 {
 
-	// si se abre los grifos manualment
-	// o esta pausado 
-	// o ya hay una alarma activa(no deberia pasar)
+	//Serial.printf("onWater %s ",Tasker::formatTime(clockTime.local()));
+	//Tasker::printTask(t);
+
+	//Serial.printf("exit onWater manualwater %s || paused %s \n",
+	//	isManualWater ? "true" : "false",
+	//	isPaused() ? "true" : "false");
+	// 
+	// si se abre los grifos manualment o esta pausado 
+	// nos salimos
 	if (isManualWater || isPaused()) {
-		/*Serial.printf("exit onWater manualwater %s || paused %s \n",
-			isManualWater ? "true" : "false",
-			isPaused() ? "true" : "false");*/
-		
-		return;// nos salimos
+		return; 
 	}
 
-	//reseteamos uno que fue cancelado 
+	//reseteamos uno que fue cancelado (pausado zona) 
 	// y salimos
-	if (!t->enabled) {
+	if (!t->enabled) 
+	{
 		t->enabled = true;
 		return;
 	}
@@ -1585,8 +1596,8 @@ void Model::onWater(Task * t)
 
 	if (currentAlarm)
 	{
-		// si no se puede regar cancelamos
-		if (t->runing && !isManualZoneWater 
+		if (t->runing && !isManualZoneWater
+			// si no se puede regar cancelamos 
 			&& !canWatering(currentZone->id)) 
 		{
 			stopWaterZone(false);
@@ -1727,7 +1738,7 @@ bool Model::stopWaterZone(bool save)
 	return true;
 }
 
-bool Model::waterZone(uint8_t zoneId)
+bool Model::waterZone(uint zoneId)
 {
 	if (!isWatering() && !isPaused() && zones.has(zoneId)) {
 
@@ -1802,22 +1813,22 @@ void Model::loadDefaultZones()
 	///*	//grifo 0 27	//grifo 1 14	//grifo 2 21	//grifo 3 17
 	//*/
 	firevent = false;
-	int id = addZone("Cesped D", 0, defaultDates);
+	ZoneItem* z = addZone("Cesped D", 0, defaultDates);
 
-	addAlarm(id, 0, duration, 7, 0, 0);
-	addAlarm(id, 1, duration, 7, 0, duration);
-	addAlarm(id, 2, duration, 7, 0, duration * 2);
+	addAlarm(z->id, 0, duration, 7, 0, 0);
+	addAlarm(z->id, 1, duration, 7, 0, duration);
+	addAlarm(z->id, 2, duration, 7, 0, duration * 2);
 
 	duration = 20;
 
-	id = addZone("Cesped N", 0, defaultDates);
-	addAlarm(id, 0, duration, 21, 0, 0);
-	addAlarm(id, 1, duration, 21, 0, duration);
-	addAlarm(id, 3, duration, 21, 0, duration * 2);
+	z = addZone("Cesped N", 0, defaultDates);
+	addAlarm(z->id, 0, duration, 21, 0, 0);
+	addAlarm(z->id, 1, duration, 21, 0, duration);
+	addAlarm(z->id, 3, duration, 21, 0, duration * 2);
 
-	id = addZone("Huerta", 0, defaultDates);
-	addAlarm(id, 3, duration, 14, 0, 0);
-	addAlarm(id, 3, duration, 14, 0, duration);
+	z = addZone("Huerta", 0, defaultDates);
+	addAlarm(z->id, 3, duration, 14, 0, 0);
+	addAlarm(z->id, 3, duration, 14, 0, duration);
 
 	writeJson("/data/zones.json", &zones);
 	writeJson("/data/alarms.json", &alarms);
@@ -2038,8 +2049,9 @@ void Model::saveDelayedHistory(Task* t)
 void Model::saveHistory(bool delayed)
 {
 	using namespace std::placeholders;
-	if (delayed) 
+	if (delayed && writeFileEnabled)
 	{
+		Serial.println("delay savehistory");
 		if (taskSaveHistory) tasker.remove(taskSaveHistory);
 		taskSaveHistory = tasker.setTimeout(
 			std::bind(&Model::saveDelayedHistory, this, _1), 60);
@@ -2143,7 +2155,7 @@ void Model::saveLoger24(Task* t)
 }
 
 //		Modes
-bool Model::canWatering(uint zoneId)
+bool Model::canWatering(uint32_t zoneId)
 {
 	if (zones.has(zoneId))
 	{
@@ -2279,7 +2291,7 @@ void Model::onUploadFile(AsyncWebServerRequest * request, const String & filenam
 		else authenticate = false;
 	}
 
-	Serial.println((request->_tempFile ? "siiii" : "nçooooo"));
+	//Serial.println((request->_tempFile ? "siiii" : "nçooooo"));
 
 	if (authenticate && request->_tempFile) {
 		if (len) {
@@ -2308,7 +2320,7 @@ void Model::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client,
 
 		send(json,client);
 		//client->ping();
-		Serial.printf("ws[%s][%u] ip%d connect and send :\n", server->url(), client->id());
+		Serial.printf("ws[%s][%u] connect and send :\n", server->url(), client->id());
 	}
 	else if (type == WS_EVT_DISCONNECT) {
 		Serial.printf("ws[%s][%u] disconnect\n", server->url(), client->id());
@@ -2361,7 +2373,7 @@ void Model::updateTasks(uint8_t zoneId)
 	{
 		AlarmItem * alarm = it.second;
 		Task * t = alarm->task;
-		//Serial.printf("zoneid :" << zoneId << "alarmid: " << alarm->id << "task :" << (t!= nullptr)  << endl;
+		//Serial.printf("zoneid :%d alarmid:%d task:%u ",zoneId ,alarm->id ,(uint)t>0);
 		if (alarm->zoneId == zoneId)
 		{
 			if (t == nullptr)
@@ -2450,7 +2462,7 @@ void Model::calcZone(int32_t zoneId)
 }
 
 //TODO por terminar
-AlarmItem * Model::findAlarm(uint32_t time, uint16_t duration, int ignoreId)
+AlarmItem * Model::findAlarm(uint32_t time, uint16_t duration, uint32_t ignoreId)
 {
 	for (auto &it : alarms) {
 		AlarmItem * alarm = it.second;

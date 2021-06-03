@@ -13,7 +13,7 @@ ClockTime & clockTime = ClockTime::instance();
 void check(uint secs) {
 	for (uint i = 0; i < secs; i++)
 	{
-
+		clockTime.timeNow();
 		tasker.check();
 		//Tasker::formatTime(msg, tasker.timeNow());
 		//Serial.print(msg);
@@ -94,7 +94,20 @@ test(TestTask)
 
 	check(6);
 	assertEqual(elapsedTask, 4);
+
+	for (int i = 0; i < tasker.taskCount; i++)
+	{
+		Tasker::printTask(&tasker.tasks[i]);
+	}
 	tasker.remove(task);
+	assertEqual(tasker.taskCount, 0);
+	Tasker::printTask(task);
+	task = tasker.add(
+		Tasker::getTickTime(0, 0, 1),// inicio
+		Tasker::getTickTime(0, 0, 4),// fin
+		&taskCallback // callback
+	);
+	Tasker::printTask(task);
 
 }
 
@@ -151,7 +164,7 @@ test(timeHasChanged) {
 	tasker.timeHasChanged();
 
 	elapsedTask = 0;
-	check(5);
+	check(6);
 	assertEqual(elapsedTask, 3);
 
 	tasker.remove(task);

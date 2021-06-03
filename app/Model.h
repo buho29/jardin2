@@ -123,7 +123,7 @@ private:
 	void saveHistory(bool delayed = true);
 	void addHistory(
 		uint32_t time, Action action, 
-		uint8_t value = 1, int32_t idItem = -1
+		uint8_t value = 1, int32_t idItem = Item::CREATE_NEW
 	);
 	void saveDelayedHistory(Task* t);
 	
@@ -262,7 +262,7 @@ public:
 	void update();
 	//serial.print(zone)
 	void printZones();
-	void printAlarms(uint8_t zone);
+	void printAlarms(uint zone);
 
 	bool connectedWifi = false;
 	bool loadedTime = false;
@@ -272,7 +272,7 @@ public:
 	char msgStatus[100] = "";
 
 	ZoneItem* currentZone = nullptr;
-	ModesItem* getModesItem(int id);
+	ModesItem* getModesItem(uint id);
 
 	// estamos regando manualmente una zona ?
 	bool isManualZoneWater = false;
@@ -280,7 +280,6 @@ public:
 	bool isManualWater = false;
 	// grifos
 	bool isAlarmRunning = false;
-
 	// esta abierto algun grifo ?
 	bool isWatering();
 	// esta pausado ?
@@ -291,21 +290,21 @@ public:
 	}
 
 	//data Zone
-	bool editZone(int zone, const char * name, uint32_t fmodes, const char* dates);
-	int addZone(const char * name, uint32_t fmodes, const char* dates);
-	bool removeZone(int zone);
+	bool editZone(uint zone, const char * name, uint32_t fmodes, const char* dates);
+	ZoneItem* addZone(const char * name, uint32_t fmodes, const char* dates);
+	bool removeZone(uint zone);
 
 	//alarmas
-	int addAlarm(int zone, int id, uint32_t time, uint16_t duration);
-	int addAlarm(int zone, int id, uint16_t duration,
+	AlarmItem* addAlarm(uint32_t zone, uint32_t tapid, uint32_t time, uint16_t duration);
+	AlarmItem* addAlarm(uint32_t zone, uint32_t tapid, uint16_t duration,
 		uint8_t h, uint8_t m, uint8_t s = 0);
 
-	bool editAlarm(int id, int tapId, uint32_t time, uint16_t duration);
-	bool removeAlarm(int index);
-	AlarmItem * findAlarm(uint32_t time, uint16_t duration, int ignoreId = -1);
+	bool editAlarm(uint32_t id, uint32_t tapId, uint32_t time, uint16_t duration);
+	bool removeAlarm(uint32_t  index);
+	AlarmItem * findAlarm(uint32_t time, uint16_t duration, uint32_t ignoreId = -1);
 
 	//riego zona manual
-	bool waterZone(uint8_t zone);
+	bool waterZone(uint zone);
 	//parar el riego de la zona actual
 	bool stopWaterZone(bool save = true);
 	bool pauseWaterZone(bool pause);
@@ -315,7 +314,7 @@ public:
 	WeatherData weather[5];
 	bool loadedForescast = false;
 
-	bool canWatering(uint zoneId);
+	bool canWatering(uint32_t zoneId);
 
 	uint16_t getElapsedAlarm();
 

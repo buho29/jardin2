@@ -30,8 +30,8 @@ struct MyItem : public Item
 DataTable<7,MyItem> myTable;
 DataList<5,MyItem> myList;
 
-test(DataTable) {
-
+test(DataTable) 
+{
 	assertEqual(myTable.maxSize,7);
 	assertEqual(myList.maxSize,5);
 
@@ -45,9 +45,13 @@ test(DataTable) {
 		assertTrue(item);
 		if (item) {
 			item->set(-1, 69 - i, t.c_str());
-			myTable.push(item);
+			assertTrue(myTable.push(item));
 		}
 	}
+
+	assertFalse(myTable.getEmpty());
+
+
 	//fill list
 	i = myList.size();
 	while (myList.size() < myList.maxSize)
@@ -58,7 +62,7 @@ test(DataTable) {
 		assertTrue(item);
 		if (item) {
 			item->set(-1, 19 + i, t.c_str());
-			myList.push(item);
+			assertTrue(myList.push(item));
 		}
 	}
 
@@ -90,7 +94,7 @@ test(DataTable) {
 	myList.clear();
 	assertEqual((int)myList.size(), 0);
 
-	String json = "[{\"id\":1,\"edad\":21,\"name\":\"list 2\"},{\"id\":1,\"edad\":22,\"name\":\"list 3\"}]";
+	String json = "[{\"id\":1,\"edad\":21,\"name\":\"list 2\"},{\"id\":2,\"edad\":22,\"name\":\"list 3\"}]";
 	assertTrue(myTable.deserializeData(json));
 	assertEqual((int)myTable.size(), 2);
 	assertFalse(myTable.deserializeData(String("teta")));

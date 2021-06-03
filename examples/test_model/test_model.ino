@@ -19,16 +19,16 @@ const int totalDuration = duration * alarmsCount;
 ***********************************************/
 
 // creamos zona con 3 alarmas 
-int createZone(uint32_t time, const char* name = "zone")
+uint createZone(uint32_t time, const char* name = "zone")
 {
-	int id = model->addZone(name, 0, "01/01-12/31");
+	ZoneItem* z = model->addZone(name, 0, "");
 
 	for (int i = 0; i < alarmsCount; i++)
 	{
-		model->addAlarm(id, i,(duration * i) + time, duration);
+		model->addAlarm(z->id, i,(duration * i) + time, duration);
 	}
 
-	return id;
+	return z->id;
 }
 
 int checkWatering(int secs) {
@@ -36,12 +36,17 @@ int checkWatering(int secs) {
 	for (int i = 0; i < secs; i++)
 	{
 		delay(1000);
+		clockTime.timeNow();
 		tasker.check();
 		if (model->currentZone && model->isWatering())
 		{
+			AlarmItem* a = model->alarms[model->currentZone->alarmId];
+			//Tasker::printTask(a->task);
 			water ++;
 		}
-		Serial.print(".");
+		//Serial.print(".");
+		//Serial.printf("%s \n", Tasker::formatTime(clockTime.local()));
+		//Serial.printf("%d %d\n",model->currentZone , model->isWatering());
 	}
 	Serial.printf(" %ds open \n",water);
 	return water;
@@ -51,66 +56,70 @@ int checkWatering(int secs) {
 *					tests
 ***********************************************/
 
-test(_Zone) 
+test(Zone) 
 {
 	Serial.println("Test Zone start");
-	uint time = clockTime.local();
 
-	int id = model->addZone("zona", 0, "01/01-12/31");
+	uint time = clockTime.timeNow();
 
-	//si es -1 es error 
-	assertMore(id, -1);
+	ZoneItem* z = model->addZone("zona", 0, "");
+	//si es 0 es error 
+	assertTrue(z);
 
 	for (int i = 0; i < alarmsCount; i++)
 	{
-		int idAlarm = model->addAlarm(id, i, (duration * i) + time, duration);
-		assertMore(idAlarm, -1);
+		AlarmItem* alarm = model->addAlarm(z->id, i, (duration * i) + time, duration);
+		assertTrue(alarm);
 	}
-	
-	delay(1000);
+
+	clockTime.timeNow();
 	tasker.check();
 
 	assertTrue(model->isAlarmRunning);
 	assertTrue(model->isWatering());
 	//comprobamos que el grifo esta abierto 14sg
-	Serial.print("\tcheck ");
-	assertEqual(checkWatering(totalDuration), totalDuration-1);
+	//Serial.print("\tcheck ");
+	assertEqual(checkWatering(totalDuration+1), totalDuration-1);
 
 	//borramos
 	assertTrue(model->removeZone(0));
-	
-	assertEqual((int)model->alarms.size(),0);
+
+	assertEqual((int)model->alarms.size(), 0);
+	assertEqual((int)model->modesItems.size(), 0);
 	assertEqual((int)model->zones.size(),0);
 
-	//check tasks is empty (-1)
-	for (int i = 0; i < tasker.taskCount; i++)
-	{
-		assertEqual(tasker.tasks[i].mode , -1);
-	}
+	delay(1000);
 }
 
 test(Pause) 
 {
 	Serial.println("Test Pause start");
 
+	clockTime.timeNow();
 	createZone(clockTime.local());
 	createZone(clockTime.local()-3600,"zone 1");
 
+	//model->printZones();
 	tasker.check();
 
 	assertTrue(model->isAlarmRunning);
 	assertTrue(model->isWatering());
+	assertTrue(model->currentZone);
 
-	Serial.print("\tpause(true) ");
+	Serial.print("pause(true) ");
 	assertTrue(model->pauseWaterZone(true));
-	// comprobamos q no se abre ningun grifo en 8sg
+	// comprobamos q no se abre ningun grifo en +5sg
+	assertTrue(model->currentZone);
 	assertEqual(checkWatering(8), 0);
-	Serial.print("\t\t");
+
+	assertFalse(model->isWatering());
+	assertTrue(model->isPaused());
+
 	//comprobamos q no se inicie otra
 	assertFalse(model->waterZone(1));
 	assertEqual(checkWatering(8), 0);
 
-	Serial.print("\tpause(false) ");
+	Serial.print("pause(false) ");
 	assertTrue(model->pauseWaterZone(false));
 	//comprobamos q no se inicie otra
 	assertFalse(model->waterZone(1));
@@ -118,56 +127,51 @@ test(Pause)
 	assertEqual(checkWatering(totalDuration+2), totalDuration-1);
 
 	//riego manual zone
-	Serial.print("\tmanual water zone ");
+	Serial.print("manual water zone ");
 	assertTrue(model->waterZone(0));
 	assertEqual(checkWatering(3), 3);
 
-	Serial.print("\tpause(true) ");
+	Serial.print("pause(true) ");
 	assertTrue(model->pauseWaterZone(true));
 	assertEqual(checkWatering(6), 0);
 
-	Serial.print("\tpause(false) ");
+	Serial.print("pause(false) ");
 	assertTrue(model->pauseWaterZone(false));
 	assertEqual(checkWatering(totalDuration-2), totalDuration-4);
 	//borramos
 	assertTrue(model->removeZone(0));
 	assertTrue(model->removeZone(1));
+
+	assertEqual((int)model->alarms.size(), 0);
+	assertEqual((int)model->modesItems.size(), 0);
+	assertEqual((int)model->zones.size(), 0);
+
+	delay(1000);
 }
 
-
-test(_FindAlarm)
+test(FindAlarm)
 {
+	clockTime.timeNow();
 	int32_t time = tasker.timeNow() + 1;
 	createZone(time);
 
-	int pa = (int)model->findAlarm(time, 5);
-	assertNotEqual(pa, 0);
-
-	pa = (int)model->findAlarm(time, 7);
-	assertNotEqual(pa, 0);
-
-	pa = (int)model->findAlarm(time + 6, 5);
-	assertNotEqual(pa, 0);
-
-	pa = (int)model->findAlarm(time, 100);
-	assertNotEqual(pa, 0);
-
-	pa = (int)model->findAlarm(time - 100, 105);
-	assertNotEqual(pa, 0);
-
-	pa = (int)model->findAlarm(time - 15, 10);
-	assertEqual(pa, 0);
-
-	pa = (int)model->findAlarm(time + 16, 10);
-	assertEqual(pa, 0);
+	assertNotEqual((int)model->findAlarm(time, 5), 0);
+	assertNotEqual((int)model->findAlarm(time, 7), 0);
+	assertNotEqual((int)model->findAlarm(time + 6, 5), 0);
+	assertNotEqual((int)model->findAlarm(time, 100), 0);
+	assertNotEqual((int)model->findAlarm(time - 100, 105), 0);
+	assertEqual((int)model->findAlarm(time - 15, 10), 0);
+	assertEqual((int)model->findAlarm(time + 16, 10), 0);
 
 	assertTrue(model->removeZone(0));
 }
 
-test(_EditAlarm)
+test(EditAlarm)
 {
 	Serial.println("Test EditAlarm start");
 
+	//update
+	clockTime.timeNow();
 	createZone(clockTime.local() - 3600);
 
 	int32_t time = tasker.timeNow();
@@ -178,11 +182,10 @@ test(_EditAlarm)
 		if (elem.second->zoneId == 0)
 			alarms[i++] = elem.second;
 	}
-
+	Serial.println("init edit");
 	for (i = 0; i < 3; i++)
 	{
 		AlarmItem* a = alarms[i];
-
 		uint32_t start = (time + (a->duration * i)) % TASK_TICKS_24H;
 		/*Serial.printf("edit new %s old %s %d %d\n",
 			Tasker::formatTime(start),
@@ -190,27 +193,31 @@ test(_EditAlarm)
 			(a->duration),
 			(a->duration * i)
 		);*/
+		//Tasker::printTask(a->task);
 		assertTrue(
 			model->editAlarm(a->id, a->tapId, start, a->duration)
 		);
+		//Tasker::printTask(a->task);
 	}
+	Serial.println("end edit");
 
-	Serial.print("\tcheck ");
-	assertEqual(checkWatering(totalDuration+1), totalDuration);
+	Serial.print("check \n");
+	assertEqual(checkWatering(totalDuration+1), totalDuration-1);
 
 	assertTrue(model->removeZone(0));
+	delay(1000);
 }
 
-test(_onlyOneAlarmRunning) 
+test(onlyOneAlarmRunning) 
 {
 	Serial.println("Test onlyOneAlarmRunning start");
 
-	int id = model->addZone("huerta", 0, "01/01-12/31");
+	ZoneItem* z = model->addZone("huerta", 0, "01/01-12/31");
 	uint32_t time = clockTime.local() + 2;
 
 	uint8_t duration = 5;
-	model->addAlarm(id, 0, time, duration);
-	model->addAlarm(id, 1, time + 1, duration);
+	model->addAlarm(z->id, 0, time, duration);
+	model->addAlarm(z->id, 1, time + 1, duration);
 
 	Serial.print("\tcheck ");
 	bool error = false;
@@ -264,7 +271,12 @@ void setup()
 	TestRunner::exclude("_*");
 	TestRunner::setTimeout(120);
 
-	clockTime.setTimeNow(0, 0, 0, 1, 1, 2021);
+	//spain
+	clockTime.setTimeZone(1);
+	//irregularity, beginDay, beginMonth, endDay, endMonth, beginHour, endHour
+	clockTime.setDst(0, 5, 3, 5, 10, 2, 3);
+	clockTime.setTimeLocal(10, 10, 0, 1, 1, 2021);
+	//clockTime.setTimeNow(0, 0, 0, 1, 1, 2021);
 }
 
 void loop() 
@@ -277,22 +289,26 @@ Opening port
 Port open
 TestRunner started on 5 test(s).
 Test EditAlarm start
-	check ................ 15s open
+init edit
+end edit
+check
+ 14s open
 Test EditAlarm passed.
 Test FindAlarm passed.
 Test Pause start
-	pause(true) ...... 0s open
-	pause(false) ................ 15s open
-	manual water zone ... 3s open
-	pause(true) ...... 0s open
-	pause(false) ............. 12s open
+pause(true)  0s open
+ 0s open
+pause(false)  14s open
+manual water zone  3s open
+pause(true)  0s open
+pause(false)  11s open
 Test Pause passed.
 Test Zone start
-	check ............... 14s open
+ 14s open
 Test Zone passed.
 Test onlyOneAlarmRunning start
 	check ..........
 Test onlyOneAlarmRunning passed.
-TestRunner duration: 86.208 seconds.
-TestRunner summary: 5 passed, 0 failed, 0 skipped, 0 timed out, out of 5 test(s).
+TestRunner duration: 100.265 seconds.
+TestRunner summary: 5 passed, 0 failed, 0 skipped, 0 timed out, out of 5 test(s).s
 */

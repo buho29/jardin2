@@ -31,7 +31,7 @@ class Task
 	friend class Tasker;
 public:
 	Task() {};
-	uint8_t id = 0;
+	uint16_t id = 0;
 	uint32_t start = 0;
 	uint32_t stop = 0;
 	bool runing = false;
@@ -150,12 +150,15 @@ class Tasker
 		// si no, se crea uno si se puede
 		if (taskCount < TASK_MAX_SIZE) {
 			t = &tasks[taskCount];
+			t->enabled = true;
+			t->runing = false;
+			t->mode = 0;
 			t->setup(
 				dateStart,	// inicio 
 				dateStop,	// fin 
 				callback	// callback
 			);
-			tasks[taskCount].id = taskCount;
+			t->id = taskCount;
 			taskCount++;
 			return t;
 		}
@@ -172,7 +175,6 @@ class Tasker
 			return;
 		}
 		task->mode = -1;
-		taskCount--;
 	};
 
 	// Devuelve un puntero de la primera ocurencia de id
@@ -187,12 +189,10 @@ class Tasker
 	};
 	
 	// a meter en un loop
-	void check() {
-
-		if (millis() - time > TASK_INTERVAL) {
+	void check() 
+	{
+		//if (millis() - time > TASK_INTERVAL) {
 			time = millis();
-			//update
-			clockTime.timeNow();
 			uint32_t current = timeNow();
 			for (uint8_t i = 0; i < taskCount; i++)
 			{
@@ -202,13 +202,13 @@ class Tasker
 				if (t->mode >= 0 && t->start < t->stop) {
 
 					if (current >= t->start && current < t->stop
-						&& !t->runing) {
-
+						&& !t->runing) 
+					{
 						startTask(t);
 					}
 					else if (current > t->start && current >= t->stop
-						&& t->runing) {
-
+						&& t->runing) 
+					{
 						stopTask(t);
 					}
 				}
@@ -217,18 +217,18 @@ class Tasker
 
 
 					if (current > t->start && (current > t->stop)
-						&& !t->runing) {
-
+						&& !t->runing) 
+					{
 						startTask(t);
 					}
 					else if (current < t->start && current > t->stop
-						&& t->runing) {
-
+						&& t->runing) 
+					{
 						stopTask(t);
 					}
 				}
 			}
-		}
+		//}
 
 	};
 
@@ -285,7 +285,7 @@ private:
 
 	Tasker() {};
 	Task tasks[TASK_MAX_SIZE];
-	uint8_t taskCount;
+	uint16_t taskCount;
 	uint32_t time;
 	void startTask(Task *t) {
 		t->runing = true;
