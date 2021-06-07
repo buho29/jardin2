@@ -182,7 +182,7 @@ test(EditAlarm)
 		if (elem.second->zoneId == 0)
 			alarms[i++] = elem.second;
 	}
-	Serial.println("init edit");
+	//Serial.println("init edit");
 	for (i = 0; i < 3; i++)
 	{
 		AlarmItem* a = alarms[i];
@@ -199,7 +199,7 @@ test(EditAlarm)
 		);
 		//Tasker::printTask(a->task);
 	}
-	Serial.println("end edit");
+	//Serial.println("end edit");
 
 	Serial.print("check \n");
 	assertEqual(checkWatering(totalDuration+1), totalDuration-1);
@@ -289,8 +289,6 @@ Opening port
 Port open
 TestRunner started on 5 test(s).
 Test EditAlarm start
-init edit
-end edit
 check
  14s open
 Test EditAlarm passed.

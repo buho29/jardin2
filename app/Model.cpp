@@ -1325,9 +1325,7 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 
 			String msg = "Not Found";
 
-			AlarmItem* ocuped = nullptr;
-
-			findAlarm(time, duration, id);
+			AlarmItem* ocuped = findAlarm(time, duration, id);
 
 			if (alarms.has(id)) {
 				AlarmItem* a = alarms[id];
@@ -1362,8 +1360,7 @@ void Model::receivedJsonAlarm(AsyncWebSocketClient * client, const JsonObject & 
 
 			String msg = "Not Found";
 
-			AlarmItem* ocuped = nullptr;
-			findAlarm(time, duration);
+			AlarmItem* ocuped = findAlarm(time, duration);
 
 			if (zones.has(zoneId))
 				msg = String(zones[zoneId]->name) + " : " + Tasker::formatTime(time);
