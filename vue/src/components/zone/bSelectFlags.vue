@@ -73,8 +73,7 @@ export default {
     }
   },
   mounted() {
-    if(this.flags)
-    this.set(this.flags);
+    if(this.flags) this.set(this.flags);
   },
   
 }

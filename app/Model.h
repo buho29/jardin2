@@ -242,6 +242,8 @@ private:
 		const String& filename, size_t index, uint8_t* data, size_t len, bool final);
 	void onFilePage(AsyncWebServerRequest* request);
 
+	void onRegisterIOT(AsyncWebServerRequest* request);
+
 	void listDir(const char* dirname, const JsonArray& rootjson, uint8_t levels);
 
 	void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
@@ -264,7 +266,7 @@ public:
 	void printZones();
 	void printAlarms(uint zone);
 
-	bool connectedWifi = false;
+	bool isConnectedWifi();
 	bool loadedTime = false;
 
 	Status status;

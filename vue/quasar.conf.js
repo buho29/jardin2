@@ -49,7 +49,7 @@ module.exports = function ( ctx ) {
       transpile: false,
       env: {
         URL: ctx.dev ?
-          '192.168.8.100' :
+          '192.168.8.104' :
           'document.location.host'
       },
       // Add dependencies for transpiling with Babel (Array of string/regex)

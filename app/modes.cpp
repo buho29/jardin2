@@ -46,10 +46,12 @@ int8_t WeatherInterp::evaluate()
 
 bool WeatherInterp::skip()
 {
-	if (this->model && this->model->loadedForescast) 
+	ModesItem* cur = model->getModesItem(targetId);
+
+	if (this->model && this->model->loadedForescast && cur) 
 	{
 		// cancelamos cuando el viento es mas de 8km/h
-		bool result = this->model->weather[0].speedWin() > 8;
+		bool result = this->model->weather[0].speedWin() > cur->maxSpeedWin;
 		if (result) Serial.printf("%s skip\n", getName());
 		return result;
 	}
@@ -93,8 +95,11 @@ int8_t SensorInterp::evaluate()
 
 bool SensorInterp::skip()
 {
+	ModesItem* cur = model->getModesItem(targetId);
+	if (!cur) return false;
+
 	// cancelamos cuando la temp es menos 5°
-	bool result = this->model->currentSensor.temperature < 5;
+	bool result = this->model->currentSensor.temperature < cur->minTemp;
 	if (result) Serial.printf("%s skip\n", getName());
 	return result;
 }

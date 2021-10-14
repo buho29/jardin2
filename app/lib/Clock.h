@@ -3,7 +3,7 @@
 
 #include "RTClib.h"
 
-#define __RTC__ 1
+#define __RTC__ 0
 #if !__RTC__
 #include <TimeLib.h>
 #endif
@@ -205,6 +205,7 @@ public:
 		}
 
 		timeNow();
+		Serial.printf("setTime (%d/%d/%d %d:%d:%d) \n ", _year, _mon, _day, _hour, _min, _sec);
 	};
 
 	void setTimeLocal(int8_t hours, int8_t min, int8_t sec, int8_t day,
@@ -218,7 +219,7 @@ public:
 		setTimeNow(dt.unixtime()-((_offset + dsth)*3600) );
 	};
 
-	void setTimeNow(int32_t utc) {
+	void setTimeNow(uint32_t utc) {
 		if (utc != _utc) {
 
 #if __RTC__
@@ -229,6 +230,8 @@ public:
 		}
 
 		timeNow();
+
+		Serial.printf("setTimeUtc (%d/%d/%d %d:%d:%d) \n ", _year,_mon, _day, _hour, _min, _sec);
 	}
 
 	void setDst(uint8_t irregularity,
@@ -239,7 +242,7 @@ public:
 		dst.set(irregularity, beginDay, beginMonth, endDay, endMonth, beginHour, endHour - 1);
 	}
 
-	void setTimeZone(uint8_t offset) { _offset = offset; }
+	void setTimeZone(int8_t offset) { _offset = offset; }
 
 	//get time
 	int8_t hour(){ return _hour; }; int8_t min() { return _min; }; 
@@ -286,6 +289,8 @@ public:
 				setTimeNow(dt.unixtime());
 				Serial.printf("updateNTP dife = %ds ", (dt.unixtime() - _utc));
 				Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+				Serial.printf("updateNTP (%d/%d/%d %d:%d:%d) \n ", _year, _mon, _day, _hour, _min, _sec);
+
 			}
 			return true;
 		}

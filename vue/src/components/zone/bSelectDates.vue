@@ -51,6 +51,7 @@ export default {
     
     //dates a cambiado
     dates: function (newValue, oldValue) {
+      console.log("teta");
       if(newValue.toString() === oldValue.toString()) 
         return;
       this.datesStr = newValue;
@@ -85,6 +86,12 @@ export default {
       this.$emit("input", this.datesStr);
     },
     
+  },
+  mounted() {
+    if(this.dates) {
+      this.datesStr = this.dates;
+      this.updateProxy();
+    }
   },
   
 }

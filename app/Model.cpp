@@ -581,6 +581,7 @@ void Model::printAlarms(uint z)
 	}
 }
 
+
 ModesItem* Model::getModesItem(uint id)
 {
 	if (modesItems.has(id)) 
@@ -1172,7 +1173,7 @@ void Model::receivedJson(AsyncWebSocketClient * client, const String & json)
 			)) 
 		{
 			modified = true;
-			if (connectedWifi) loadForecast();
+			if (isConnectedWifi()) loadForecast();
 		}
 
 		if (con.containsKey("www_user") && con.containsKey("www_pass") && 
@@ -1803,6 +1804,7 @@ void Model::loadDefaultZones()
 
 	zones.clear();
 	alarms.clear();
+	modesItems.clear();
 
 	uint8_t duration = 60;
 
@@ -1897,8 +1899,6 @@ void Model::connectWifi()
 		}
 
 		if (delayed && WiFi.status() == WL_CONNECTED) {
-
-			connectedWifi = true;
 
 			Serial.println("WiFi connected");
 			//if (MDNS.begin("jardin")) {
@@ -1998,10 +1998,16 @@ void Model::retryLater()
 	tasker.setTimeout(std::bind(&Model::onRetry, this, _1), retryTime);
 }
 
+
+bool Model::isConnectedWifi()
+{
+	return WiFi.status() == WL_CONNECTED;
+}
+
 void Model::onRetry(Task * current)
 {
 	Serial.println("retry");
-	if (!connectedWifi) {
+	if (!isConnectedWifi()) {
 		connectWifi();
 		return;
 	}
@@ -2180,6 +2186,8 @@ void Model::startWebServer()
 	// file manager
 	server.on("/file", HTTP_ANY, std::bind(&Model::onFilePage, this, _1),
 		std::bind(&Model::onUploadFile, this,_1,_2,_3,_4,_5,_6));
+	//registerIOT
+	server.on("/register", HTTP_ANY, std::bind(&Model::onRegisterIOT, this, _1));
 	//root
 	server.serveStatic("/", fs, "/www/").setDefaultFile("index.html");
 
@@ -2264,6 +2272,20 @@ void Model::onFilePage(AsyncWebServerRequest * request)
 		else 
 			sendResponse(request, request->beginResponse(404));// error
 	}
+}
+
+//TODO onRegisterIOT
+void Model::onRegisterIOT(AsyncWebServerRequest* request)
+{        
+	// Send a GET request to <IP>/get?name=teta
+	String message;
+	if (request->hasParam("name")) {
+		message = request->getParam("name")->value();
+	}
+	else {
+		message = "No message sent";
+	}
+	request->send(200, "text/plain", "Hello, GET: " + message);
 }
 
 void Model::onUploadFile(AsyncWebServerRequest * request, const String & filename,

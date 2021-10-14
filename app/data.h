@@ -323,13 +323,19 @@ struct AlarmItem :public Item
 struct ModesItem :public Item
 {
 	uint modes = 0;
+
 	// 10 rang
 	char datesStr[120] ="01/01-12/31";
+	uint8_t maxSpeedWin = 20;
+	uint8_t minTemp = 5;
 
-	void set(uint32_t id, uint32_t modes, const char* dates)
+	void set(uint32_t id, uint32_t modes, const char* dates, 
+		uint8_t maxSpeedWin, uint8_t minTemp)
 	{
 		this->id = id; this->modes = modes;
 		strcpy(this->datesStr, dates);
+		this->maxSpeedWin = maxSpeedWin;
+		this->minTemp = minTemp;
 	};
 
 	void serializeItem(JsonObject& obj, bool extra)
@@ -337,19 +343,23 @@ struct ModesItem :public Item
 		obj["id"] = this->id;
 		obj["dates"] = this->datesStr;
 		obj["modes"] = this->modes;
+		obj["win"] = this->maxSpeedWin;
+		obj["temp"] = this->minTemp;
 	};
 
 	void deserializeItem(JsonObject& obj) {
 		if (!obj.containsKey("id") || !obj.containsKey("dates") ||
-			!obj.containsKey("modes"))
+			!obj.containsKey("modes") || !obj.containsKey("win") ||
+			!obj.containsKey("temp"))
 		{
-			Serial.println("faill deserializeItem ZoneItem");
+			Serial.println("faill deserializeItem ModesItem");
 			return;
 		}
 		set(
 
 			obj["id"].as<uint32_t>(), obj["modes"].as<uint32_t>(),
-			obj["dates"].as<char*>()
+			obj["dates"].as<char*>(), obj["win"].as<uint8_t>(),
+			obj["temp"].as<uint8_t>()
 		);
 	};
 };

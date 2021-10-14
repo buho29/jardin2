@@ -27,11 +27,12 @@
           :flags="modesFlags"
           @input="changedFlags"
         />
-
-        <b-select-dates 
+        <!-- calendar -->
+        <b-select-dates v-if="checkModes(8)"
           :dates= "datesStr"
-          @input="changedDates"/>
-
+          @input="changedDates"></b-select-dates>
+        
+        
         <div class="col-12 text-right">
           <q-btn :label="$t('cancel')"
             flat class="text-primary"
@@ -213,7 +214,7 @@ export default {
               { label: this.$t('modes[9]'),  value: 0b01000000000},
               { label: this.$t('modes[10]'), value: 0b10000000000}
           ],
-          datesStr: "",
+          datesStr: "01/01-31/12",
       }
     },
     computed: {
@@ -227,14 +228,16 @@ export default {
           this.modesFlags = flags;
         },
         changedDates(dates){
-          console.log(dates);
           this.datesStr = dates;
+        },
+        checkModes(flags){
+          return (this.modesFlags & flags) > 0;
         },
         ...mapActions(['deleteAlarm', 'editZone', 'editAlarm', 'addZone', 'addAlarm']),
         onSaveZone() {
             let error = false;
             if (this.zoneId >= 0) {
-              console.log('editt',this.modesFlags,this.datesStr);
+              //console.log('editt',this.modesFlags,this.datesStr);
                 this.editZone({
                     id: this.zoneId,
                     name: this.name,
@@ -301,6 +304,8 @@ export default {
                     this.can_watering = zone.can_watering;
                     this.modesFlags = modes.modes;
                     this.datesStr = modes.dates;
+                    console.log("teto",this.datesStr
+                    );
                 }
             }
         },
